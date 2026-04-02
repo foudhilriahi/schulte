@@ -1,0 +1,197 @@
+import type { JobOffer, Application, Notification, UserProfile } from "./types";
+
+export const mockJobs: JobOffer[] = [
+  {
+    id: "1",
+    title: "CNC Machine Operator",
+    city: "Bouarada",
+    contractType: "CDI",
+    department: "Production",
+    openPositions: 3,
+    description:
+      "Operate and maintain CNC machines for precision automotive parts manufacturing.",
+    requirements: ["CNC Programming", "Quality Control", "Technical Drawing"],
+    status: "active",
+    deadline: "2026-03-25",
+    createdAt: "2026-02-01T08:00:00Z",
+    updatedAt: "2026-02-01T08:00:00Z",
+  },
+  {
+    id: "2",
+    title: "Quality Engineer",
+    city: "Zaghouan",
+    contractType: "CDI",
+    department: "Quality Assurance",
+    openPositions: 1,
+    description:
+      "Ensure product quality standards and implement continuous improvement processes.",
+    requirements: ["ISO 9001", "IATF 16949", "Six Sigma"],
+    status: "active",
+    deadline: "2026-03-20",
+    createdAt: "2026-02-03T08:00:00Z",
+    updatedAt: "2026-02-03T08:00:00Z",
+  },
+  {
+    id: "3",
+    title: "Production Intern",
+    city: "Bouarada",
+    contractType: "Stage",
+    department: "Production",
+    openPositions: 2,
+    description:
+      "Support production team with daily operations and process documentation.",
+    requirements: ["Mechanical Engineering", "AutoCAD", "Teamwork"],
+    status: "active",
+    deadline: "2026-04-01",
+    createdAt: "2026-02-05T08:00:00Z",
+    updatedAt: "2026-02-05T08:00:00Z",
+  },
+  {
+    id: "4",
+    title: "Maintenance Technician",
+    city: "Zaghouan",
+    contractType: "CDD",
+    department: "Maintenance",
+    openPositions: 2,
+    description:
+      "Perform preventive and corrective maintenance on production equipment.",
+    requirements: ["Electrical Systems", "PLC", "Preventive Maintenance"],
+    status: "active",
+    deadline: "2026-03-18",
+    createdAt: "2026-02-07T08:00:00Z",
+    updatedAt: "2026-02-07T08:00:00Z",
+  },
+  {
+    id: "5",
+    title: "Logistics Coordinator",
+    city: "Bouarada",
+    contractType: "CDI",
+    department: "Logistics",
+    openPositions: 1,
+    description: "Coordinate inbound and outbound logistics operations.",
+    requirements: ["SAP", "Supply Chain", "Inventory Management"],
+    status: "active",
+    deadline: "2026-03-30",
+    createdAt: "2026-02-09T08:00:00Z",
+    updatedAt: "2026-02-09T08:00:00Z",
+  },
+  {
+    id: "6",
+    title: "Process Engineer",
+    city: "Zaghouan",
+    contractType: "CDI",
+    department: "Engineering",
+    openPositions: 1,
+    description:
+      "Develop and optimize manufacturing processes for automotive components.",
+    requirements: ["Lean Manufacturing", "CATIA", "Process Optimization"],
+    status: "active",
+    deadline: "2026-04-05",
+    createdAt: "2026-02-11T08:00:00Z",
+    updatedAt: "2026-02-11T08:00:00Z",
+  },
+];
+
+export const mockApplications: Application[] = [
+  {
+    id: "app-1",
+    candidateId: "user-1",
+    offerId: "1",
+    status: "interview",
+    createdAt: "2026-02-15T10:30:00Z",
+    updatedAt: "2026-02-18T14:00:00Z",
+    offer: mockJobs[0],
+    interview: {
+      id: "int-1",
+      applicationId: "app-1",
+      date: "2026-03-12",
+      time: "10:00",
+      location: "Schulte Tunisia - Bouarada Factory, Building A",
+      type: "on-site",
+      status: "scheduled",
+      prepNotes: [
+        "Review CNC programming fundamentals",
+        "Prepare questions about production targets",
+        "Bring copies of certifications",
+      ],
+    },
+  },
+  {
+    id: "app-2",
+    candidateId: "user-1",
+    offerId: "2",
+    status: "reviewing",
+    createdAt: "2026-02-20T16:45:00Z",
+    updatedAt: "2026-02-25T11:00:00Z",
+    offer: mockJobs[1],
+  },
+  {
+    id: "app-3",
+    candidateId: "user-1",
+    offerId: "3",
+    status: "accepted",
+    createdAt: "2026-01-10T08:00:00Z",
+    updatedAt: "2026-02-01T09:00:00Z",
+    offer: mockJobs[2],
+  },
+];
+
+export const mockNotifications: Notification[] = [
+  {
+    id: "notif-1",
+    userId: "user-1",
+    title: "Entretien planifié",
+    message:
+      "Votre entretien pour le poste CNC Machine Operator a été planifié pour le 12 mars 2026.",
+    type: "success",
+    read: false,
+    createdAt: "2026-03-05T09:00:00Z",
+  },
+  {
+    id: "notif-2",
+    userId: "user-1",
+    title: "Candidature en cours d'examen",
+    message:
+      "Votre candidature pour le poste Quality Engineer est en cours d'examen par notre équipe.",
+    type: "info",
+    read: true,
+    createdAt: "2026-02-25T11:00:00Z",
+  },
+  {
+    id: "notif-3",
+    userId: "user-1",
+    title: "Nouvelle offre disponible",
+    message:
+      "Un nouveau poste correspondant à votre profil : Process Engineer à Zaghouan.",
+    type: "info",
+    read: false,
+    createdAt: "2026-03-01T08:00:00Z",
+  },
+  {
+    id: "notif-4",
+    userId: "user-1",
+    title: "Candidature acceptée !",
+    message:
+      "Félicitations ! Votre candidature pour le poste Production Intern a été acceptée.",
+    type: "success",
+    read: true,
+    createdAt: "2026-02-01T09:00:00Z",
+  },
+];
+
+export const mockProfile: UserProfile = {
+  id: "user-1",
+  name: "Ahmed Ben Ali",
+  email: "ahmed.benali@email.com",
+  phone: "+21698765432",
+  role: "CANDIDATE",
+  city: "Bouarada",
+  experience: "3 years",
+  skills: [
+    "CNC Programming",
+    "AutoCAD",
+    "Quality Control",
+    "Lean Manufacturing",
+  ],
+  cvUrl: "/cv/ahmed-benali.pdf",
+};

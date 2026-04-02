@@ -1,0 +1,100 @@
+# 📐 Diagrammes Mermaid — Schulte Tunisia Recruitment Platform
+## Index des Diagrammes pour le Rapport PFE
+
+Tous les diagrammes sont en **français**, au format Mermaid.js (.md).  
+Ils peuvent être intégrés directement dans le rapport PFE via tout éditeur Markdown supportant Mermaid (Typora, Obsidian, VS Code + extension Markdown Preview Mermaid, GitLab, GitHub).
+
+---
+
+## 📊 Diagramme Entité-Relation (ERD)
+
+| Fichier | Description |
+|---|---|
+| [01_erd.md](./01_erd.md) | Schéma complet de la base de données PostgreSQL — toutes les tables, colonnes, types et relations |
+
+---
+
+## 🏗️ Diagramme de Classes
+
+| Fichier | Description |
+|---|---|
+| [02_class_diagram.md](./02_class_diagram.md) | Architecture logicielle complète : entités Prisma, énumérations, repositories (Pattern Repository), services (Strategy, Observer, Factory) |
+
+---
+
+## 🔄 Diagrammes de Séquence
+
+| Fichier | Description |
+|---|---|
+| [03_sequence_auth.md](./03_sequence_auth.md) | Authentification des 3 rôles (Admin email, RH email, Candidat téléphone) + rafraîchissement silencieux JWT |
+| [04_sequence_candidature.md](./04_sequence_candidature.md) | Dépôt de candidature complet : chemin PDF (Multer + pdf-parse) et formulaire 5 étapes (jsPDF) |
+| [05_sequence_ia.md](./05_sequence_ia.md) | Pipeline IA — Puter.js GPT-4o (navigateur) avec fallback automatique Gemini 1.5 Flash (backend) |
+| [06_sequence_temps_reel.md](./06_sequence_temps_reel.md) | Flux temps réel Socket.io — RH déplace carte Kanban → téléphone candidat mis à jour instantanément |
+| [07_sequence_entretien.md](./07_sequence_entretien.md) | Planification d'entretien + rappel J-1 cron + décision finale (pass/fail/no_show) |
+| [08_sequence_admin.md](./08_sequence_admin.md) | Administration — CRUD comptes RH + gestion templates + propagation Socket.io `template:updated` |
+
+---
+
+## 🔀 Diagrammes d'États
+
+| Fichier | Description |
+|---|---|
+| [09_state_candidature.md](./09_state_candidature.md) | Cycle de vie complet d'une candidature : new → reviewing → interview → accepted / rejected |
+| [10_state_offre.md](./10_state_offre.md) | Cycle de vie d'une offre d'emploi : open → paused → closed + Socket.io `offer:new` / `offer:closed` |
+
+---
+
+## ✅ Diagramme des Exigences
+
+| Fichier | Description |
+|---|---|
+| [11_requirement_diagram.md](./11_requirement_diagram.md) | Exigences fonctionnelles (candidat, RH, admin) et non-fonctionnelles (sécurité OWASP, temps réel, coût zéro, multilangue) |
+
+---
+
+## 🏛️ Architecture & Flowcharts
+
+| Fichier | Description |
+|---|---|
+| [12_architecture.md](./12_architecture.md) | Vue globale : 3 apps Next.js, backend Express, PostgreSQL, Socket.io, services externes (Puter.js, Gemini, Gmail, Vercel, Railway) |
+| [13_flowchart_depot_cv.md](./13_flowchart_depot_cv.md) | Flowchart détaillé du traitement du CV PDF : validation type/taille, pdf-parse, extraction email, stockage UUID, cas d'erreur |
+
+---
+
+## 📅 Planning
+
+| Fichier | Description |
+|---|---|
+| [14_gantt_roadmap.md](./14_gantt_roadmap.md) | Diagramme de Gantt sur 4 mois — toutes les tâches de développement jusqu'à la soutenance |
+
+---
+
+## 🛠️ Intégration dans le Rapport
+
+### Option 1 — Typora / Obsidian
+Ouvrez les fichiers `.md` directement. Le rendu Mermaid est automatique.
+
+### Option 2 — VS Code
+Installez l'extension **"Markdown Preview Mermaid Support"** puis prévisualisez avec `Ctrl+Shift+V`.
+
+### Option 3 — Mermaid Live Editor
+Copiez le contenu du bloc ` ```mermaid ``` ` sur [mermaid.live](https://mermaid.live) pour exporter en PNG/SVG.
+
+### Option 4 — LaTeX / Word
+1. Ouvrez le diagramme sur [mermaid.live](https://mermaid.live)
+2. Exportez en **SVG** ou **PNG** haute résolution
+3. Insérez l'image dans votre rapport
+
+---
+
+## 📋 Récapitulatif des Patterns Illustrés
+
+| Pattern | Diagramme(s) |
+|---|---|
+| **Repository** | Diagramme de Classes (02) |
+| **Strategy (IA)** | Diagramme de Classes (02) + Séquence IA (05) |
+| **Observer (Notifications)** | Séquence Temps Réel (06) + Séquence Entretien (07) |
+| **Factory (CV)** | Diagramme de Classes (02) + Séquence Candidature (04) |
+| **MVC** | Architecture (12) |
+| **RBAC + Site Ownership** | Séquence Auth (03) + Séquence Admin (08) |
+| **Pub/Sub Rooms Socket.io** | Séquence Temps Réel (06) + Architecture (12) |

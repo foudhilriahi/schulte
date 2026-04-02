@@ -1,0 +1,192 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  ADMIN
+  HR
+  CANDIDATE
+}
+
+enum Site {
+  Bouarada
+  Zaghouan
+}
+
+enum ContractType {
+  CDI
+  CDD
+  Stage
+  Alternance
+}
+
+enum OfferStatus {
+  open
+  paused
+  closed
+}
+
+enum InterviewOutcome {
+  pass
+  fail
+  no_show
+}
+
+enum ApplicationStatus {
+  new
+  reviewing
+  interview
+  accepted
+  rejected
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String?  @unique
+  passwordHash String
+  role         Role
+  name         String
+  phone        String?  @unique
+  site         Site?
+  
+  // Admin/HR management
+  isActive     Boolean  @default(true)
+  deletedAt    DateTime?
+  
+  // Password reset
+  resetToken       String?
+  resetTokenExpiry DateTime?
+  
+  // Specific to candidates
+  city         String?
+  experience   String?
+  skills       String[]
+  cvUrl        String?
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  applications Application[]
+  notifications Notification[]
+  refreshTokens RefreshToken[]
+  createdOffers JobOffer[]
+  createdTemplates OfferTemplate[]
+  scheduledInterviews Interview[]
+}
+
+model JobOffer {
+  id            String       @id @default(uuid())
+  templateId    String?
+  site          Site
+  title         String
+  contractType  ContractType
+  department    String
+  seats         Int          @default(1)
+  description   String
+  requiredSkills String[]
+  experienceYears Int        @default(0)
+  salaryRange   String?
+  showSalary    Boolean      @default(true)
+  status        OfferStatus  @default(open)
+  deadline      DateTime
+  createdById   String
+  deletedAt     DateTime?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  template      OfferTemplate? @relation(fields: [templateId], references: [id])
+  createdBy     User          @relation(fields: [createdById], references: [id])
+  applications  Application[]
+}
+
+model OfferTemplate {
+  id              String       @id @default(uuid())
+  titleFr         String
+  titleEn         String
+  contractType    ContractType
+  department      String
+  description     String
+  suggestedSkills String[]
+  isActive        Boolean      @default(true)
+  createdById     String
+  deletedAt       DateTime?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  createdBy       User         @relation(fields: [createdById], references: [id])
+  offers          JobOffer[]
+}
+
+model Application {
+  id           String            @id @default(uuid())
+  candidateId  String
+  offerId      String
+  status       ApplicationStatus @default(new)
+  
+  // Data extraction & AI
+  cvUrl        String?
+  cvText       String?
+  formData     Json?
+  cvTemplate   String?
+  coverNote    String?
+  aiScore      Int?
+  aiAnalysis   Json?
+  
+  // HR review
+  hrNotes      String?
+  hrRating     Int?
+  hrTags       String[]
+  
+  appliedAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  candidate    User              @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  offer        JobOffer          @relation(fields: [offerId], references: [id], onDelete: Cascade)
+  interview    Interview?
+
+  @@unique([candidateId, offerId])
+}
+
+model Interview {
+  id               String           @id @default(uuid())
+  applicationId    String           @unique
+  scheduledAt      DateTime
+  location         String
+  type             String           @default("on-site")
+  notesForCandidate String?
+  outcome          InterviewOutcome?
+  reminderSent     Boolean          @default(false)
+  createdById      String
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  application      Application      @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  createdBy        User             @relation(fields: [createdById], references: [id])
+}
+
+model Notification {
+  id            String   @id @default(uuid())
+  userId        String
+  type          String   @default("info")
+  payload       Json
+  emailSent     Boolean  @default(false)
+  readAt        DateTime?
+  createdAt     DateTime @default(now())
+
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  userId    String
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
