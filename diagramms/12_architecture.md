@@ -1,24 +1,26 @@
 # Architecture Globale — Schulte Tunisia Recruitment Platform
-# 3 applications Next.js + 1 backend Express + PostgreSQL
+# 2 frontends (HR/Admin React Vite + Candidate Next.js) + 1 backend Express + PostgreSQL
 
 ```mermaid
 flowchart TB
     subgraph CLIENT ["COTE CLIENT"]
         direction TB
 
-        subgraph ADMIN_APP ["Admin Dashboard Next.js 14"]
+        subgraph ADMIN_APP ["Admin Dashboard React Vite"]
             A1["Login Admin email + mot de passe"]
             A2["Gestion Comptes RH CRUD"]
             A3["Gestion Templates 7 postes"]
             A4["Vue Ensemble stats globales"]
+            A5["Mini messagerie vers RH + bell live"]
         end
 
-        subgraph HR_APP ["Dashboard RH Next.js 14"]
+        subgraph HR_APP ["Dashboard RH React Vite"]
             H1["Login RH email + mot de passe"]
             H2["Creation offre via template"]
             H3["Kanban Board glisser-deposer"]
             H4["Analyse IA Puter.js et Gemini"]
             H5["Calendrier entretiens et planification"]
+            H6["Bell notifications live"]
         end
 
         subgraph PWA_APP ["PWA Candidat Next.js 14 + next-pwa"]
@@ -34,12 +36,12 @@ flowchart TB
         direction TB
 
         subgraph API ["Routes API REST"]
-            R1["/api/auth JWT Refresh Token 30j"]
+            R1["/api/auth JWT Access + Refresh token"]
             R2["/api/offers CRUD site-scoped"]
             R3["/api/applications Upload Status IA"]
             R4["/api/interviews Planification Outcome"]
-            R5["/api/admin HR CRUD + Templates"]
-            R6["/api/notifications Lecture Marquage"]
+            R5["/api/admin HR CRUD + Templates + Broadcast RH"]
+            R6["/api/notifications Lecture Marquage Suppression"]
         end
 
         subgraph SERVICES ["Services"]
@@ -60,7 +62,7 @@ flowchart TB
             M6["helmet + cors en-tetes HTTP"]
         end
 
-        SOCKET["Socket.io rooms candidate hr site offers"]
+        SOCKET["Socket.io rooms admin hr site candidate"]
         EVENTS["EventEmitter Observer application.statusChanged interview.scheduled"]
     end
 
@@ -70,7 +72,7 @@ flowchart TB
         T3["offer_templates 7 positions seedees"]
         T4["applications UNIQUE offer+candidate"]
         T5["interviews 1 par candidature"]
-        T6["notifications socket et email tracking"]
+        T6["notifications bell + realtime tracking"]
         T7["refresh_tokens SHA-256 hashes"]
     end
 
@@ -78,15 +80,15 @@ flowchart TB
         EXT1["Puter.js GPT-4o Gratuit Navigateur"]
         EXT2["Gemini 1.5 Flash Gratuit 1500 req/j Fallback"]
         EXT3["Gmail SMTP Nodemailer Emails + ics"]
-        EXT4["Vercel 3 frontends deployes"]
-        EXT5["Railway prod API + PostgreSQL"]
+        EXT4["Frontend deploy selon environnement"]
+        EXT5["PostgreSQL local ou cloud"]
     end
 
     ADMIN_APP -->|"HTTPS REST JWT"| API
     HR_APP -->|"HTTPS REST JWT"| API
     PWA_APP -->|"HTTPS REST JWT"| API
 
-    HR_APP <-->|"Socket.io application:new template:updated"| SOCKET
+    HR_APP <-->|"Socket.io application:new template:updated notification:new"| SOCKET
     PWA_APP <-->|"Socket.io status:changed offer:new interview:scheduled"| SOCKET
 
     API --> MIDDLEWARE
@@ -104,5 +106,5 @@ flowchart TB
     ADMIN_APP -. "Deploy" .-> EXT4
     HR_APP -. "Deploy" .-> EXT4
     PWA_APP -. "Deploy" .-> EXT4
-    API -. "Deploy" .-> EXT5
+    API -. "Uses" .-> EXT5
 ```

@@ -13,6 +13,10 @@ stateDiagram-v2
         ChoixTemplate --> FormulaireVide : Creer depuis zero
         FormulairePreRempli --> Validation : Remplit contrat delai sieges
         FormulaireVide --> Validation : Remplit tous les champs
+        note right of ChoixTemplate
+            RH voit uniquement templates actifs
+            Liste mise a jour en temps reel via template:updated
+        end note
     }
 
     Creation --> Brouillon : Enregistre comme brouillon status paused

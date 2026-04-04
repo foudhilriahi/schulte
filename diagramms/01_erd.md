@@ -88,8 +88,7 @@ erDiagram
     NOTIFICATIONS {
         uuid id PK
         uuid user_id FK
-        uuid application_id FK "nullable"
-        string type "status_change interview_scheduled reminder"
+        string type "info success warning"
         json payload
         boolean email_sent
         timestamp read_at "null si non lu"
@@ -105,5 +104,7 @@ erDiagram
     OFFER_TEMPLATES ||--o{ JOB_OFFERS : "sert de base"
     JOB_OFFERS ||--o{ APPLICATIONS : "recoit"
     APPLICATIONS ||--o| INTERVIEWS : "donne lieu a"
-    APPLICATIONS ||--o{ NOTIFICATIONS : "genere"
+    APPLICATIONS ||--o{ NOTIFICATIONS : "genere selon evenements"
+    OFFER_TEMPLATES ||--o{ NOTIFICATIONS : "peut generer via admin updates"
+    JOB_OFFERS ||--o{ NOTIFICATIONS : "peut generer via offer lifecycle"
 ```

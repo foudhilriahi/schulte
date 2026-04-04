@@ -1,4 +1,4 @@
-# Diagramme de Sequence — Administration Comptes RH et Templates
+# Diagramme de Sequence — Administration Comptes RH, Templates et Broadcast RH
 
 ```mermaid
 sequenceDiagram
@@ -14,8 +14,8 @@ sequenceDiagram
     Admin->>AdminUI: Clique Creer un compte RH
     AdminUI-->>Admin: Modale CreateHRModal
     Admin->>AdminUI: Remplit nom email mot de passe et site
-    AdminUI->>API: POST /api/admin/users
-    API->>API: requireAdmin verifie role admin
+    AdminUI->>API: POST /api/admin/hr-accounts
+    API->>API: authenticate + requireRole ADMIN
     API->>API: Validation Joi email format + password min 8 + site valide
     API->>DB: Cherche par email
     alt Email deja utilise
@@ -32,12 +32,12 @@ sequenceDiagram
     Admin->>AdminUI: Clique Desactiver sur un compte RH
     AdminUI-->>Admin: Dialogue de confirmation
     Admin->>AdminUI: Confirme
-    AdminUI->>API: PATCH /api/admin/users/:id/deactivate
+    AdminUI->>API: DELETE /api/admin/hr-accounts/:id
     API->>DB: isActive false et supprime tous les refreshTokens
     DB-->>API: OK
     API-->>AdminUI: 200 OK
     AdminUI-->>Admin: Badge Inactif sur la ligne
-    Note over HR: Prochain refresh token du RH retourne 401 et le deconnecte
+    Note over HR: Refresh tokens du RH revokes, prochaine tentative protegee renvoie 401/403
 
     Note over Admin, HR: Gestion des Templates
 
@@ -45,11 +45,12 @@ sequenceDiagram
     AdminUI-->>Admin: Modale CreateTemplateModal
     Admin->>AdminUI: Remplit titre FR titre EN description et competences
     AdminUI->>API: POST /api/admin/templates
-    API->>API: requireAdmin + Validation Joi description min 10 et au moins 1 competence
+    API->>API: validate schema titleFr/titleEn/contractType/department/description
     API->>DB: offerTemplateRepo.create
     DB-->>API: Template cree
-    API->>Socket: emit template:updated vers room hr:all
-    Socket-->>HR: Modales Nouvelle Offre ouvertes notifiees
+    API->>Socket: emit template:updated vers all HR rooms
+    API->>DB: create notifications for active HR users
+    Socket-->>HR: Refresh liste templates + bell update
     API-->>AdminUI: 201
     AdminUI-->>Admin: Toast Template cree
 
@@ -59,19 +60,30 @@ sequenceDiagram
     AdminUI->>API: PATCH /api/admin/templates/:id
     API->>DB: Mise a jour
     DB-->>API: OK
-    API->>Socket: emit template:updated vers room hr:all
-    Socket-->>HR: Dashboards RH notifies
+    API->>Socket: emit template:updated vers all HR rooms
+    API->>DB: create notifications for active HR users
+    Socket-->>HR: Dashboards RH notifies + bell update
     API-->>AdminUI: 200 OK
     AdminUI-->>Admin: Toast Template mis a jour
 
-    Admin->>AdminUI: Clique Desactiver un template
+    Admin->>AdminUI: Clique Toggle actif/inactif sur un template custom
     AdminUI-->>Admin: Dialogue de confirmation
     Admin->>AdminUI: Confirme
-    AdminUI->>API: PATCH /api/admin/templates/:id/deactivate
-    API->>DB: isActive false soft delete FK preservee
+    AdminUI->>API: DELETE /api/admin/templates/:id
+    API->>API: If core template id then 403 protected
+    API->>DB: Toggle isActive + deletedAt
     DB-->>API: OK
-    API->>Socket: emit template:updated vers room hr:all
-    Socket-->>HR: Template disparu de la liste creation offres
+    API->>Socket: emit template:updated vers all HR rooms
+    API->>DB: create notifications for active HR users
+    Socket-->>HR: Template apparait/disparait en temps reel dans selector
     API-->>AdminUI: 200 OK
-    AdminUI-->>Admin: Toast Template desactive
+    AdminUI-->>Admin: Toast Template activated/deactivated
+
+    Note over Admin, HR: Mini messagerie admin vers RH
+    Admin->>AdminUI: Ecrit un message dans Settings
+    AdminUI->>API: POST /api/admin/broadcast-hr avec message et site optionnel
+    API->>DB: createMany notifications pour RH actifs cibles
+    API->>Socket: emit notification:new et admin:broadcast vers RH cibles
+    Socket-->>HR: Bell dropdown mis a jour instantanement
+    API-->>AdminUI: 201 Broadcast sent
 ```

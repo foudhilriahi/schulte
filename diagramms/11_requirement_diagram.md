@@ -54,7 +54,7 @@ requirementDiagram
 
     requirement REQ_RH_IA {
         id: 2.2
-        text: "Le RH peut analyser un CV avec l'IA en moins de 5 secondes"
+        text: "Le RH peut analyser un CV avec l'IA avec strategie primaire + fallback et resultat en quelques secondes"
         risk: high
         verifymethod: test
     }
@@ -87,6 +87,13 @@ requirementDiagram
         verifymethod: demonstration
     }
 
+    requirement REQ_ADMIN_BROADCAST {
+        id: 3.3
+        text: "L'admin peut envoyer un message broadcast aux RH tous sites ou site cible"
+        risk: medium
+        verifymethod: demonstration
+    }
+
     requirement REQ_SECURITE {
         id: 4.1
         text: "Le systeme couvre les risques OWASP Top 10 applicables"
@@ -97,6 +104,13 @@ requirementDiagram
     requirement REQ_TEMPS_REEL {
         id: 4.2
         text: "Les mises a jour de statut sont propagees en temps reel via Socket.io"
+        risk: high
+        verifymethod: demonstration
+    }
+
+    requirement REQ_BELL_UNIFIEE {
+        id: 4.4
+        text: "La cloche notifications affiche en temps reel templates offres et messages admin pour RH"
         risk: high
         verifymethod: demonstration
     }
@@ -119,7 +133,9 @@ requirementDiagram
     PFE_Schulte - traces -> REQ_RH_SITE
     PFE_Schulte - traces -> REQ_ADMIN_HR
     PFE_Schulte - traces -> REQ_ADMIN_TEMPLATES
+    PFE_Schulte - traces -> REQ_ADMIN_BROADCAST
     PFE_Schulte - traces -> REQ_SECURITE
     PFE_Schulte - traces -> REQ_TEMPS_REEL
+    PFE_Schulte - traces -> REQ_BELL_UNIFIEE
     PFE_Schulte - traces -> REQ_COUT_ZERO
 ```

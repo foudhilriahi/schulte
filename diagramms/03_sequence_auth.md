@@ -1,5 +1,5 @@
 # Diagramme de Sequence — Authentification des 3 Roles
-# Admin et RH utilisent email + mot de passe. Candidat utilise telephone tunisien.
+# Admin et RH utilisent email + mot de passe. Candidat utilise telephone + email optionnel.
 
 ```mermaid
 sequenceDiagram
@@ -27,7 +27,7 @@ sequenceDiagram
             Backend->>DB: Sauvegarde SHA-256 du refreshToken
             Backend->>Cookie: setRefreshCookie httpOnly 30 jours
             Backend-->>Frontend: 200 avec accessToken et user
-            Frontend->>Frontend: Stocke dans authStore Zustand
+            Frontend->>Frontend: Stocke dans authStore Zustand (sessionStorage par onglet pour HR/Admin)
             Frontend-->>Admin: Redirection dashboard
         end
     end
@@ -52,14 +52,12 @@ sequenceDiagram
         end
     end
 
-    Note over Frontend, Cookie: Rafraichissement silencieux du token par intercepteur Axios
+    Note over Frontend, Cookie: Strategie session isolee HR/Admin
 
     Frontend->>Backend: Requete avec token expire
     Backend-->>Frontend: 401 Unauthorized
-    Frontend->>Backend: POST /api/auth/refresh lit le cookie httpOnly
-    Backend->>DB: Trouve refreshToken par SHA-256
-    Backend->>DB: Supprime ancien token et cree nouveau
-    Backend->>Cookie: Nouveau cookie 30 jours
-    Backend-->>Frontend: 200 avec nouveau accessToken
-    Frontend->>Frontend: Rejoue la requete originale sans interruption
+    Frontend->>Frontend: clear auth session de cet onglet
+    Frontend-->>Admin: Redirection login (pas de collision inter-comptes)
+
+    Note over Frontend: Endpoint /api/auth/refresh reste disponible pour les autres clients si necessaire
 ```
