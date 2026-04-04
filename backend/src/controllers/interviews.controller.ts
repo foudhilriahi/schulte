@@ -3,6 +3,7 @@ import prisma from "../config/prisma";
 import { appEmitter } from "../events/emitter";
 import { InterviewRepository } from "../repositories/interview.repository";
 import logger from "../utils/logger";
+import { SocketService } from "../services/socket.service";
 
 export class InterviewsController {
   // GET /api/interviews
@@ -115,6 +116,8 @@ export class InterviewsController {
         location: interview.location,
         notes: interview.notesForCandidate ?? undefined,
       });
+
+      SocketService.emitToAdmin('admin:overview:updated', { reason: 'interview-scheduled', interviewId: interview.id });
 
       res.status(201).json(interview);
     } catch (err: any) {

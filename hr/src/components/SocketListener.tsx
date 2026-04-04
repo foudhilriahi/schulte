@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { socketService } from '@/lib/socket';
 import { useAuthStore } from '@/store/authStore';
+import { authSession } from '@/lib/authSession';
 
 export default function SocketListener() {
   const { isAuthenticated, user } = useAuthStore();
@@ -12,7 +13,7 @@ export default function SocketListener() {
   useEffect(() => {
     if (!isAuthenticated || !user) return;
 
-    const token = localStorage.getItem('accessToken');
+    const token = authSession.getAccessToken();
     if (!token) return;
 
     // Connect socket

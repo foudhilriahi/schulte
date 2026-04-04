@@ -10,9 +10,6 @@
     "migrate": "npx prisma migrate dev",
     "generate": "npx prisma generate"
   },
-  "prisma": {
-    "seed": "tsx prisma/seed.ts"
-  },
   "keywords": [],
   "author": "",
   "license": "ISC",

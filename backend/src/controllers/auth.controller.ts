@@ -68,6 +68,11 @@ export class AuthController {
         return;
       }
 
+      if (user.isActive === false || user.deletedAt) {
+        res.status(403).json({ error: 'Account is inactive. Please contact the administrator.' });
+        return;
+      }
+
       const valid = await AuthService.comparePassword(password, user.passwordHash);
       if (!valid) {
         res.status(401).json({ error: 'Invalid email or password' });

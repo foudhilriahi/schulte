@@ -208,6 +208,7 @@ export class ApplicationsController {
       }
 
       SocketService.emitToSite(offer.site, "application:new", application);
+      SocketService.emitToAdmin('admin:overview:updated', { reason: 'application-created', applicationId: application.id });
 
       res.status(201).json(application);
     } catch (err: any) {
@@ -329,6 +330,7 @@ export class ApplicationsController {
       }
 
       SocketService.emitToSite(offer.site, "application:new", application);
+      SocketService.emitToAdmin('admin:overview:updated', { reason: 'application-created', applicationId: application.id });
 
       res.status(201).json(application);
     } catch (err: any) {

@@ -1,7 +1,8 @@
 // ✅ CHECKPOINT — FIX #2: SOCKET.IO CLIENT
 import { io, Socket } from 'socket.io-client';
+import { authSession } from '@/lib/authSession';
 
-const URL = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000';
+const URL = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:4000';
 
 class SocketService {
   private socket: Socket | null = null;
@@ -29,6 +30,17 @@ class SocketService {
 
     this.socket.on('disconnect', () => {
       console.log('🔴 WebSocket Disconnected (HR)');
+    });
+
+    this.socket.on('connect_error', (err: any) => {
+      const message = String(err?.message || '');
+      console.error('❌ WebSocket connect error (HR):', message);
+
+      // Any auth socket mismatch clears only this tab session.
+      if (message.includes('Authentication error')) {
+        authSession.clear();
+        window.location.href = '/login';
+      }
     });
   }
 

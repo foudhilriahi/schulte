@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Users, Briefcase, ClipboardList, CalendarDays, TrendingUp, UserCheck } from 'lucide-react'
 import { api } from '@/lib/axios'
+import { socketService } from '@/lib/socket'
 import {
   BarChart,
   Bar,
@@ -31,25 +32,54 @@ const AdminOverviewPage = () => {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    api.get('/admin/overview').then(res => {
-      setStats(res.data)
-    }).catch(() => {
-      // fallback
-      setStats({ 
-        hrAccounts: 0, 
-        totalCandidates: 0,
-        activeOffers: 0, 
-        totalOffers: 0,
-        totalApplications: 0,
-        applicationsMonth: 0, 
-        interviewsWeek: 0, 
-        applicationsWithAI: 0,
-        averageAIScore: null,
-        applicationsByStatus: [],
-        offersBySite: [],
-        recentApplications: [] 
-      })
-    }).finally(() => setLoading(false))
+    const fallback = { 
+      hrAccounts: 0, 
+      totalCandidates: 0,
+      activeOffers: 0, 
+      totalOffers: 0,
+      totalApplications: 0,
+      applicationsMonth: 0, 
+      interviewsWeek: 0, 
+      applicationsWithAI: 0,
+      averageAIScore: null,
+      applicationsByStatus: [],
+      offersBySite: [],
+      recentApplications: [] 
+    }
+
+    const fetchOverview = async (showLoading = false) => {
+      try {
+        if (showLoading) setLoading(true)
+        const res = await api.get('/admin/overview')
+        setStats(res.data)
+      } catch {
+        setStats(fallback)
+      } finally {
+        if (showLoading) setLoading(false)
+      }
+    }
+
+    fetchOverview(true)
+
+    const socket = socketService.getSocket()
+    const refresh = () => fetchOverview(false)
+    const watchedEvents = [
+      'admin:overview:updated',
+      'admin:hr-account:changed',
+      'template:updated',
+      'offer:new',
+      'offer:closed',
+      'application:new',
+      'application:analysed',
+      'application:manual_analysis',
+      'interview:scheduled',
+    ]
+
+    watchedEvents.forEach((eventName) => socket?.on(eventName, refresh))
+
+    return () => {
+      watchedEvents.forEach((eventName) => socket?.off(eventName, refresh))
+    }
   }, [])
 
   if (loading) return <DashboardLayout title="Overview"><p>Loading...</p></DashboardLayout>

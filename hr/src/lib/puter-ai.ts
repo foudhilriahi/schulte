@@ -1,3 +1,5 @@
+import { authSession } from '@/lib/authSession';
+
 // ============================================================
 // PUTER.JS AI SERVICE — Browser-based GPT-4o Analysis
 // Primary AI strategy called from HR dashboard
@@ -173,7 +175,7 @@ Return exactly this JSON structure (nothing else):
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+        'Authorization': `Bearer ${authSession.getAccessToken()}`,
       },
     });
 

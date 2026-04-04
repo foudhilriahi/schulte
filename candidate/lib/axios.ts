@@ -2,7 +2,7 @@ import axios from 'axios';
 import { storage, STORAGE_KEYS } from './storage';
 
 // Get base URL from env or use default fallback for local dev
-const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
 
 export const api = axios.create({
   baseURL,

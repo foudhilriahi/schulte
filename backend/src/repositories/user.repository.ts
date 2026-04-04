@@ -26,9 +26,15 @@ export class UserRepository {
     return prisma.user.update({ where: { id }, data });
   }
 
-  static async findAllByRole(role: Role) {
+  static async findAllByRole(role: Role, includeInactive = true) {
     return prisma.user.findMany({
-      where: { role },
+      where: includeInactive
+        ? { role }
+        : {
+            role,
+            isActive: true,
+            deletedAt: null,
+          },
       orderBy: { createdAt: 'desc' },
       select: {
         id: true,
@@ -36,6 +42,8 @@ export class UserRepository {
         name: true,
         phone: true,
         site: true,
+        isActive: true,
+        deletedAt: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -72,5 +80,31 @@ export class UserRepository {
         resetTokenExpiry: { gt: new Date() },
       },
     });
+  }
+
+  static async findActiveAdminIds() {
+    const rows = await prisma.user.findMany({
+      where: {
+        role: 'ADMIN',
+        isActive: true,
+        deletedAt: null,
+      },
+      select: { id: true },
+    });
+    return rows.map((r) => r.id);
+  }
+
+  static async findActiveHRIds(site?: Site, excludeUserId?: string) {
+    const rows = await prisma.user.findMany({
+      where: {
+        role: 'HR',
+        isActive: true,
+        deletedAt: null,
+        ...(site ? { site } : {}),
+        ...(excludeUserId ? { id: { not: excludeUserId } } : {}),
+      },
+      select: { id: true },
+    });
+    return rows.map((r) => r.id);
   }
 }

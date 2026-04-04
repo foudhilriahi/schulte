@@ -1,11 +1,14 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import type { SignOptions } from 'jsonwebtoken';
 import crypto from 'crypto';
 import { env } from '../config/env';
 import type { AuthPayload } from '../middleware/authenticate';
 
 const SALT_ROUNDS = 12;
-const ACCESS_TOKEN_EXPIRY = '15m';
+const ACCESS_TOKEN_EXPIRY =
+  (process.env.JWT_EXPIRES_IN as SignOptions['expiresIn']) ||
+  ('15m' as SignOptions['expiresIn']);
 const REFRESH_TOKEN_EXPIRY_DAYS = 30;
 
 export class AuthService {

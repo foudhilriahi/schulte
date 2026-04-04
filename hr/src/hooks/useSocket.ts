@@ -2,13 +2,14 @@
 import { useEffect } from 'react';
 import { socketService } from '../lib/socket';
 import { useAuthStore } from '../store/authStore';
+import { authSession } from '../lib/authSession';
 
 export function useSocket() {
   const { isAuthenticated } = useAuthStore();
 
   useEffect(() => {
     if (isAuthenticated) {
-      const token = localStorage.getItem('accessToken');
+      const token = authSession.getAccessToken();
       if (token) {
         socketService.connect(token);
       }

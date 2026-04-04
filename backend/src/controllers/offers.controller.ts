@@ -1,9 +1,22 @@
 import { Request, Response } from 'express';
 import { OfferRepository } from '../repositories/offer.repository';
+import { NotificationRepository } from '../repositories/notification.repository';
+import { UserRepository } from '../repositories/user.repository';
 import { SocketService } from '../services/socket.service';
 import logger from '../utils/logger';
 
 export class OffersController {
+  private static async notifyUsers(userIds: string[], payload: any, type: string = 'info'): Promise<void> {
+    await NotificationRepository.createManyForUsers({
+      userIds,
+      type,
+      payload,
+    });
+    userIds.forEach((id) => {
+      SocketService.emitToUser(id, 'notification:new', payload);
+    });
+  }
+
   // GET /api/offers (public — candidates can browse)
   static async getAll(req: Request, res: Response): Promise<void> {
     try {
@@ -194,6 +207,27 @@ export class OffersController {
       if (offer.status === 'open') {
         SocketService.emitToAllCandidates('offer:new', offer);
       }
+      SocketService.emitToAdmin('admin:overview:updated', { reason: 'offer-created', offerId: offer.id });
+
+      const adminIds = await UserRepository.findActiveAdminIds();
+      await OffersController.notifyUsers(adminIds, {
+        title: 'New offer published',
+        message: `${offer.title} was created for ${offer.site}`,
+        category: 'offer',
+        action: 'created',
+        offerId: offer.id,
+        site: offer.site,
+      });
+
+      const hrIds = await UserRepository.findActiveHRIds(offer.site as any, req.user!.userId);
+      await OffersController.notifyUsers(hrIds, {
+        title: 'Offer published',
+        message: `${offer.title} is now available in your site offers`,
+        category: 'offer',
+        action: 'created',
+        offerId: offer.id,
+        site: offer.site,
+      });
 
       res.status(201).json(offer);
     } catch (err: any) {
@@ -215,6 +249,28 @@ export class OffersController {
         SocketService.emitToAllCandidates('offer:new', offer);
       }
 
+      SocketService.emitToAdmin('admin:overview:updated', { reason: 'offer-updated', offerId: offer.id });
+
+      const adminIds = await UserRepository.findActiveAdminIds();
+      await OffersController.notifyUsers(adminIds, {
+        title: 'Offer updated',
+        message: `${offer.title} was updated (${offer.status})`,
+        category: 'offer',
+        action: 'updated',
+        offerId: offer.id,
+        site: offer.site,
+      });
+
+      const hrIds = await UserRepository.findActiveHRIds(offer.site as any, req.user!.userId);
+      await OffersController.notifyUsers(hrIds, {
+        title: 'Offer updated',
+        message: `${offer.title} changed status to ${offer.status}`,
+        category: 'offer',
+        action: 'updated',
+        offerId: offer.id,
+        site: offer.site,
+      });
+
       res.json(offer);
     } catch (err: any) {
       logger.error('Update offer error:', err);
@@ -226,10 +282,33 @@ export class OffersController {
   static async remove(req: Request, res: Response): Promise<void> {
     try {
       const id = req.params.id as string;
+      const existing = await OfferRepository.findById(id);
       await OfferRepository.delete(id);
       logger.info(`HR deleted offer: ${id}`);
       
       SocketService.emitToAllCandidates('offer:closed', { id });
+      SocketService.emitToAdmin('admin:overview:updated', { reason: 'offer-deleted', offerId: id });
+
+      const adminIds = await UserRepository.findActiveAdminIds();
+      await OffersController.notifyUsers(adminIds, {
+        title: 'Offer deleted',
+        message: `Offer ${id} was deleted`,
+        category: 'offer',
+        action: 'deleted',
+        offerId: id,
+      }, 'warning');
+
+      if (existing?.site) {
+        const hrIds = await UserRepository.findActiveHRIds(existing.site as any, req.user!.userId);
+        await OffersController.notifyUsers(hrIds, {
+          title: 'Offer deleted',
+          message: `${existing.title} was removed from ${existing.site}`,
+          category: 'offer',
+          action: 'deleted',
+          offerId: id,
+          site: existing.site,
+        }, 'warning');
+      }
 
       res.json({ message: 'Offer deleted' });
     } catch (err: any) {

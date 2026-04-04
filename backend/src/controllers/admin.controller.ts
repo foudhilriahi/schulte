@@ -2,16 +2,30 @@ import { Request, Response } from 'express';
 import { AuthService } from '../services/auth.service';
 import { UserRepository } from '../repositories/user.repository';
 import { TemplateRepository } from '../repositories/template.repository';
+import { NotificationRepository } from '../repositories/notification.repository';
 import { SocketService } from '../services/socket.service';
 import logger from '../utils/logger';
 
 export class AdminController {
+  private static async notifyActiveHR(payload: any, type: string = 'info'): Promise<void> {
+    const hrIds = await UserRepository.findActiveHRIds();
+    await NotificationRepository.createManyForUsers({
+      userIds: hrIds,
+      type,
+      payload,
+    });
+    hrIds.forEach((id) => {
+      SocketService.emitToUser(id, 'notification:new', payload);
+    });
+  }
+
   // ============ HR ACCOUNT MANAGEMENT ============
 
   // GET /api/admin/hr-accounts
   static async getHRAccounts(req: Request, res: Response): Promise<void> {
     try {
-      const accounts = await UserRepository.findAllByRole('HR');
+      const includeInactive = String(req.query.includeInactive || 'false') === 'true';
+      const accounts = await UserRepository.findAllByRole('HR', includeInactive);
       res.json(accounts);
     } catch (err: any) {
       logger.error('Get HR accounts error:', err);
@@ -23,8 +37,9 @@ export class AdminController {
   static async createHRAccount(req: Request, res: Response): Promise<void> {
     try {
       const { name, email, password, phone, site } = req.body;
+      const normalizedEmail = String(email).trim().toLowerCase();
 
-      const existing = await UserRepository.findByEmail(email);
+      const existing = await UserRepository.findByEmail(normalizedEmail);
       if (existing) {
         res.status(409).json({ error: 'Email already in use' });
         return;
@@ -46,15 +61,18 @@ export class AdminController {
 
       const passwordHash = await AuthService.hashPassword(password);
       const user = await UserRepository.create({
-        email,
+        email: normalizedEmail,
         passwordHash,
         role: 'HR',
         name,
-        phone,
+        phone: phone || undefined,
         site: normalizedSite as any,
       });
 
       logger.info(`Admin created HR account: ${user.email} for site ${normalizedSite}`);
+
+      SocketService.emitToAdmin('admin:hr-account:changed', { action: 'created', userId: user.id });
+      SocketService.emitToAdmin('admin:overview:updated', { reason: 'hr-account-created' });
 
       res.status(201).json({
         id: user.id,
@@ -76,8 +94,20 @@ export class AdminController {
       const id = req.params.id as string;
       const updates: Record<string, any> = {};
 
+      if (req.body.email) {
+        const normalizedEmail = String(req.body.email).trim().toLowerCase();
+        const existing = await UserRepository.findByEmail(normalizedEmail);
+        if (existing && existing.id !== id) {
+          res.status(409).json({ error: 'Email already in use' });
+          return;
+        }
+        updates.email = normalizedEmail;
+      }
+
       if (req.body.name) updates.name = req.body.name;
-      if (req.body.phone) updates.phone = req.body.phone;
+      if (Object.prototype.hasOwnProperty.call(req.body, 'phone')) {
+        updates.phone = req.body.phone || null;
+      }
       if (req.body.site) {
         // Normalize site value to match enum
         const siteStr = req.body.site.toString().toLowerCase();
@@ -97,6 +127,9 @@ export class AdminController {
       const user = await UserRepository.update(id, updates);
       logger.info(`Admin updated HR account: ${user.email}`);
 
+      SocketService.emitToAdmin('admin:hr-account:changed', { action: 'updated', userId: user.id });
+      SocketService.emitToAdmin('admin:overview:updated', { reason: 'hr-account-updated' });
+
       res.json({
         id: user.id,
         name: user.name,
@@ -114,9 +147,38 @@ export class AdminController {
   static async deleteHRAccount(req: Request, res: Response): Promise<void> {
     try {
       const id = req.params.id as string;
+
+      if (id === req.user!.userId) {
+        res.status(400).json({ error: 'You cannot deactivate your own account.' });
+        return;
+      }
+
+      const target = await UserRepository.findById(id);
+      if (!target || target.role !== 'HR') {
+        res.status(404).json({ error: 'HR account not found' });
+        return;
+      }
+
+      if (target.isActive === false || target.deletedAt) {
+        res.status(400).json({ error: 'Account is already deactivated' });
+        return;
+      }
+
       await UserRepository.deleteAllRefreshTokens(id);
-      await UserRepository.update(id, { email: `deleted_${id}@removed.local` }); // soft-delete approach
+
+      const updates: Record<string, any> = {
+        isActive: false,
+        deletedAt: new Date(),
+      };
+
+      if (target.email && !target.email.startsWith('deleted_')) {
+        updates.email = `deleted_${id}@removed.local`;
+      }
+
+      await UserRepository.update(id, updates); // soft-delete approach
       logger.info(`Admin deactivated HR account: ${id}`);
+      SocketService.emitToAdmin('admin:hr-account:changed', { action: 'deleted', userId: id });
+      SocketService.emitToAdmin('admin:overview:updated', { reason: 'hr-account-deleted' });
       res.json({ message: 'HR account deactivated' });
     } catch (err: any) {
       logger.error('Delete HR account error:', err);
@@ -129,7 +191,9 @@ export class AdminController {
   // GET /api/admin/templates
   static async getTemplates(req: Request, res: Response): Promise<void> {
     try {
-      const templates = await TemplateRepository.findAll();
+      const templates = req.user?.role === 'HR'
+        ? await TemplateRepository.findActive()
+        : await TemplateRepository.findAll();
       res.json(templates);
     } catch (err: any) {
       logger.error('Get templates error:', err);
@@ -140,16 +204,34 @@ export class AdminController {
   // POST /api/admin/templates
   static async createTemplate(req: Request, res: Response): Promise<void> {
     try {
+      const body = req.body as Record<string, any>;
+      const payload = {
+        titleFr: (body.titleFr ?? body.title)?.trim(),
+        titleEn: (body.titleEn ?? body.title_en)?.trim(),
+        contractType: body.contractType,
+        department: body.department?.trim(),
+        description: body.description?.trim(),
+        suggestedSkills: Array.isArray(body.suggestedSkills) ? body.suggestedSkills : [],
+      };
+
       const template = await TemplateRepository.create({
-        ...req.body,
+        ...payload,
         createdById: req.user!.userId,
       });
       logger.info(`Admin created template: ${template.titleFr}`);
+      SocketService.emitToAdmin('template:updated', template);
       SocketService.emitToAllHR('template:updated', template);
+      await AdminController.notifyActiveHR({
+        title: 'Template added',
+        message: `A new template was added: ${template.titleFr}`,
+        category: 'template',
+        action: 'created',
+        templateId: template.id,
+      });
       res.status(201).json(template);
     } catch (err: any) {
       logger.error('Create template error:', err);
-      res.status(500).json({ error: 'Failed to create template' });
+      res.status(500).json({ error: err?.message || 'Failed to create template' });
     }
   }
 
@@ -157,13 +239,36 @@ export class AdminController {
   static async updateTemplate(req: Request, res: Response): Promise<void> {
     try {
       const id = req.params.id as string;
-      const template = await TemplateRepository.update(id, req.body);
+      const body = req.body as Record<string, any>;
+      const updates: Record<string, any> = {
+        ...(body.titleFr !== undefined || body.title !== undefined ? { titleFr: (body.titleFr ?? body.title)?.trim() } : {}),
+        ...(body.titleEn !== undefined || body.title_en !== undefined ? { titleEn: (body.titleEn ?? body.title_en)?.trim() } : {}),
+        ...(body.contractType !== undefined ? { contractType: body.contractType } : {}),
+        ...(body.department !== undefined ? { department: body.department?.trim() } : {}),
+        ...(body.description !== undefined ? { description: body.description?.trim() } : {}),
+        ...(body.suggestedSkills !== undefined ? { suggestedSkills: body.suggestedSkills } : {}),
+        ...(body.isActive !== undefined ? { isActive: body.isActive } : {}),
+      };
+
+      const template = await TemplateRepository.update(id, updates);
       logger.info(`Admin updated template: ${template.titleFr}`);
+      SocketService.emitToAdmin('template:updated', template);
       SocketService.emitToAllHR('template:updated', template);
+      await AdminController.notifyActiveHR({
+        title: 'Template updated',
+        message: `Template updated: ${template.titleFr}`,
+        category: 'template',
+        action: 'updated',
+        templateId: template.id,
+      });
       res.json(template);
     } catch (err: any) {
       logger.error('Update template error:', err);
-      res.status(500).json({ error: 'Failed to update template' });
+      if (err?.code === 'P2025') {
+        res.status(404).json({ error: 'Template not found' });
+        return;
+      }
+      res.status(500).json({ error: err?.message || 'Failed to update template' });
     }
   }
 
@@ -185,18 +290,77 @@ export class AdminController {
       
       if (coreTemplateIds.includes(id)) {
         res.status(403).json({ 
-          error: 'Cannot delete core template. Core templates are protected and must always be available.' 
+          error: 'Cannot deactivate core template. Core templates are protected and must always be available.' 
         });
         return;
       }
-      
-      await TemplateRepository.delete(id);
-      logger.info(`Admin deleted template: ${id}`);
-      SocketService.emitToAllHR('template:updated', { id });
-      res.json({ message: 'Template deleted' });
+
+      const existing = await TemplateRepository.findById(id);
+      if (!existing) {
+        res.status(404).json({ error: 'Template not found' });
+        return;
+      }
+
+      const nextIsActive = !existing.isActive;
+      const template = await TemplateRepository.update(id, {
+        isActive: nextIsActive,
+        deletedAt: nextIsActive ? null : new Date(),
+      });
+
+      logger.info(`Admin ${nextIsActive ? 'activated' : 'deactivated'} template: ${id}`);
+      SocketService.emitToAdmin('template:updated', template);
+      SocketService.emitToAllHR('template:updated', template);
+      await AdminController.notifyActiveHR({
+        title: `Template ${nextIsActive ? 'activated' : 'deactivated'}`,
+        message: `Template ${template.titleFr} is now ${nextIsActive ? 'active' : 'inactive'}`,
+        category: 'template',
+        action: nextIsActive ? 'activated' : 'deactivated',
+        templateId: template.id,
+      });
+      res.json({ message: `Template ${nextIsActive ? 'activated' : 'deactivated'}`, template });
     } catch (err: any) {
       logger.error('Delete template error:', err);
-      res.status(500).json({ error: 'Failed to delete template' });
+      res.status(500).json({ error: 'Failed to change template status' });
+    }
+  }
+
+  // POST /api/admin/broadcast-hr
+  static async broadcastToHR(req: Request, res: Response): Promise<void> {
+    try {
+      const { message, site } = req.body as { message: string; site?: 'Bouarada' | 'Zaghouan' };
+      const sender = req.user?.userId;
+
+      const hrIds = await UserRepository.findActiveHRIds(site as any);
+      if (hrIds.length === 0) {
+        res.status(200).json({ message: 'No active HR recipients for this audience', sent: 0 });
+        return;
+      }
+
+      const payload = {
+        title: 'Message from Admin',
+        message,
+        category: 'broadcast',
+        site: site || 'all',
+        sentBy: sender,
+        sentAt: new Date().toISOString(),
+      };
+
+      await NotificationRepository.createManyForUsers({
+        userIds: hrIds,
+        type: 'info',
+        payload,
+      });
+
+      hrIds.forEach((id) => {
+        SocketService.emitToUser(id, 'notification:new', payload);
+        SocketService.emitToUser(id, 'admin:broadcast', payload);
+      });
+
+      logger.info(`Admin broadcast sent to ${hrIds.length} HR users (site=${site || 'all'})`);
+      res.status(201).json({ message: 'Broadcast sent', sent: hrIds.length });
+    } catch (err: any) {
+      logger.error('Broadcast to HR error:', err);
+      res.status(500).json({ error: 'Failed to send broadcast' });
     }
   }
 

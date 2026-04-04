@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { api } from '@/lib/axios'
+import { authSession } from '@/lib/authSession'
 
 interface User {
   id: string
@@ -15,6 +16,7 @@ interface AuthState {
   login: (email: string, password: string) => Promise<void>
   logout: () => Promise<void>
   loadFromStorage: () => void
+  updateUser: (updates: Partial<User>) => void
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -22,8 +24,8 @@ export const useAuthStore = create<AuthState>((set) => ({
   isAuthenticated: false,
 
   loadFromStorage: () => {
-    const stored = localStorage.getItem('user')
-    const token = localStorage.getItem('accessToken')
+    const stored = authSession.getUserRaw()
+    const token = authSession.getAccessToken()
     if (stored && token) {
       const user = JSON.parse(stored)
       // Validate role - only HR and ADMIN allowed
@@ -31,8 +33,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         set({ user, isAuthenticated: true })
       } else {
         // Clear invalid user
-        localStorage.removeItem('accessToken')
-        localStorage.removeItem('user')
+        authSession.clear()
         set({ user: null, isAuthenticated: false })
       }
     }
@@ -46,8 +47,8 @@ export const useAuthStore = create<AuthState>((set) => ({
       throw new Error('Access denied. This app is for HR and Admin users only.')
     }
     
-    localStorage.setItem('accessToken', data.accessToken)
-    localStorage.setItem('user', JSON.stringify(data.user))
+    authSession.setAccessToken(data.accessToken)
+    authSession.setUserRaw(JSON.stringify(data.user))
     set({ user: data.user, isAuthenticated: true })
   },
 
@@ -55,8 +56,16 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       await api.post('/auth/logout')
     } catch { /* ignore */ }
-    localStorage.removeItem('accessToken')
-    localStorage.removeItem('user')
+    authSession.clear()
     set({ user: null, isAuthenticated: false })
+  },
+
+  updateUser: (updates) => {
+    set((state) => {
+      if (!state.user) return state
+      const nextUser = { ...state.user, ...updates }
+      authSession.setUserRaw(JSON.stringify(nextUser))
+      return { user: nextUser }
+    })
   },
 }))

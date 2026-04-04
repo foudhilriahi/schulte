@@ -41,6 +41,10 @@ export class SocketService {
       // Join Rooms based on role
       socket.join(`user:${user.userId}`);
       
+      if (user.role === 'ADMIN') {
+        socket.join('admin');
+      }
+
       if (user.role === 'HR' || user.role === 'ADMIN') {
         socket.join(`hr:${user.userId}`);
         if (user.site) {
@@ -80,6 +84,12 @@ export class SocketService {
     // We could either create a global 'hr:all' room, or just emit to all sites
     if (io) {
       io.to('site:Bouarada').to('site:Zaghouan').emit(eventName, data); // Both plants
+    }
+  }
+
+  static emitToAdmin(eventName: string, data: any): void {
+    if (io) {
+      io.to('admin').emit(eventName, data);
     }
   }
 

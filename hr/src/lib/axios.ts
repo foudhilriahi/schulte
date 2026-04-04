@@ -1,6 +1,7 @@
 import axios from 'axios'
+import { authSession } from '@/lib/authSession'
 
-const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
+const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api'
 
 export const api = axios.create({
   baseURL,
@@ -12,41 +13,28 @@ export const api = axios.create({
 
 // Attach access token on every request
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('accessToken')
+  const token = authSession.getAccessToken()
   if (token && config.headers) {
     config.headers.Authorization = `Bearer ${token}`
   }
   return config
 })
 
-// On 401: attempt token refresh, else redirect to login
+// On auth failures: clear this tab session and force re-login.
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const original = error.config
 
-    if (
-      error.response?.status === 401 &&
-      !original._retry &&
-      original.url !== '/auth/login' &&
-      original.url !== '/auth/refresh'
-    ) {
-      original._retry = true
-      try {
-        const res = await axios.post(
-          `${baseURL}/auth/refresh`,
-          {},
-          { withCredentials: true },
-        )
-        const newToken: string = res.data.accessToken
-        localStorage.setItem('accessToken', newToken)
-        original.headers.Authorization = `Bearer ${newToken}`
-        return api(original)
-      } catch {
-        localStorage.removeItem('accessToken')
-        localStorage.removeItem('user')
-        window.location.href = '/login'
-      }
+    if (error.response?.status === 401 && original.url !== '/auth/login') {
+      authSession.clear()
+      window.location.href = '/login'
+      return Promise.reject(error)
+    }
+
+    if (error.response?.status === 403 && typeof original?.url === 'string' && original.url.startsWith('/admin')) {
+      authSession.clear()
+      window.location.href = '/login'
     }
 
     return Promise.reject(error)

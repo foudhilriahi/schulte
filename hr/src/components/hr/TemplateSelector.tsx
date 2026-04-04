@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { FileText, Plus, Sparkles } from 'lucide-react'
 import { api } from '@/lib/axios'
 import { toast } from 'sonner'
+import { socketService } from '@/lib/socket'
 
 interface Template {
   id: string
@@ -44,6 +45,20 @@ const TemplateSelector = ({ open, onClose, onSelectTemplate, onCreateFromScratch
   useEffect(() => {
     if (open) {
       fetchTemplates()
+    }
+  }, [open])
+
+  useEffect(() => {
+    if (!open) return
+
+    const socket = socketService.getSocket()
+    const onTemplateUpdated = () => {
+      fetchTemplates()
+    }
+
+    socket?.on('template:updated', onTemplateUpdated)
+    return () => {
+      socket?.off('template:updated', onTemplateUpdated)
     }
   }, [open])
 

@@ -15,6 +15,23 @@ export class NotificationRepository {
     });
   }
 
+  static async createManyForUsers(data: {
+    userIds: string[];
+    type?: string;
+    payload: any;
+  }) {
+    const uniqueIds = Array.from(new Set(data.userIds.filter(Boolean)));
+    if (uniqueIds.length === 0) return { count: 0 };
+
+    return prisma.notification.createMany({
+      data: uniqueIds.map((userId) => ({
+        userId,
+        type: data.type ?? 'info',
+        payload: data.payload,
+      })),
+    });
+  }
+
   static async findByUser(userId: string, limit = 50) {
     return prisma.notification.findMany({
       where: { userId },
@@ -31,11 +48,12 @@ export class NotificationRepository {
     return result.count;
   }
 
-  static async markOneRead(id: string) {
-    return prisma.notification.update({
-      where: { id },
+  static async markOneRead(id: string, userId: string) {
+    const result = await prisma.notification.updateMany({
+      where: { id, userId },
       data: { readAt: new Date() },
     });
+    return result.count;
   }
 
   static async countUnread(userId: string): Promise<number> {
@@ -44,9 +62,15 @@ export class NotificationRepository {
     });
   }
 
-  static async deleteOne(id: string) {
-    return prisma.notification.delete({
-      where: { id },
+  static async deleteOne(id: string, userId: string) {
+    return prisma.notification.deleteMany({
+      where: { id, userId },
+    });
+  }
+
+  static async deleteAllByUser(userId: string) {
+    return prisma.notification.deleteMany({
+      where: { userId },
     });
   }
 }

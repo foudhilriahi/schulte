@@ -4,9 +4,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/lib/axios";
+import { authSession } from "@/lib/authSession";
 import { toast } from "sonner";
 import ScheduleInterviewModal from "./ScheduleInterviewModal";
 import PuterAIBattle from "./PuterAIBattle";
+
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:4000/api";
 
 interface CandidateDrawerProps {
   candidate: any;
@@ -468,9 +471,9 @@ const CandidateDrawer = ({
                     variant="outline" 
                     onClick={async () => {
                       try {
-                        const token = localStorage.getItem('accessToken')
+                        const token = authSession.getAccessToken()
                         const filename = candidate.cvUrl?.replace('/uploads/', '') || ''
-                        const response = await fetch(`http://localhost:5000/api/uploads/${filename}`, {
+                        const response = await fetch(`${API_BASE}/uploads/${filename}`, {
                           headers: {
                             'Authorization': `Bearer ${token}`
                           }

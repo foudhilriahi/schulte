@@ -5,6 +5,16 @@ export class TemplateRepository {
     return prisma.offerTemplate.findMany({ orderBy: { createdAt: 'desc' } });
   }
 
+  static async findActive() {
+    return prisma.offerTemplate.findMany({
+      where: {
+        isActive: true,
+        deletedAt: null,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
   static async findById(id: string) {
     return prisma.offerTemplate.findUnique({ where: { id } });
   }

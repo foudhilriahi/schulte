@@ -3,7 +3,7 @@ import DashboardLayout from '@/components/hr/DashboardLayout'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Plus, Pencil, X, ToggleLeft, ToggleRight } from 'lucide-react'
+import { Plus, Pencil, X, ToggleLeft, ToggleRight, Lock } from 'lucide-react'
 import { api } from '@/lib/axios'
 import { toast } from 'sonner'
 import {
@@ -12,6 +12,17 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { socketService } from '@/lib/socket'
+
+const CORE_TEMPLATE_IDS = new Set([
+  'planificateur-production',
+  'acheteur-strategique',
+  'chef-equipe-achats',
+  'mecanicien-industriel',
+  'operateur-machines',
+  'technicien-electronique',
+  'responsable-rh',
+])
 
 const TemplatesPage = () => {
   const [templates, setTemplates] = useState<any[]>([])
@@ -22,7 +33,15 @@ const TemplatesPage = () => {
   const [editOpen, setEditOpen] = useState(false)
   const [selected, setSelected] = useState<any>(null)
 
-  const [form, setForm] = useState({ title: '', titleEn: '', description: '', suggestedSkills: [] as string[], skillInput: '' })
+  const [form, setForm] = useState({
+    titleFr: '',
+    titleEn: '',
+    contractType: 'CDI',
+    department: '',
+    description: '',
+    suggestedSkills: [] as string[],
+    skillInput: ''
+  })
 
   const fetchTemplates = async () => {
     try {
@@ -34,19 +53,54 @@ const TemplatesPage = () => {
 
   useEffect(() => { fetchTemplates() }, [])
 
+  useEffect(() => {
+    const socket = socketService.getSocket()
+    const refresh = () => fetchTemplates()
+    socket?.on('template:updated', refresh)
+    return () => {
+      socket?.off('template:updated', refresh)
+    }
+  }, [])
+
   const handleCreate = async () => {
     try {
-      await api.post('/admin/templates', {
-        title: form.title,
-        titleEn: form.titleEn,
-        description: form.description,
+      const payload = {
+        titleFr: form.titleFr.trim(),
+        titleEn: form.titleEn.trim(),
+        contractType: form.contractType,
+        department: form.department.trim(),
+        description: form.description.trim(),
         suggestedSkills: form.suggestedSkills,
+      }
+
+      if (!payload.titleFr || !payload.titleEn || !payload.department) {
+        toast.error('Title FR, Title EN and Department are required')
+        return
+      }
+
+      if (payload.titleFr.length < 2 || payload.titleEn.length < 2) {
+        toast.error('Template titles must be at least 2 characters')
+        return
+      }
+
+      if (payload.description.length < 10) {
+        toast.error('Description must be at least 10 characters')
+        return
+      }
+
+      await api.post('/admin/templates', {
+        ...payload,
       })
       toast.success('Template created.')
       setCreateOpen(false)
-      setForm({ title: '', titleEn: '', description: '', suggestedSkills: [], skillInput: '' })
+      setForm({ titleFr: '', titleEn: '', contractType: 'CDI', department: '', description: '', suggestedSkills: [], skillInput: '' })
       fetchTemplates()
     } catch (err: any) {
+      const details = err.response?.data?.details
+      if (Array.isArray(details) && details.length > 0) {
+        toast.error(details[0])
+        return
+      }
       toast.error(err.response?.data?.error || 'Error')
     }
   }
@@ -54,29 +108,44 @@ const TemplatesPage = () => {
   const handleEdit = async () => {
     if (!selected) return
     try {
-      await api.patch(`/admin/templates/${selected.id}`, {
-        title: form.title,
-        titleEn: form.titleEn,
-        description: form.description,
+      const payload = {
+        titleFr: form.titleFr.trim(),
+        titleEn: form.titleEn.trim(),
+        contractType: form.contractType,
+        department: form.department.trim(),
+        description: form.description.trim(),
         suggestedSkills: form.suggestedSkills,
+      }
+
+      await api.patch(`/admin/templates/${selected.id}`, {
+        ...payload,
       })
       toast.success('Template updated.')
       setEditOpen(false)
       fetchTemplates()
-    } catch { toast.error('Error') }
+    } catch (err: any) {
+      const details = err.response?.data?.details
+      if (Array.isArray(details) && details.length > 0) {
+        toast.error(details[0])
+        return
+      }
+      toast.error(err.response?.data?.error || 'Error')
+    }
   }
 
   const handleToggle = async (t: any) => {
     try {
-      await api.delete(`/admin/templates/${t.id}`)
-      toast.success('Template status toggled.')
+      const { data } = await api.delete(`/admin/templates/${t.id}`)
+      toast.success(data?.message || 'Template status updated.')
       fetchTemplates()
-    } catch { toast.error('Error') }
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || 'Error')
+    }
   }
 
   const filtered = templates.filter(t => {
     if (!showInactive && t.isActive === false) return false
-    return t.title?.toLowerCase().includes(search.toLowerCase()) || t.titleEn?.toLowerCase().includes(search.toLowerCase())
+    return t.titleFr?.toLowerCase().includes(search.toLowerCase()) || t.titleEn?.toLowerCase().includes(search.toLowerCase())
   })
 
   const addSkill = () => {
@@ -95,10 +164,14 @@ const TemplatesPage = () => {
             Show inactive
           </label>
         </div>
-        <Button onClick={() => { setForm({ title: '', titleEn: '', description: '', suggestedSkills: [], skillInput: '' }); setCreateOpen(true) }} className="gap-2 bg-[#1A2B4A] hover:bg-[#243a5e]">
+        <Button onClick={() => { setForm({ titleFr: '', titleEn: '', contractType: 'CDI', department: '', description: '', suggestedSkills: [], skillInput: '' }); setCreateOpen(true) }} className="gap-2 bg-[#1A2B4A] hover:bg-[#243a5e]">
           <Plus className="h-4 w-4" /> Create Template
         </Button>
       </div>
+
+      <p className="mb-3 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-3 py-2">
+        Core templates are protected and cannot be deactivated.
+      </p>
 
       <Card className="rounded-2xl shadow-sm">
         <CardContent className="p-0">
@@ -116,9 +189,21 @@ const TemplatesPage = () => {
               {loading && <tr><td colSpan={5} className="px-4 py-6 text-center text-muted-foreground">Loading...</td></tr>}
               {!loading && filtered.length === 0 && <tr><td colSpan={5} className="px-4 py-6 text-center text-muted-foreground">No templates found.</td></tr>}
               {filtered.map((t, i) => (
+                (() => {
+                  const isCore = CORE_TEMPLATE_IDS.has(t.id)
+                  return (
                 <tr key={t.id} className={`border-b hover:bg-slate-50 ${i % 2 === 0 ? '' : 'bg-slate-50/50'}`}>
-                  <td className="px-4 py-3 font-medium">{t.title}</td>
-                  <td className="px-4 py-3 text-muted-foreground">{t.titleEn || t.title_en || '—'}</td>
+                  <td className="px-4 py-3 font-medium">
+                    <div className="flex items-center gap-2">
+                      <span>{t.titleFr}</span>
+                      {isCore && (
+                        <Badge variant="outline" className="gap-1 text-[10px] border-amber-300 text-amber-700">
+                          <Lock className="h-3 w-3" /> Core
+                        </Badge>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 text-muted-foreground">{t.titleEn || '—'}</td>
                   <td className="px-4 py-3">
                     <div className="flex flex-wrap gap-1">
                       {(t.suggestedSkills || t.suggested_skills || []).slice(0, 3).map((s: string) => (
@@ -139,22 +224,38 @@ const TemplatesPage = () => {
                       <Button variant="ghost" size="sm" onClick={() => {
                         setSelected(t)
                         setForm({
-                          title: t.title,
-                          titleEn: t.titleEn || t.title_en || '',
+                          titleFr: t.titleFr || '',
+                          titleEn: t.titleEn || '',
+                          contractType: t.contractType || 'CDI',
+                          department: t.department || '',
                           description: t.description || '',
-                          suggestedSkills: t.suggestedSkills || t.suggested_skills || [],
+                          suggestedSkills: t.suggestedSkills || [],
                           skillInput: ''
                         })
                         setEditOpen(true)
                       }}>
                         <Pencil className="h-3.5 w-3.5" />
                       </Button>
-                      <Button variant="ghost" size="sm" onClick={() => handleToggle(t)}>
-                        {t.isActive !== false ? <ToggleRight className="h-4 w-4 text-emerald-500" /> : <ToggleLeft className="h-4 w-4 text-slate-400" />}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleToggle(t)}
+                        disabled={isCore}
+                        title={isCore ? 'Core templates cannot be deactivated' : 'Toggle active status'}
+                      >
+                        {isCore ? (
+                          <Lock className="h-4 w-4 text-amber-600" />
+                        ) : t.isActive !== false ? (
+                          <ToggleRight className="h-4 w-4 text-emerald-500" />
+                        ) : (
+                          <ToggleLeft className="h-4 w-4 text-slate-400" />
+                        )}
                       </Button>
                     </div>
                   </td>
                 </tr>
+                  )
+                })()
               ))}
             </tbody>
           </table>
@@ -169,8 +270,27 @@ const TemplatesPage = () => {
             <DialogHeader><DialogTitle>{title}</DialogTitle></DialogHeader>
             {title === 'Edit Template' && <p className="text-xs text-amber-600 bg-amber-50 p-2 rounded">Editing will not change existing offers created from this template.</p>}
             <div className="space-y-3">
-              <div><Label>Position (French)</Label><Input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} /></div>
+              <div><Label>Position (French)</Label><Input value={form.titleFr} onChange={e => setForm({ ...form, titleFr: e.target.value })} /></div>
               <div><Label>Reference (English)</Label><Input value={form.titleEn} onChange={e => setForm({ ...form, titleEn: e.target.value })} /></div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label>Contract Type</Label>
+                  <select
+                    value={form.contractType}
+                    onChange={e => setForm({ ...form, contractType: e.target.value })}
+                    className="h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
+                  >
+                    <option value="CDI">CDI</option>
+                    <option value="CDD">CDD</option>
+                    <option value="Stage">Stage</option>
+                    <option value="Alternance">Alternance</option>
+                  </select>
+                </div>
+                <div>
+                  <Label>Department</Label>
+                  <Input value={form.department} onChange={e => setForm({ ...form, department: e.target.value })} />
+                </div>
+              </div>
               <div><Label>Description</Label><Textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} className="min-h-[100px]" /></div>
               <div>
                 <Label>Suggested Skills</Label>
