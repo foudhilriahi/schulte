@@ -89,6 +89,7 @@ export class ApplicationRepository {
     cvUrl?: string;
     cvText?: string;
     formData?: any;
+    cvTemplate?: string;
     coverNote?: string;
   }) {
     return prisma.application.create({

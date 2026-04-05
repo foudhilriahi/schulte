@@ -48,7 +48,7 @@ const KanbanBoard = () => {
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
   const [pendingSchedule, setPendingSchedule] =
     useState<PendingSchedule | null>(null);
-  const { listen } = useSocket();
+  const { socket } = useSocket();
 
   const fetchApplications = useCallback(() => {
     api
@@ -65,9 +65,14 @@ const KanbanBoard = () => {
           contractType: a.offer?.contractType || "CDI",
           city: a.offer?.site || "Bouarada",
           aiScore: a.aiScore ?? 0,
-          starRating: a.hrRating ?? 0,
+              aiAnalysis: a.aiAnalysis || null,
+              starRating: a.hrRating ?? 0,
           status: statusMap[a.status] || "new",
           skills: a.candidate?.skills || [],
+              cvText: a.cvText || "",
+              requiredSkills: a.offer?.requiredSkills || [],
+              experienceYears: a.offer?.experienceYears || 0,
+              description: a.offer?.description || "",
           experience: "",
           education: "",
           notes: a.hrNotes || "",
@@ -83,10 +88,26 @@ const KanbanBoard = () => {
     fetchApplications();
   }, [fetchApplications]);
 
-  listen("application:new", () => {
-    toast.info("Nouvelle candidature reçue !");
-    fetchApplications();
-  });
+  useEffect(() => {
+    if (!socket) return;
+
+    const onApplicationNew = () => {
+      toast.info("Nouvelle candidature reçue !");
+      fetchApplications();
+    };
+
+    const onApplicationAnalysed = () => {
+      fetchApplications();
+    };
+
+    socket.on("application:new", onApplicationNew);
+    socket.on("application:analysed", onApplicationAnalysed);
+
+    return () => {
+      socket.off("application:new", onApplicationNew);
+      socket.off("application:analysed", onApplicationAnalysed);
+    };
+  }, [socket, fetchApplications]);
 
   const handleDragEnd = useCallback(
     async (result: DropResult) => {

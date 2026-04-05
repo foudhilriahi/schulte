@@ -77,7 +77,20 @@ const InterviewsPage = () => {
     api
       .get("/interviews")
       .then((res) => {
-        setInterviews(res.data || []);
+        const normalized = (res.data || []).map((i: any) => {
+          const dt = i.scheduledAt ? new Date(i.scheduledAt) : null;
+          return {
+            ...i,
+            status: i.outcome || 'scheduled',
+            date: dt ? dt.toISOString().split('T')[0] : '',
+            time: dt
+              ? dt.toLocaleTimeString('fr-TN', { hour: '2-digit', minute: '2-digit' })
+              : '',
+            notes: i.notesForCandidate || '',
+            prepNotes: Array.isArray(i.notesForCandidate) ? i.notesForCandidate : [],
+          };
+        });
+        setInterviews(normalized);
       })
       .catch(() => {
         setInterviews([]);
@@ -224,7 +237,7 @@ const InterviewCard = ({ interview, onRecordOutcome }: InterviewCardProps) => {
   const candidateName =
     interview.application?.candidate?.name || "Candidat inconnu";
   const offerTitle = interview.application?.offer?.title || "—";
-  const offerCity = interview.application?.offer?.city || "";
+  const offerCity = interview.application?.offer?.site || "";
 
   const dateDisplay = formatInterviewDate(interview.date, interview.time);
 

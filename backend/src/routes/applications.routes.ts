@@ -26,6 +26,12 @@ router.post(
   requireRole("CANDIDATE"),
   ApplicationsController.submitWithForm,
 );
+router.post(
+  "/from-cv",
+  authenticate,
+  requireRole("CANDIDATE"),
+  ApplicationsController.submitFromSavedCV,
+);
 
 // HR routes
 router.get(

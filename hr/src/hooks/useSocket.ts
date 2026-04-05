@@ -20,15 +20,5 @@ export function useSocket() {
 
   const socket = socketService.getSocket();
 
-  const listen = (event: string, callback: (data: any) => void) => {
-    useEffect(() => {
-      if (!socket) return;
-      socket.on(event, callback);
-      return () => {
-        socket.off(event, callback);
-      };
-    }, [socket, callback, event]);
-  };
-
-  return { socket, listen };
+  return { socket };
 }

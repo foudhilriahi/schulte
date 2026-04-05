@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { FileText, Star, Upload, Plus } from 'lucide-react'
-import { toast } from 'sonner'
+import { useAuthStore } from '@/store/auth'
+import { api } from '@/lib/axios'
 
 interface CVItem {
   id: string
@@ -15,8 +16,8 @@ interface CVItem {
   createdAt: string
   isDefault: boolean
   size?: number
-  template?: string
-  data?: string // Base64 data for uploaded files, or CV data for generated ones
+  template?: 'modern' | 'classic'
+  data?: any
 }
 
 interface CVSelectorProps {
@@ -29,23 +30,32 @@ interface CVSelectorProps {
 
 export function CVSelector({ open, onClose, onSelectCV, onUploadNew, allowCreateNew = true }: CVSelectorProps) {
   const [cvs, setCvs] = useState<CVItem[]>([])
+  const { user } = useAuthStore()
 
   useEffect(() => {
     if (open && typeof window !== 'undefined') {
-      // Reload CVs every time the dialog opens
-      const savedCVs = localStorage.getItem('user_cvs')
-      if (savedCVs) {
-        try {
-          setCvs(JSON.parse(savedCVs))
-        } catch (err) {
-          console.error('Failed to parse CVs:', err)
+      api
+        .get('/cvs/mine')
+        .then((res) => {
+          const list = Array.isArray(res.data) ? res.data : []
+          setCvs(
+            list.map((cv: any) => ({
+              id: cv.id,
+              name: cv.name,
+              type: cv.type === 'generated' ? 'generated' : 'uploaded',
+              createdAt: cv.createdAt,
+              isDefault: !!cv.isDefault,
+              size: typeof cv.size === 'number' ? cv.size : undefined,
+              template: cv.cvTemplate === 'classic' ? 'classic' : 'modern',
+              data: cv.formData,
+            })),
+          )
+        })
+        .catch(() => {
           setCvs([])
-        }
-      } else {
-        setCvs([])
-      }
+        })
     }
-  }, [open])
+  }, [open, user?.id])
 
   const handleSelectCV = (cv: CVItem) => {
     onSelectCV(cv)

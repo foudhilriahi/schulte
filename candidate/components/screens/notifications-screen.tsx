@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { Bell, Trash2, CheckCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNotificationStore } from "@/store/notifications";
+import { useAuthStore } from "@/store/auth";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 
@@ -34,10 +35,12 @@ export function NotificationsScreen() {
   const markAllRead = useNotificationStore((s) => s.markAllRead);
   const markOneRead = useNotificationStore((s) => s.markOneRead);
   const deleteNotification = useNotificationStore((s) => s.deleteNotification);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
   useEffect(() => {
+    if (!isAuthenticated) return;
     fetchNotifications();
-  }, [fetchNotifications]);
+  }, [fetchNotifications, isAuthenticated]);
 
   return (
     <div className="flex flex-col min-h-screen pb-20">

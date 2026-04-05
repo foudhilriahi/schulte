@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge'
 import { Star } from 'lucide-react'
 import CandidateDrawer from '@/components/hr/CandidateDrawer'
 import { api } from '@/lib/axios'
+import { toast } from 'sonner'
 
 const statusLabels: Record<string, string> = {
   new: 'Nouvelle',
@@ -27,14 +28,25 @@ const CandidatesPage = () => {
         name: a.candidate?.name || 'Unknown',
         phone: a.candidate?.phone || '',
         email: a.candidate?.email || '',
+        cvUrl: a.cvUrl || '',
+        cvText: a.cvText || '',
+        formData: a.formData || null,
         jobTitle: a.offer?.title || '',
         contractType: a.offer?.contractType || 'CDI',
         city: a.offer?.site || '',
         aiScore: a.aiScore ?? 0,
+        aiAnalysis: a.aiAnalysis || null,
         starRating: a.hrRating ?? 0,
+        notes: a.hrNotes || '',
+        skills: a.candidate?.skills || [],
+        requiredSkills: a.offer?.requiredSkills || [],
+        experienceYears: a.offer?.experienceYears || 0,
+        description: a.offer?.description || '',
         status: a.status,
       })))
-    }).catch(() => {}).finally(() => setLoading(false))
+    }).catch(() => {
+      toast.error('Failed to load candidates')
+    }).finally(() => setLoading(false))
   }, [])
 
   return (

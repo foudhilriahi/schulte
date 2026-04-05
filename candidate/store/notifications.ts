@@ -32,7 +32,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
   fetchNotifications: async () => {
     set({ isLoading: true })
     try {
-      const res = await api.get('/api/notifications')
+      const res = await api.get('/notifications')
       const notifications: CandidateNotification[] = res.data
       const unreadCount = notifications.filter((n) => !n.read).length
       set({ notifications, unreadCount })
@@ -45,7 +45,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
 
   fetchUnreadCount: async () => {
     try {
-      const res = await api.get('/api/notifications/unread-count')
+      const res = await api.get('/notifications/unread-count')
       set({ unreadCount: res.data.count })
     } catch {
       // fail silently
@@ -54,7 +54,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
 
   markAllRead: async () => {
     try {
-      await api.patch('/api/notifications/mark-all-read')
+      await api.patch('/notifications/mark-all-read')
       set((state) => ({
         notifications: state.notifications.map((n) => ({ ...n, read: true })),
         unreadCount: 0,
@@ -66,7 +66,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
 
   markOneRead: async (id: string) => {
     try {
-      await api.patch(`/api/notifications/${id}/read`)
+      await api.patch(`/notifications/${id}/read`)
       set((state) => {
         const notifications = state.notifications.map((n) =>
           n.id === id ? { ...n, read: true } : n
@@ -84,7 +84,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
 
   deleteNotification: async (id: string) => {
     try {
-      await api.delete(`/api/notifications/${id}`)
+      await api.delete(`/notifications/${id}`)
       set((state) => {
         const target = state.notifications.find((n) => n.id === id)
         const unreadCount =

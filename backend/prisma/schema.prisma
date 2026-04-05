@@ -72,11 +72,31 @@ model User {
   updatedAt    DateTime @updatedAt
 
   applications Application[]
+  cvs CandidateCV[]
   notifications Notification[]
   refreshTokens RefreshToken[]
   createdOffers JobOffer[]
   createdTemplates OfferTemplate[]
   scheduledInterviews Interview[]
+}
+
+model CandidateCV {
+  id           String   @id @default(uuid())
+  candidateId  String
+  name         String
+  type         String
+  source       String
+  cvUrl        String?
+  formData     Json?
+  cvTemplate   String?
+  size         Int?
+  isDefault    Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  candidate    User     @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+
+  @@index([candidateId, createdAt])
 }
 
 model JobOffer {

@@ -8,6 +8,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
 import { useAuthStore } from '@/store/auth'
+import { api } from '@/lib/axios'
+import { loadLatestDraft, loadStoredCVs } from '@/lib/cv-storage'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 
 interface CVItem {
   id: string
@@ -16,8 +21,9 @@ interface CVItem {
   createdAt: string
   isDefault: boolean
   size?: number
-  template?: string
-  data?: string // Base64 data for uploaded files, or CV data for generated ones
+  template?: 'modern' | 'classic'
+  data?: any
+  cvUrl?: string
 }
 
 export default function MyCVPage() {
@@ -25,12 +31,79 @@ export default function MyCVPage() {
   const { user } = useAuthStore()
   const [cvs, setCvs] = useState<CVItem[]>([])
   const [isUploading, setIsUploading] = useState(false)
-  const [refreshKey, setRefreshKey] = useState(0)
+  const [isBuilding, setIsBuilding] = useState(false)
+  const [builder, setBuilder] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    city: '',
+    currentRole: '',
+    yearsExperience: '',
+    skills: '',
+    coverNote: '',
+    template: 'modern' as 'modern' | 'classic',
+  })
 
-  // Load CVs on mount and when refreshKey changes
+  const mapApiCVToUI = (cv: any): CVItem => ({
+    id: cv.id,
+    name: cv.name,
+    type: cv.type === 'generated' ? 'generated' : 'uploaded',
+    createdAt: cv.createdAt,
+    isDefault: !!cv.isDefault,
+    size: typeof cv.size === 'number' ? cv.size : undefined,
+    template: cv.cvTemplate === 'classic' ? 'classic' : 'modern',
+    data: cv.formData,
+    cvUrl: cv.cvUrl,
+  })
+
+  const base64ToFile = (base64Data: string, fileName: string): File => {
+    const byteCharacters = atob(base64Data)
+    const byteNumbers = new Array(byteCharacters.length)
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i)
+    }
+    const byteArray = new Uint8Array(byteNumbers)
+    return new File([byteArray], fileName, { type: 'application/pdf' })
+  }
+
+  const syncLocalCVsToBackend = async () => {
+    const localCVs = loadStoredCVs(user?.id)
+    if (!localCVs.length) return false
+
+    let synced = false
+
+    for (const cv of localCVs) {
+      try {
+        if (cv.type === 'uploaded' && cv.data && !cv.cvUrl) {
+          const file = base64ToFile(String(cv.data), `${cv.name}.pdf`)
+          const payload = new FormData()
+          payload.append('cvFile', file)
+          await api.post('/cvs/upload', payload, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+          })
+          synced = true
+        }
+
+        if (cv.type === 'generated' && cv.data) {
+          await api.post('/cvs/generated', {
+            name: cv.name,
+            formData: cv.data,
+            template: cv.template || 'modern',
+            isDefault: cv.isDefault,
+          })
+          synced = true
+        }
+      } catch {
+        // Keep going so one bad legacy record does not block the rest.
+      }
+    }
+
+    return synced
+  }
+
   useEffect(() => {
     loadCVs()
-  }, [refreshKey])
+  }, [user?.id])
 
   // Also reload when page becomes visible (user navigates back)
   useEffect(() => {
@@ -44,54 +117,48 @@ export default function MyCVPage() {
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
   }, [])
 
-  const loadCVs = () => {
-    if (typeof window !== 'undefined') {
-      const savedCVs = localStorage.getItem('user_cvs')
-      if (savedCVs) {
-        try {
-          const parsed = JSON.parse(savedCVs)
-          setCvs(parsed)
-        } catch (err) {
-          console.error('Failed to parse CVs:', err)
-          setCvs([])
-        }
-      } else {
-        setCvs([])
-      }
-      
-      // Also check for legacy generated CV
-      const legacyDraft = localStorage.getItem('latest_cv_draft')
-      if (legacyDraft && (!savedCVs || JSON.parse(savedCVs).length === 0)) {
-        try {
-          const draft = JSON.parse(legacyDraft)
-          const generatedCV: CVItem = {
-            id: 'generated-' + Date.now(),
-            name: `Generated CV - ${draft.template || 'Modern'}`,
-            type: 'generated',
-            createdAt: new Date().toISOString(),
-            isDefault: true,
-            template: draft.template || 'modern',
-            data: draft
-          }
-          const newCVs = [generatedCV]
-          setCvs(newCVs)
-          localStorage.setItem('user_cvs', JSON.stringify(newCVs))
-        } catch (err) {
-          console.error('Failed to migrate legacy CV:', err)
+  const loadCVs = async () => {
+    if (typeof window === 'undefined') return
+
+    try {
+      const response = await api.get('/cvs/mine')
+      const apiCVs = Array.isArray(response.data) ? response.data.map(mapApiCVToUI) : []
+      if (apiCVs.length === 0) {
+        const synced = await syncLocalCVsToBackend()
+        if (synced) {
+          const refreshed = await api.get('/cvs/mine')
+          const refreshedCVs = Array.isArray(refreshed.data)
+            ? refreshed.data.map(mapApiCVToUI)
+            : []
+          setCvs(refreshedCVs)
+          return
         }
       }
+      setCvs(apiCVs)
+      return
+    } catch {
+      // Fallback below
+    }
+
+    const legacyDraft = loadLatestDraft(user?.id)
+    if (legacyDraft) {
+      setCvs([
+        {
+          id: 'legacy-generated-cv',
+          name: `Generated CV - ${legacyDraft.template || 'Modern'}`,
+          type: 'generated',
+          createdAt: new Date().toISOString(),
+          isDefault: true,
+          template: legacyDraft.template === 'classic' ? 'classic' : 'modern',
+          data: legacyDraft,
+        },
+      ])
+    } else {
+      setCvs([])
     }
   }
 
-  const saveCVs = (newCVs: CVItem[]) => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('user_cvs', JSON.stringify(newCVs))
-      setCvs(newCVs)
-      setRefreshKey(prev => prev + 1)
-    }
-  }
-
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
 
@@ -106,49 +173,92 @@ export default function MyCVPage() {
     }
 
     setIsUploading(true)
-    
-    // Convert file to base64 for storage
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      const base64Data = e.target?.result as string
-      
-      // Create new CV item with base64 data
-      const newCV: CVItem = {
-        id: 'uploaded-' + Date.now(),
-        name: file.name.replace('.pdf', ''),
-        type: 'uploaded',
-        createdAt: new Date().toISOString(),
-        isDefault: cvs.length === 0, // First CV becomes default
-        size: file.size,
-        data: base64Data.split(',')[1] // Remove data:application/pdf;base64, prefix
+
+    try {
+      const payload = new FormData()
+      payload.append('cvFile', file)
+      await api.post('/cvs/upload', payload, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+
+      toast.success('CV uploaded successfully!')
+      await loadCVs()
+    } catch {
+      toast.error('Failed to upload CV')
+    } finally {
+      setIsUploading(false)
+    }
+  }
+
+  const handleBuildCV = async () => {
+    if (!builder.name.trim() || !builder.email.trim() || !builder.phone.trim()) {
+      toast.error('Name, email and phone are required to build a CV')
+      return
+    }
+
+    setIsBuilding(true)
+    try {
+      const skillsArray = builder.skills
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean)
+
+      const formData = {
+        personal: {
+          name: builder.name.trim(),
+          email: builder.email.trim(),
+          phone: builder.phone.trim(),
+          city: builder.city.trim(),
+        },
+        experience: [
+          {
+            title: builder.currentRole.trim(),
+            duration: builder.yearsExperience.trim(),
+            company: '',
+          },
+        ],
+        skills: skillsArray,
+        coverNote: builder.coverNote.trim(),
+        template: builder.template,
       }
 
-      const newCVs = [...cvs, newCV]
-      saveCVs(newCVs)
-      setIsUploading(false)
-      toast.success('CV uploaded successfully!')
+      await api.post('/cvs/generated', {
+        name: `Generated CV - ${builder.name.trim()}`,
+        formData,
+        template: builder.template,
+      })
+
+      toast.success('Generated CV saved to your profile')
+      setBuilder({
+        name: '',
+        email: '',
+        phone: '',
+        city: '',
+        currentRole: '',
+        yearsExperience: '',
+        skills: '',
+        coverNote: '',
+        template: 'modern',
+      })
+      await loadCVs()
+    } catch {
+      toast.error('Failed to build and save CV')
+    } finally {
+      setIsBuilding(false)
     }
-    
-    reader.onerror = () => {
-      setIsUploading(false)
-      toast.error('Failed to process file')
-    }
-    
-    reader.readAsDataURL(file)
   }
 
   const handleDownload = async (cv: CVItem) => {
     try {
-      if (cv.type === 'uploaded' && cv.data) {
-        // For uploaded PDFs, recreate blob from base64
-        const byteCharacters = atob(cv.data)
-        const byteNumbers = new Array(byteCharacters.length)
-        for (let i = 0; i < byteCharacters.length; i++) {
-          byteNumbers[i] = byteCharacters.charCodeAt(i)
+      if (cv.type === 'uploaded' && cv.cvUrl) {
+        const filename = cv.cvUrl.split('/').pop()
+        if (!filename) {
+          toast.error('Invalid CV file reference')
+          return
         }
-        const byteArray = new Uint8Array(byteNumbers)
-        const blob = new Blob([byteArray], { type: 'application/pdf' })
-        const url = URL.createObjectURL(blob)
+
+        const response = await api.get(`/uploads/${filename}`, { responseType: 'blob' })
+        const url = URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }))
         const a = document.createElement('a')
         a.href = url
         a.download = `${cv.name}.pdf`
@@ -167,12 +277,15 @@ export default function MyCVPage() {
   }
 
   const handleSetDefault = (cvId: string) => {
-    const newCVs = cvs.map(cv => ({
-      ...cv,
-      isDefault: cv.id === cvId
-    }))
-    saveCVs(newCVs)
-    toast.success('Default CV updated!')
+    api
+      .patch(`/cvs/${cvId}/default`)
+      .then(async () => {
+        toast.success('Default CV updated!')
+        await loadCVs()
+      })
+      .catch(() => {
+        toast.error('Failed to update default CV')
+      })
   }
 
   const handleDelete = (cvId: string) => {
@@ -183,15 +296,15 @@ export default function MyCVPage() {
       return
     }
 
-    const newCVs = cvs.filter(cv => cv.id !== cvId)
-    
-    // If deleted CV was default, make first remaining CV default
-    if (cvToDelete.isDefault && newCVs.length > 0) {
-      newCVs[0].isDefault = true
-    }
-    
-    saveCVs(newCVs)
-    toast.success('CV deleted successfully!')
+    api
+      .delete(`/cvs/${cvId}`)
+      .then(async () => {
+        toast.success('CV deleted successfully!')
+        await loadCVs()
+      })
+      .catch(() => {
+        toast.error('Failed to delete CV')
+      })
   }
 
   const formatFileSize = (bytes: number) => {
@@ -245,12 +358,106 @@ export default function MyCVPage() {
                 </p>
                 <input
                   type="file"
-                  accept=".pdf"
+                  accept="application/pdf,.pdf"
                   onChange={handleFileUpload}
                   disabled={isUploading}
                   className="hidden"
                 />
               </label>
+            </CardContent>
+          </Card>
+
+          {/* Build CV */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Build New CV</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div>
+                <Label className="text-sm">Full Name *</Label>
+                <Input
+                  value={builder.name}
+                  onChange={(e) => setBuilder((p) => ({ ...p, name: e.target.value }))}
+                  placeholder="Your full name"
+                />
+              </div>
+              <div>
+                <Label className="text-sm">Email *</Label>
+                <Input
+                  type="email"
+                  value={builder.email}
+                  onChange={(e) => setBuilder((p) => ({ ...p, email: e.target.value }))}
+                  placeholder="you@example.com"
+                />
+              </div>
+              <div>
+                <Label className="text-sm">Phone *</Label>
+                <Input
+                  value={builder.phone}
+                  onChange={(e) => setBuilder((p) => ({ ...p, phone: e.target.value }))}
+                  placeholder="+216 XX XXX XXX"
+                />
+              </div>
+              <div>
+                <Label className="text-sm">City</Label>
+                <Input
+                  value={builder.city}
+                  onChange={(e) => setBuilder((p) => ({ ...p, city: e.target.value }))}
+                  placeholder="Your city"
+                />
+              </div>
+              <div>
+                <Label className="text-sm">Current Role</Label>
+                <Input
+                  value={builder.currentRole}
+                  onChange={(e) => setBuilder((p) => ({ ...p, currentRole: e.target.value }))}
+                  placeholder="e.g. Production Planner"
+                />
+              </div>
+              <div>
+                <Label className="text-sm">Years of Experience</Label>
+                <Input
+                  value={builder.yearsExperience}
+                  onChange={(e) => setBuilder((p) => ({ ...p, yearsExperience: e.target.value }))}
+                  placeholder="e.g. 4 years"
+                />
+              </div>
+              <div>
+                <Label className="text-sm">Skills (comma separated)</Label>
+                <Input
+                  value={builder.skills}
+                  onChange={(e) => setBuilder((p) => ({ ...p, skills: e.target.value }))}
+                  placeholder="Excel, SAP, Planning"
+                />
+              </div>
+              <div>
+                <Label className="text-sm">Cover Note</Label>
+                <Textarea
+                  value={builder.coverNote}
+                  onChange={(e) => setBuilder((p) => ({ ...p, coverNote: e.target.value }))}
+                  placeholder="Short profile summary"
+                  className="min-h-[90px]"
+                />
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant={builder.template === 'modern' ? 'default' : 'outline'}
+                  onClick={() => setBuilder((p) => ({ ...p, template: 'modern' }))}
+                  type="button"
+                >
+                  Modern
+                </Button>
+                <Button
+                  variant={builder.template === 'classic' ? 'default' : 'outline'}
+                  onClick={() => setBuilder((p) => ({ ...p, template: 'classic' }))}
+                  type="button"
+                >
+                  Classic
+                </Button>
+              </div>
+              <Button onClick={handleBuildCV} disabled={isBuilding} className="w-full">
+                {isBuilding ? 'Saving...' : 'Build & Save CV'}
+              </Button>
             </CardContent>
           </Card>
 

@@ -15,7 +15,12 @@ const SettingsPage = () => {
   const [saving, setSaving] = useState(false)
 
   const handlePasswordChange = async () => {
-    if (newPw.length < 8) { toast.error('Min 8 characters'); return }
+    if (!currentPw.trim()) { toast.error('Mot de passe actuel requis'); return }
+    if (newPw.length < 8 || !/\d/.test(newPw)) {
+      toast.error('Min 8 caractères avec au moins 1 chiffre')
+      return
+    }
+    if (newPw === currentPw) { toast.error('Le nouveau mot de passe doit etre different'); return }
     setSaving(true)
     try {
       await api.patch('/profile/password', { currentPassword: currentPw, newPassword: newPw })

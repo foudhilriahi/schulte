@@ -46,7 +46,6 @@ export function HomeScreen() {
               width={140}
               height={40}
               className="h-8 w-auto"
-              priority
             />
             <span className="text-xs text-muted-foreground font-medium">Tunisia Jobs</span>
           </div>

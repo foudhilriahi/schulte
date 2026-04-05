@@ -13,6 +13,15 @@ import { useOffer } from "@/hooks/useOffers";
 import { useSubmitFormApplication } from "@/hooks/useApplications";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
+import {
+  loadJobDraft,
+  saveJobDraft,
+  clearJobDraft,
+  saveLatestDraft,
+  loadStoredCVs,
+  saveStoredCVs,
+} from "@/lib/cv-storage";
+import { useAuthStore } from "@/store/auth";
 
 const stepLabels = ["Personal", "Edu", "Exp", "Skills", "Review"];
 const languages = ["Arabic", "French", "English", "German"];
@@ -24,6 +33,7 @@ export default function ManualFormApplyPage({
   params: Promise<{ jobId: string }>;
 }) {
   const router = useRouter();
+  const { user } = useAuthStore();
   const { jobId } = use(params);
   const { data: job } = useOffer(jobId);
   const mutation = useSubmitFormApplication();
@@ -33,10 +43,9 @@ export default function ManualFormApplyPage({
 
   // Form State
   const [draft, setDraft] = useState(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem(`draft_${jobId}`);
-      if (saved) return JSON.parse(saved);
-    }
+    const saved = loadJobDraft(jobId, user?.id);
+    if (saved) return saved;
+
     return {
       personal: { name: "", email: "", phone: "", dob: "", city: "" },
       education: [{ degree: "", field: "", institution: "", year: "" }],
@@ -49,15 +58,20 @@ export default function ManualFormApplyPage({
   });
 
   const [hasSavedDraft, setHasSavedDraft] = useState(() => {
-    if (typeof window !== "undefined") {
-      return !!localStorage.getItem(`draft_${jobId}`);
-    }
-    return false;
+    return !!loadJobDraft(jobId, user?.id);
   });
 
   useEffect(() => {
-    localStorage.setItem(`draft_${jobId}`, JSON.stringify(draft));
-  }, [draft, jobId]);
+    saveJobDraft(jobId, user?.id, draft);
+  }, [draft, jobId, user?.id]);
+
+  useEffect(() => {
+    const saved = loadJobDraft(jobId, user?.id);
+    if (saved) {
+      setDraft(saved as typeof draft);
+      setHasSavedDraft(true);
+    }
+  }, [jobId, user?.id]);
 
   // Show a toast once on mount when a saved draft was detected
   useEffect(() => {
@@ -103,8 +117,24 @@ export default function ManualFormApplyPage({
   const handleSubmit = async () => {
     try {
       await mutation.mutateAsync({ offerId: jobId, formData: draft });
-      localStorage.setItem("latest_cv_draft", JSON.stringify(draft));
-      localStorage.removeItem(`draft_${jobId}`);
+
+      const existingCVs = loadStoredCVs(user?.id);
+      const newCV = {
+        id: `generated-${Date.now()}`,
+        name: `Generated CV - ${job?.title || "Application"}`,
+        type: "generated" as const,
+        createdAt: new Date().toISOString(),
+        isDefault: existingCVs.length === 0,
+        template:
+          draft?.template === "classic" || draft?.template === "modern"
+            ? draft.template
+            : "modern",
+        data: draft,
+      };
+
+      saveStoredCVs(user?.id, [...existingCVs, newCV]);
+      saveLatestDraft(user?.id, draft);
+      clearJobDraft(jobId, user?.id);
       setHasSavedDraft(false);
       toast.success("Application submitted successfully!");
       router.push("/applications");
@@ -137,7 +167,7 @@ export default function ManualFormApplyPage({
                 type="button"
                 className="text-xs text-muted-foreground underline hover:text-red-500 transition-colors"
                 onClick={() => {
-                  localStorage.removeItem(`draft_${jobId}`);
+                  clearJobDraft(jobId, user?.id);
                   setDraft({
                     personal: {
                       name: "",

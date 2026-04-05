@@ -26,8 +26,19 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
+    const status = error.response?.status;
 
-    if (error.response?.status === 401 && !originalRequest._retry && originalRequest.url !== '/auth/login' && originalRequest.url !== '/auth/refresh') {
+    if (status === 403) {
+      // Role/session mismatch: clear candidate tab token and force clean login.
+      storage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
+      storage.removeItem(STORAGE_KEYS.LEGACY_ACCESS_TOKEN);
+      if (typeof window !== 'undefined') {
+        window.location.href = '/login';
+      }
+      return Promise.reject(error);
+    }
+
+    if (status === 401 && !originalRequest._retry && originalRequest.url !== '/auth/login' && originalRequest.url !== '/auth/refresh') {
       originalRequest._retry = true;
 
       try {
@@ -44,6 +55,7 @@ api.interceptors.response.use(
       } catch (refreshError) {
         // Refresh token failed or expired, force logout pipeline
         storage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
+        storage.removeItem(STORAGE_KEYS.LEGACY_ACCESS_TOKEN);
         if (typeof window !== 'undefined') {
           window.location.href = '/login'; // Redirect to login
         }

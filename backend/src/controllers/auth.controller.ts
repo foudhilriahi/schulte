@@ -17,6 +17,12 @@ export class AuthController {
         return;
       }
 
+      const existingPhone = await UserRepository.findByPhone(phone);
+      if (existingPhone) {
+        res.status(409).json({ error: 'Phone already registered' });
+        return;
+      }
+
       const passwordHash = await AuthService.hashPassword(password);
       const user = await UserRepository.create({
         email,
@@ -53,6 +59,21 @@ export class AuthController {
       });
     } catch (err: any) {
       logger.error('Register error:', err);
+
+      if (err?.code === 'P2002') {
+        const fields: string[] = err?.meta?.target || [];
+        if (fields.includes('email')) {
+          res.status(409).json({ error: 'Email already registered' });
+          return;
+        }
+        if (fields.includes('phone')) {
+          res.status(409).json({ error: 'Phone already registered' });
+          return;
+        }
+        res.status(409).json({ error: 'Duplicate account data' });
+        return;
+      }
+
       res.status(500).json({ error: 'Registration failed' });
     }
   }

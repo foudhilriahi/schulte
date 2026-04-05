@@ -4,7 +4,8 @@
  */
 
 const STORAGE_KEYS = {
-  ACCESS_TOKEN: 'accessToken',
+  ACCESS_TOKEN: 'candidate_access_token',
+  LEGACY_ACCESS_TOKEN: 'accessToken',
   USER_CVS: 'user_cvs',
   LEGACY_CV_DRAFT: 'latest_cv_draft',
 } as const;

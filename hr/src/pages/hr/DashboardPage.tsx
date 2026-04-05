@@ -71,7 +71,7 @@ const DashboardPage = () => {
       .then((res) => {
         const list: any[] = res.data || [];
         setInterviews(
-          list.filter((i: any) => i.status === "scheduled").slice(0, 5),
+          list.filter((i: any) => !i.outcome).slice(0, 5),
         );
       })
       .catch(() => {});
@@ -205,14 +205,19 @@ const DashboardPage = () => {
                 </p>
               )}
               {interviews.map((interview: any, i: number) => {
-                const dateLabel = interview.date
-                  ? new Date(interview.date).toLocaleDateString("fr-TN", {
+                const dateLabel = interview.scheduledAt
+                  ? new Date(interview.scheduledAt).toLocaleDateString("fr-TN", {
                       weekday: "short",
                       day: "numeric",
                       month: "short",
                     })
                   : "—";
-                const timeLabel = interview.time ?? "";
+                const timeLabel = interview.scheduledAt
+                  ? new Date(interview.scheduledAt).toLocaleTimeString("fr-TN", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })
+                  : "";
                 return (
                   <div
                     key={interview.id}
@@ -226,6 +231,7 @@ const DashboardPage = () => {
                         {interview.application?.offer?.title || ""} —{" "}
                         {dateLabel}
                         {timeLabel ? ` à ${timeLabel}` : ""}
+                        {interview.location ? ` • ${interview.location}` : ""}
                       </p>
                     </div>
                     <Badge className="text-xs bg-blue-100 text-blue-800">

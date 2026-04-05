@@ -13,6 +13,8 @@ import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import type { JobOffer } from '@/lib/types'
 import { useSubmitPDFApplication, useSubmitFormApplication } from '@/hooks/useApplications'
+import { loadStoredCVs, saveLatestDraft, saveStoredCVs } from '@/lib/cv-storage'
+import { useAuthStore } from '@/store/auth'
 
 interface ApplicationFormProps {
   job: JobOffer
@@ -34,6 +36,7 @@ interface FormData {
 
 export function ApplicationForm({ job, onBack }: ApplicationFormProps) {
   const router = useRouter()
+  const { user } = useAuthStore()
   const [currentStep, setCurrentStep] = useState(1)
   const [direction, setDirection] = useState<'forward' | 'backward'>('forward')
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -99,25 +102,19 @@ export function ApplicationForm({ job, onBack }: ApplicationFormProps) {
           template: 'modern'
         }
         
-        // Save to localStorage for CV management
-        if (typeof window !== 'undefined') {
-          const existingCVs = JSON.parse(localStorage.getItem('user_cvs') || '[]')
-          const newCV = {
-            id: 'generated-' + Date.now(),
-            name: `Generated CV - ${job.title}`,
-            type: 'generated',
-            createdAt: new Date().toISOString(),
-            isDefault: existingCVs.length === 0,
-            template: 'modern',
-            data: cvData
-          }
-          
-          const updatedCVs = [...existingCVs, newCV]
-          localStorage.setItem('user_cvs', JSON.stringify(updatedCVs))
-          
-          // Also save as latest draft for backward compatibility
-          localStorage.setItem('latest_cv_draft', JSON.stringify(cvData))
+        const existingCVs = loadStoredCVs(user?.id)
+        const newCV = {
+          id: 'generated-' + Date.now(),
+          name: `Generated CV - ${job.title}`,
+          type: 'generated' as const,
+          createdAt: new Date().toISOString(),
+          isDefault: existingCVs.length === 0,
+          template: 'modern',
+          data: cvData
         }
+
+        saveStoredCVs(user?.id, [...existingCVs, newCV])
+        saveLatestDraft(user?.id, cvData)
 
         await formMutation.mutateAsync({
           offerId: job.id,

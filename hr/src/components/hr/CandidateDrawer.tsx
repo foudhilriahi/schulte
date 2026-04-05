@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Star, Phone, Mail, MapPin, Briefcase, X, Bot, Zap } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -30,10 +30,14 @@ const CandidateDrawer = ({
   const [puterResults, setPuterResults] = useState<any[]>([]);
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
 
-  // Sync local state when candidate changes
-  if (candidate && notes === "" && candidate.notes) setNotes(candidate.notes);
-  if (candidate && rating === 0 && candidate.starRating)
-    setRating(candidate.starRating);
+  useEffect(() => {
+    if (!open || !candidate) return;
+    setNotes(candidate.notes || "");
+    setRating(candidate.starRating || 0);
+    setAiResult(null);
+    setAiSource(null);
+    setPuterResults([]);
+  }, [candidate?.id, open]);
 
   if (!open || !candidate) return null;
 

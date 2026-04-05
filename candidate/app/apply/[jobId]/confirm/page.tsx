@@ -10,8 +10,10 @@ import { Badge } from '@/components/ui/badge'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { useOffer } from '@/hooks/useOffers'
-import { useSubmitPDFApplication } from '@/hooks/useApplications'
+import { useSubmitSavedCVApplication } from '@/hooks/useApplications'
 import { toast } from 'sonner'
+import { useAuthStore } from '@/store/auth'
+import { api } from '@/lib/axios'
 
 interface CVItem {
   id: string
@@ -20,8 +22,9 @@ interface CVItem {
   createdAt: string
   isDefault: boolean
   size?: number
-  template?: string
-  data?: string // Base64 data for uploaded files, or CV data for generated ones
+  template?: 'modern' | 'classic'
+  data?: any
+  cvUrl?: string
 }
 
 interface ConfirmApplicationPageProps {
@@ -33,9 +36,10 @@ export default function ConfirmApplicationPage({ params }: ConfirmApplicationPag
   const searchParams = useSearchParams()
   const { jobId } = use(params)
   const cvId = searchParams.get('cvId')
+  const { user } = useAuthStore()
   
   const { data: job } = useOffer(jobId)
-  const mutation = useSubmitPDFApplication()
+  const mutation = useSubmitSavedCVApplication()
   
   const [selectedCV, setSelectedCV] = useState<CVItem | null>(null)
   const [coverNote, setCoverNote] = useState('')
@@ -43,90 +47,82 @@ export default function ConfirmApplicationPage({ params }: ConfirmApplicationPag
 
   useEffect(() => {
     if (cvId && typeof window !== 'undefined') {
-      const savedCVs = localStorage.getItem('user_cvs')
-      if (savedCVs) {
-        const cvs: CVItem[] = JSON.parse(savedCVs)
-        const cv = cvs.find(c => c.id === cvId)
-        if (cv) {
-          setSelectedCV(cv)
-        } else {
-          toast.error('CV not found')
-          router.push(`/apply/${jobId}`)
-        }
-      }
-    }
-  }, [cvId, jobId, router])
-
-  const handleDownloadCV = () => {
-    if (selectedCV?.data) {
-      try {
-        if (selectedCV.type === 'uploaded') {
-          // For uploaded PDFs, recreate blob from base64
-          const byteCharacters = atob(selectedCV.data)
-          const byteNumbers = new Array(byteCharacters.length)
-          for (let i = 0; i < byteCharacters.length; i++) {
-            byteNumbers[i] = byteCharacters.charCodeAt(i)
+      api
+        .get('/cvs/mine')
+        .then((res) => {
+          const list = Array.isArray(res.data) ? res.data : []
+          const cv = list.find((c: any) => c.id === cvId)
+          if (!cv) {
+            toast.error('CV not found')
+            router.push(`/apply/${jobId}`)
+            return
           }
-          const byteArray = new Uint8Array(byteNumbers)
-          const blob = new Blob([byteArray], { type: 'application/pdf' })
-          const url = URL.createObjectURL(blob)
-          const a = document.createElement('a')
-          a.href = url
-          a.download = `${selectedCV.name}.pdf`
-          a.click()
-          URL.revokeObjectURL(url)
-          toast.success('CV downloaded!')
-        } else {
-          toast.error('Generated CV preview not available here')
+
+          setSelectedCV({
+            id: cv.id,
+            name: cv.name,
+            type: cv.type === 'generated' ? 'generated' : 'uploaded',
+            createdAt: cv.createdAt,
+            isDefault: !!cv.isDefault,
+            size: typeof cv.size === 'number' ? cv.size : undefined,
+            template: cv.cvTemplate === 'classic' ? 'classic' : 'modern',
+            data: cv.formData,
+            cvUrl: cv.cvUrl,
+          })
+        })
+        .catch(() => {
+          toast.error('Failed to load selected CV')
+          router.push(`/apply/${jobId}`)
+        })
+    }
+  }, [cvId, jobId, router, user?.id])
+
+  const handleDownloadCV = async () => {
+    if (!selectedCV) return
+
+    try {
+      if (selectedCV.type === 'uploaded' && selectedCV.cvUrl) {
+        const filename = selectedCV.cvUrl.split('/').pop()
+        if (!filename) {
+          toast.error('Invalid CV reference')
+          return
         }
-      } catch (error) {
-        toast.error('Error downloading CV')
+        const response = await api.get(`/uploads/${filename}`, { responseType: 'blob' })
+        const url = URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }))
+        const a = document.createElement('a')
+        a.href = url
+        a.download = `${selectedCV.name}.pdf`
+        a.click()
+        URL.revokeObjectURL(url)
+        toast.success('CV downloaded!')
+        return
       }
-    } else {
+
+      if (selectedCV.type === 'generated' && selectedCV.data) {
+        const { generateCV } = await import('@/lib/cv-generator')
+        const doc = generateCV(selectedCV.data, selectedCV.template || 'modern')
+        doc.save(`${selectedCV.name}.pdf`)
+        toast.success('CV downloaded!')
+        return
+      }
+
       toast.error('CV file not available for download')
+    } catch {
+      toast.error('Error downloading CV')
     }
   }
 
   const handleSubmit = async () => {
-    if (!selectedCV?.data) {
-      toast.error('No CV data available')
+    if (!selectedCV || !cvId) {
+      toast.error('No CV selected')
       return
     }
 
     setIsSubmitting(true)
     try {
-      let cvFile: File
-
-      if (selectedCV.type === 'uploaded') {
-        // Recreate File from base64 data
-        try {
-          const byteCharacters = atob(selectedCV.data)
-          const byteNumbers = new Array(byteCharacters.length)
-          for (let i = 0; i < byteCharacters.length; i++) {
-            byteNumbers[i] = byteCharacters.charCodeAt(i)
-          }
-          const byteArray = new Uint8Array(byteNumbers)
-          cvFile = new File([byteArray], `${selectedCV.name}.pdf`, { type: 'application/pdf' })
-        } catch (error) {
-          toast.error('Error processing uploaded CV')
-          return
-        }
-      } else {
-        // For generated CVs, create PDF from data
-        try {
-          const { generateCV } = await import('@/lib/cv-generator')
-          const doc = generateCV(selectedCV.data, selectedCV.template || 'modern')
-          const pdfBlob = doc.output('blob')
-          cvFile = new File([pdfBlob], `${selectedCV.name}.pdf`, { type: 'application/pdf' })
-        } catch (error) {
-          toast.error('Error processing generated CV')
-          return
-        }
-      }
-
       await mutation.mutateAsync({
         offerId: jobId,
-        cvFile,
+        cvId,
         coverNote
       })
       router.push('/applications')
@@ -224,7 +220,9 @@ export default function ConfirmApplicationPage({ params }: ConfirmApplicationPag
                       )}
                     </div>
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <Badge variant="default" className="text-xs">Uploaded</Badge>
+                      <Badge variant="default" className="text-xs">
+                        {selectedCV.type === 'uploaded' ? 'Uploaded' : 'Generated'}
+                      </Badge>
                       <span>•</span>
                       <span>{formatDate(selectedCV.createdAt)}</span>
                       {selectedCV.size && (

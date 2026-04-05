@@ -20,6 +20,7 @@ import profileRoutes from "./routes/profile.routes";
 import interviewsRoutes from "./routes/interviews.routes";
 import notificationsRoutes from "./routes/notifications.routes";
 import uploadsRoutes from "./routes/uploads.routes";
+import candidateCVRoutes from "./routes/candidate-cv.routes";
 
 import { SocketService } from "./services/socket.service";
 import { NotificationService } from "./services/notification.service";
@@ -66,6 +67,7 @@ app.use("/api/applications", applicationsRoutes);
 app.use("/api/profile", profileRoutes);
 app.use("/api/interviews", interviewsRoutes);
 app.use("/api/notifications", notificationsRoutes);
+app.use("/api/cvs", candidateCVRoutes);
 
 // ============ ERROR HANDLER ============
 app.use(errorHandler);

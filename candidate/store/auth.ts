@@ -45,6 +45,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       console.error('Logout error:', err);
     } finally {
       storage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
+      storage.removeItem(STORAGE_KEYS.LEGACY_ACCESS_TOKEN);
       set({ user: null, isAuthenticated: false, isLoading: false });
     }
   },
@@ -55,6 +56,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       // The interceptor automatically handles tokens
       const token = storage.getItem<string>(STORAGE_KEYS.ACCESS_TOKEN);
       if (!token) {
+        storage.removeItem(STORAGE_KEYS.LEGACY_ACCESS_TOKEN);
         // If no token at all, probably not logged in
         set({ user: null, isAuthenticated: false, isLoading: false });
         // Attempt a silent refresh just in case we have a cookie but no local token
@@ -68,6 +70,7 @@ export const useAuthStore = create<AuthState>((set) => ({
           // Validate role
           if (meRes.data.role !== 'CANDIDATE') {
             storage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
+            storage.removeItem(STORAGE_KEYS.LEGACY_ACCESS_TOKEN);
             set({ 
               user: null, 
               isAuthenticated: false, 
@@ -89,6 +92,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       // Validate role - only CANDIDATE allowed
       if (res.data.role !== 'CANDIDATE') {
         storage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
+        storage.removeItem(STORAGE_KEYS.LEGACY_ACCESS_TOKEN);
         set({ 
           user: null, 
           isAuthenticated: false, 

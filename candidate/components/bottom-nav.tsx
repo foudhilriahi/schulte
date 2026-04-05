@@ -6,6 +6,7 @@ import { useEffect } from "react";
 import { Home, FileText, Bell, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useNotificationStore } from "@/store/notifications";
+import { useAuthStore } from "@/store/auth";
 
 const navItems = [
   { href: "/", icon: Home, label: "Home" },
@@ -17,10 +18,12 @@ const navItems = [
 export function BottomNav() {
   const pathname = usePathname();
   const unreadCount = useNotificationStore((s) => s.unreadCount);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
   useEffect(() => {
+    if (!isAuthenticated) return;
     useNotificationStore.getState().fetchUnreadCount();
-  }, []);
+  }, [isAuthenticated]);
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-background border-t border-border z-50 safe-area-pb">

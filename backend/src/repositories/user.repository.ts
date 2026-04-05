@@ -10,6 +10,10 @@ export class UserRepository {
     return prisma.user.findUnique({ where: { email } });
   }
 
+  static async findByPhone(phone: string) {
+    return prisma.user.findUnique({ where: { phone } });
+  }
+
   static async create(data: {
     email: string;
     passwordHash: string;

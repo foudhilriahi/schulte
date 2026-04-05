@@ -7,10 +7,12 @@ import { CVSelector } from '@/components/cv-selector'
 import { useOffer } from '@/hooks/useOffers'
 import { useMyApplications } from '@/hooks/useApplications'
 import { Skeleton } from '@/components/ui/skeleton'
-import { CheckCircle2, ArrowLeft, FileText, Plus, Upload } from 'lucide-react'
+import { CheckCircle2, ArrowLeft, FileText } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { useAuthStore } from '@/store/auth'
+import { api } from '@/lib/axios'
 
 interface CVItem {
   id: string
@@ -19,8 +21,8 @@ interface CVItem {
   createdAt: string
   isDefault: boolean
   size?: number
-  template?: string
-  file?: File
+  template?: 'modern' | 'classic'
+  cvUrl?: string
   data?: any
 }
 
@@ -68,22 +70,39 @@ function LoadingSkeleton() {
 export default function ApplyPage({ params }: ApplyPageProps) {
   const router = useRouter()
   const { jobId } = use(params)
+  const { user } = useAuthStore()
   
   const { data: job, isLoading: loadingOffer } = useOffer(jobId)
   const { data: myApps = [], isLoading: loadingApps } = useMyApplications()
   
   const [cvs, setCvs] = useState<CVItem[]>([])
   const [showCVSelector, setShowCVSelector] = useState(false)
-  const [selectedCV, setSelectedCV] = useState<CVItem | null>(null)
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const savedCVs = localStorage.getItem('user_cvs')
-      if (savedCVs) {
-        setCvs(JSON.parse(savedCVs))
+    const loadCVs = async () => {
+      try {
+        const res = await api.get('/cvs/mine')
+        const mapped: CVItem[] = Array.isArray(res.data)
+          ? res.data.map((cv: any) => ({
+              id: cv.id,
+              name: cv.name,
+              type: cv.type === 'generated' ? 'generated' : 'uploaded',
+              createdAt: cv.createdAt,
+              isDefault: !!cv.isDefault,
+              size: typeof cv.size === 'number' ? cv.size : undefined,
+              template: cv.cvTemplate === 'classic' ? 'classic' : 'modern',
+              cvUrl: cv.cvUrl,
+              data: cv.formData,
+            }))
+          : []
+        setCvs(mapped)
+      } catch {
+        setCvs([])
       }
     }
-  }, [])
+
+    loadCVs()
+  }, [user?.id])
 
   if (loadingOffer || loadingApps) {
     return <LoadingSkeleton />
@@ -162,21 +181,8 @@ export default function ApplyPage({ params }: ApplyPageProps) {
   }
 
   const handleCVSelect = (cv: CVItem | null) => {
-    setSelectedCV(cv)
-    if (cv === null) {
-      // Create new CV via form
-      router.push(`/apply/${jobId}/form`)
-    } else if (cv.type === 'uploaded') {
-      // Use uploaded CV - go directly to confirmation/submission
-      router.push(`/apply/${jobId}/confirm?cvId=${cv.id}`)
-    } else {
-      // Use generated CV data to pre-fill form
-      router.push(`/apply/${jobId}/form?cvId=${cv.id}`)
-    }
-  }
-
-  const handleUploadNew = () => {
-    router.push(`/apply/${jobId}/upload`)
+    if (!cv) return
+    router.push(`/apply/${jobId}/confirm?cvId=${cv.id}`)
   }
 
   const formatDate = (dateString: string) => {
@@ -264,8 +270,21 @@ export default function ApplyPage({ params }: ApplyPageProps) {
           {/* Other Options */}
           <div className="space-y-3">
             <h2 className="text-sm font-semibold text-foreground">
-              {cvs.length > 0 ? 'Other Options' : 'Choose Application Method'}
+              {cvs.length > 0 ? 'All Saved CVs' : 'No Saved CV'}
             </h2>
+
+            {cvs.length === 0 && (
+              <Card className="border-amber-200 bg-amber-50">
+                <CardContent className="p-4">
+                  <p className="text-sm text-amber-900 mb-3">
+                    Build or upload your CV from Profile first, then come back to apply.
+                  </p>
+                  <Button variant="outline" onClick={() => router.push('/profile/cv')}>
+                    Go to My CVs
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
             
             {/* Choose from existing CVs */}
             {cvs.length > 1 && (
@@ -286,42 +305,6 @@ export default function ApplyPage({ params }: ApplyPageProps) {
                 </CardContent>
               </Card>
             )}
-
-            {/* Upload new CV */}
-            <Card 
-              className="cursor-pointer hover:shadow-md transition-shadow"
-              onClick={handleUploadNew}
-            >
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center">
-                    <Upload className="h-5 w-5" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-medium text-foreground">Upload New CV</h3>
-                    <p className="text-sm text-muted-foreground">Upload a PDF resume</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Create new CV */}
-            <Card 
-              className="cursor-pointer hover:shadow-md transition-shadow"
-              onClick={() => handleCVSelect(null)}
-            >
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-teal-50 text-teal-600 rounded-full flex items-center justify-center">
-                    <Plus className="h-5 w-5" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-medium text-foreground">Create New CV</h3>
-                    <p className="text-sm text-muted-foreground">Fill out the application form</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
           </div>
         </div>
 
@@ -330,8 +313,8 @@ export default function ApplyPage({ params }: ApplyPageProps) {
           open={showCVSelector}
           onClose={() => setShowCVSelector(false)}
           onSelectCV={handleCVSelect}
-          onUploadNew={handleUploadNew}
-          allowCreateNew={true}
+          onUploadNew={() => router.push('/profile/cv')}
+          allowCreateNew={false}
         />
       </main>
     </div>

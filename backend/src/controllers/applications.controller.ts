@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { ApplicationRepository } from "../repositories/application.repository";
 import { OfferRepository } from "../repositories/offer.repository";
 import { UserRepository } from "../repositories/user.repository";
+import { CandidateCVRepository } from "../repositories/candidate-cv.repository";
 import { extractTextFromPDF, extractEmail } from "../services/upload.service";
 import { analyseApplication, CVTextExtractor } from "../services/ai.service";
 import { SocketService } from "../services/socket.service";
@@ -9,6 +10,7 @@ import { appEmitter } from "../events/emitter";
 import logger from "../utils/logger";
 import prisma from "../config/prisma";
 import fs from "fs";
+import path from "path";
 import type { ApplicationStatus } from "@prisma/client";
 
 export class ApplicationsController {
@@ -140,6 +142,21 @@ export class ApplicationsController {
         coverNote,
       });
 
+      if (cvUrl) {
+        await UserRepository.update(candidateId, { cvUrl });
+
+        if (req.file) {
+          await CandidateCVRepository.create({
+            candidateId,
+            name: req.file.originalname.replace(/\.pdf$/i, "").trim() || "Uploaded CV",
+            type: "uploaded",
+            source: "application_upload",
+            cvUrl,
+            size: req.file.size,
+          });
+        }
+      }
+
       logger.info(
         `✅ Application created: ${candidateId} -> ${offer.title} (${offer.site}), CV text: ${cvText.length} chars`,
       );
@@ -261,7 +278,23 @@ export class ApplicationsController {
         candidateId,
         offerId,
         formData,
+        cvTemplate:
+          typeof formData?.template === "string" && formData.template.trim()
+            ? formData.template.trim().toLowerCase()
+            : "modern",
         cvText, // Store assembled text for AI analysis
+      });
+
+      await CandidateCVRepository.create({
+        candidateId,
+        name: `Generated CV - ${offer.title}`,
+        type: "generated",
+        source: "application_generated",
+        formData,
+        cvTemplate:
+          typeof formData?.template === "string" && formData.template.trim()
+            ? formData.template.trim().toLowerCase()
+            : "modern",
       });
 
       logger.info(`✅ Form application created: ${candidateId} -> ${offer.title}, CV text: ${cvText.length} chars`);
@@ -336,6 +369,128 @@ export class ApplicationsController {
     } catch (err: any) {
       logger.error("Submit form application error:", err);
       res.status(500).json({ error: "Failed to submit application" });
+    }
+  }
+
+  // POST /api/applications/from-cv (candidate — apply using an existing saved CV)
+  static async submitFromSavedCV(req: Request, res: Response): Promise<void> {
+    try {
+      const { offerId, cvId, coverNote } = req.body;
+      const candidateId = req.user!.userId;
+
+      const offer = await OfferRepository.findById(offerId);
+      if (!offer || offer.status !== "open") {
+        res.status(400).json({ error: "Offer is closed or not found" });
+        return;
+      }
+
+      const existing = await ApplicationRepository.checkDuplicate(candidateId, offerId);
+      if (existing) {
+        res.status(409).json({ error: "You have already applied to this offer" });
+        return;
+      }
+
+      const selectedCV = await CandidateCVRepository.findByIdForCandidate(candidateId, cvId);
+      if (!selectedCV) {
+        res.status(404).json({ error: "Selected CV not found" });
+        return;
+      }
+
+      let cvUrl: string | undefined;
+      let formData: any;
+      let cvTemplate: string | undefined;
+      let cvText = "";
+
+      if (selectedCV.type === "uploaded") {
+        if (!selectedCV.cvUrl) {
+          res.status(400).json({ error: "Selected uploaded CV has no file reference" });
+          return;
+        }
+
+        cvUrl = selectedCV.cvUrl;
+        const filename = cvUrl.replace("/uploads/", "");
+        const uploadPath = path.join(__dirname, "../../uploads", filename);
+
+        try {
+          cvText = await extractTextFromPDF(uploadPath);
+        } catch {
+          cvText = `[CV file linked: ${filename}. Text extraction pending or failed. Manual review required.]`;
+        }
+
+        await UserRepository.update(candidateId, { cvUrl });
+      } else {
+        formData = (selectedCV.formData as Record<string, any>) || {};
+        cvTemplate = selectedCV.cvTemplate || "modern";
+        cvText = CVTextExtractor.assembleFromFormData(formData);
+      }
+
+      if (!cvText || cvText.length < 10) {
+        cvText = `[CV selected from profile library: ${selectedCV.id}. Manual review may be required.]`;
+      }
+
+      const application = await ApplicationRepository.create({
+        candidateId,
+        offerId,
+        cvUrl,
+        formData,
+        cvTemplate,
+        cvText,
+        coverNote,
+      });
+
+      if (cvText.length > 30) {
+        analyseApplication({
+          cvText,
+          offerTitle: offer.title,
+          requiredSkills: offer.requiredSkills || [],
+          experienceYears: offer.experienceYears || 0,
+          description: offer.description || "",
+        })
+          .then(async (result) => {
+            await ApplicationRepository.saveAIResult(application.id, {
+              score: result.score,
+              analysis: JSON.stringify({
+                ...result,
+                analysisDate: new Date().toISOString(),
+                cvTextLength: cvText.length,
+                analysisType: "saved_cv",
+              }),
+            });
+
+            SocketService.emitToSite(offer.site, "application:analysed", {
+              applicationId: application.id,
+              candidateId,
+              score: result.score,
+              recommendation: result.recommendation,
+              confidence: result.confidence,
+              aiProvider: result.aiProvider,
+              analysisType: "saved_cv",
+            });
+
+            SocketService.emitToUser(candidateId, "ai:analysis_complete", {
+              applicationId: application.id,
+              jobTitle: offer.title,
+              score: result.score,
+              recommendation: result.recommendation,
+              tipsForCandidate: result.tipsForCandidate,
+              analysisType: "saved_cv",
+            });
+          })
+          .catch((error) => {
+            logger.error(`❌ AI analysis failed for saved CV application ${application.id}:`, error?.message || error);
+          });
+      }
+
+      SocketService.emitToSite(offer.site, "application:new", application);
+      SocketService.emitToAdmin("admin:overview:updated", {
+        reason: "application-created",
+        applicationId: application.id,
+      });
+
+      res.status(201).json(application);
+    } catch (err: any) {
+      logger.error("Submit application from saved CV error:", err);
+      res.status(500).json({ error: "Failed to submit application from selected CV" });
     }
   }
 

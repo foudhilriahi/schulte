@@ -9,15 +9,34 @@ import { toast } from 'sonner'
 import { useSubmitPDFApplication } from '@/hooks/useApplications'
 import { useOffer } from '@/hooks/useOffers'
 import { Textarea } from '@/components/ui/textarea'
+import { useAuthStore } from '@/store/auth'
+import { loadStoredCVs, saveStoredCVs } from '@/lib/cv-storage'
 
 export default function UploadApplyPage({ params }: { params: Promise<{ jobId: string }> }) {
   const router = useRouter()
   const { jobId } = use(params)
   const { data: job } = useOffer(jobId)
   const mutation = useSubmitPDFApplication()
+  const { user } = useAuthStore()
   
   const [file, setFile] = useState<File | null>(null)
   const [coverNote, setCoverNote] = useState('')
+
+  const fileToBase64 = (f: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = (event) => {
+        const result = event.target?.result
+        if (typeof result !== 'string') {
+          reject(new Error('Invalid file result'))
+          return
+        }
+        resolve(result.split(',')[1] || '')
+      }
+      reader.onerror = () => reject(new Error('Failed to read file'))
+      reader.readAsDataURL(f)
+    })
+  }
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0]
@@ -43,7 +62,30 @@ export default function UploadApplyPage({ params }: { params: Promise<{ jobId: s
     }
     
     try {
-      await mutation.mutateAsync({ offerId: jobId, cvFile: file })
+      await mutation.mutateAsync({ offerId: jobId, cvFile: file, coverNote })
+
+      const base64Data = await fileToBase64(file)
+      const existingCVs = loadStoredCVs(user?.id)
+      const existingMatch = existingCVs.find(
+        (cv) =>
+          cv.type === 'uploaded' &&
+          cv.name === file.name.replace('.pdf', '') &&
+          cv.size === file.size,
+      )
+
+      const nextCV = {
+        id: existingMatch?.id || `uploaded-${Date.now()}`,
+        name: file.name.replace('.pdf', ''),
+        type: 'uploaded' as const,
+        createdAt: existingMatch?.createdAt || new Date().toISOString(),
+        isDefault: existingMatch?.isDefault ?? existingCVs.length === 0,
+        size: file.size,
+        data: base64Data,
+      }
+
+      const filtered = existingCVs.filter((cv) => cv.id !== nextCV.id)
+      saveStoredCVs(user?.id, [...filtered, nextCV])
+
       router.push('/applications')
     } catch (e) {
       // Error is handled in the hook
