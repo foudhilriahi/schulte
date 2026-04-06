@@ -92,6 +92,7 @@ export class NotificationService {
           candidateName,
           candidateEmail,
           offerTitle,
+          offerSite,
           scheduledAt,
           location,
           notes,
@@ -130,6 +131,9 @@ export class NotificationService {
 
         // Real-time socket push
         SocketService.emitToCandidate(candidateId, 'interview:scheduled', payload);
+        if (offerSite) {
+          SocketService.emitToSite(offerSite, 'interview:scheduled', payload);
+        }
 
         // Email with ICS attachment
         await sendInterviewInviteEmail(

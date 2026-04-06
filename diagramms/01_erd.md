@@ -59,6 +59,8 @@ erDiagram
         uuid id PK
         uuid offer_id FK
         uuid candidate_id FK
+        uuid candidate_cv_id FK "nullable pour compatibilite legacy"
+        text cv_text_snapshot "snapshot immutable utilise par IA"
         string cv_url "nullable UUID.pdf"
         text cv_text "nullable extrait pdf-parse"
         json form_data "nullable formulaire 5 etapes"
@@ -71,6 +73,21 @@ erDiagram
         string hr_tags "tableau JSON"
         timestamp applied_at
         timestamp updated_at
+    }
+
+    CANDIDATE_CV {
+        uuid id PK
+        uuid candidate_id FK
+        string name
+        string type "uploaded ou generated"
+        string source "profile_upload profile_generated application_upload application_generated"
+        string cv_url "nullable"
+        text cv_text "texte CV normalise"
+        json form_data "nullable"
+        string cv_template "modern classic nullable"
+        int size "nullable"
+        boolean is_default
+        timestamp created_at
     }
 
     INTERVIEWS {
@@ -99,10 +116,12 @@ erDiagram
     USERS ||--o{ JOB_OFFERS : "cree"
     USERS ||--o{ OFFER_TEMPLATES : "cree"
     USERS ||--o{ APPLICATIONS : "soumet"
+    USERS ||--o{ CANDIDATE_CV : "possede"
     USERS ||--o{ NOTIFICATIONS : "recoit"
     USERS ||--o{ INTERVIEWS : "planifie"
     OFFER_TEMPLATES ||--o{ JOB_OFFERS : "sert de base"
     JOB_OFFERS ||--o{ APPLICATIONS : "recoit"
+    CANDIDATE_CV ||--o{ APPLICATIONS : "source CV selectionne"
     APPLICATIONS ||--o| INTERVIEWS : "donne lieu a"
     APPLICATIONS ||--o{ NOTIFICATIONS : "genere selon evenements"
     OFFER_TEMPLATES ||--o{ NOTIFICATIONS : "peut generer via admin updates"

@@ -1,16 +1,11 @@
 import { Request, Response } from "express";
 import { ApplicationRepository } from "../repositories/application.repository";
 import { OfferRepository } from "../repositories/offer.repository";
-import { UserRepository } from "../repositories/user.repository";
 import { CandidateCVRepository } from "../repositories/candidate-cv.repository";
-import { extractTextFromPDF, extractEmail } from "../services/upload.service";
-import { analyseApplication, CVTextExtractor } from "../services/ai.service";
+import { analyseApplication } from "../services/ai.service";
 import { SocketService } from "../services/socket.service";
 import { appEmitter } from "../events/emitter";
 import logger from "../utils/logger";
-import prisma from "../config/prisma";
-import fs from "fs";
-import path from "path";
 import type { ApplicationStatus } from "@prisma/client";
 
 export class ApplicationsController {
@@ -58,320 +53,6 @@ export class ApplicationsController {
     }
   }
 
-  // POST /api/applications (candidate — PDF upload with smart text extraction)
-  static async submitWithCV(req: Request, res: Response): Promise<void> {
-    try {
-      const { offerId, coverNote } = req.body;
-      const candidateId = req.user!.userId;
-
-      // Check offer exists and is open
-      const offer = await OfferRepository.findById(offerId);
-      if (!offer || offer.status !== "open") {
-        if (req.file) fs.unlinkSync(req.file.path);
-        res.status(400).json({ error: "Offer is closed or not found" });
-        return;
-      }
-
-      // Check duplicate
-      const existing = await ApplicationRepository.checkDuplicate(
-        candidateId,
-        offerId,
-      );
-      if (existing) {
-        if (req.file) fs.unlinkSync(req.file.path);
-        res
-          .status(409)
-          .json({ error: "You have already applied to this offer" });
-        return;
-      }
-
-      let cvUrl: string | undefined;
-      let cvText: string | undefined;
-
-      if (req.file) {
-        cvUrl = `/uploads/${req.file.filename}`;
-
-        // Smart PDF text extraction
-        try {
-          logger.info(`📄 Starting PDF text extraction for ${req.file.filename}`);
-          const fileBuffer = fs.readFileSync(req.file.path);
-          const base64Data = fileBuffer.toString('base64');
-          
-          logger.info(`📄 File read successfully, size: ${fileBuffer.length} bytes, base64: ${base64Data.length} chars`);
-          
-          // Use smart CV text extractor
-          cvText = await CVTextExtractor.extractFromPDF(base64Data);
-          
-          logger.info(`✅ PDF extraction completed: ${cvText.length} characters extracted`);
-          logger.info(`📝 First 200 chars: ${cvText.substring(0, 200)}`);
-
-          // Try to extract email from CV text
-          if (cvText && cvText.length > 50) {
-            const email = extractEmail(cvText);
-            if (email) {
-              await UserRepository.update(candidateId, { email });
-              logger.info(`📧 Email extracted from CV: ${email}`);
-            }
-          }
-        } catch (error) {
-          logger.error(`❌ Smart PDF extraction failed for ${req.file.filename}:`, error);
-          // Fallback to old method
-          try {
-            const text = await extractTextFromPDF(req.file.path);
-            cvText = text;
-            logger.info(`✅ Fallback extraction succeeded: ${cvText?.length || 0} chars`);
-          } catch (fallbackError) {
-            logger.error(`❌ Fallback PDF extraction also failed:`, fallbackError);
-            const fileSize = req.file ? fs.statSync(req.file.path).size : 0;
-            cvText = `[PDF uploaded but text extraction failed. File: ${req.file.filename}, Size: ${fileSize} bytes. Manual review required.]`;
-          }
-        }
-      }
-
-      // Ensure we have some CV text
-      if (!cvText || cvText.length < 10) {
-        logger.warn(`⚠️ No CV text extracted, using placeholder`);
-        cvText = `[CV file uploaded: ${req.file?.filename || 'unknown'}. Text extraction pending or failed. Manual review required.]`;
-      }
-
-      const application = await ApplicationRepository.create({
-        candidateId,
-        offerId,
-        cvUrl,
-        cvText,
-        coverNote,
-      });
-
-      if (cvUrl) {
-        await UserRepository.update(candidateId, { cvUrl });
-
-        if (req.file) {
-          await CandidateCVRepository.create({
-            candidateId,
-            name: req.file.originalname.replace(/\.pdf$/i, "").trim() || "Uploaded CV",
-            type: "uploaded",
-            source: "application_upload",
-            cvUrl,
-            size: req.file.size,
-          });
-        }
-      }
-
-      logger.info(
-        `✅ Application created: ${candidateId} -> ${offer.title} (${offer.site}), CV text: ${cvText.length} chars`,
-      );
-
-      // Trigger automatic AI analysis in background
-      if (cvText && cvText.length > 30) {
-        logger.info(`🤖 Triggering automatic AI analysis for application ${application.id}`);
-        
-        // Run AI analysis asynchronously (don't wait for it)
-        analyseApplication({
-          cvText,
-          offerTitle: offer.title,
-          requiredSkills: offer.requiredSkills || [],
-          experienceYears: offer.experienceYears || 0,
-          description: offer.description || "",
-        })
-          .then(async (result) => {
-            // Save comprehensive AI result to database
-            await ApplicationRepository.saveAIResult(application.id, {
-              score: result.score,
-              analysis: JSON.stringify({
-                ...result,
-                analysisDate: new Date().toISOString(),
-                cvTextLength: cvText.length,
-                analysisType: 'automatic_upload'
-              }),
-            });
-            logger.info(`✅ Automatic AI analysis complete for ${application.id}: score ${result.score} (${result.aiProvider})`);
-            
-            // Notify HR via WebSocket with detailed results
-            SocketService.emitToSite(offer.site, "application:analysed", {
-              applicationId: application.id,
-              candidateId: candidateId,
-              score: result.score,
-              recommendation: result.recommendation,
-              confidence: result.confidence,
-              aiProvider: result.aiProvider,
-              strengths: result.strengths,
-              gaps: result.gaps,
-              analysisType: 'automatic_upload'
-            });
-
-            // Notify candidate via WebSocket
-            SocketService.emitToUser(candidateId, "ai:analysis_complete", {
-              applicationId: application.id,
-              jobTitle: offer.title,
-              score: result.score,
-              recommendation: result.recommendation,
-              tipsForCandidate: result.tipsForCandidate,
-              analysisType: 'automatic_upload'
-            });
-          })
-          .catch((error) => {
-            logger.error(`❌ Automatic AI analysis failed for ${application.id}:`, error.message);
-            
-            // Notify about analysis failure
-            SocketService.emitToSite(offer.site, "application:analysis_failed", {
-              applicationId: application.id,
-              candidateId: candidateId,
-              error: error.message,
-              analysisType: 'automatic_upload'
-            });
-          });
-      } else {
-        logger.warn(`⚠️ Skipping AI analysis - insufficient CV text (${cvText?.length || 0} chars)`);
-      }
-
-      SocketService.emitToSite(offer.site, "application:new", application);
-      SocketService.emitToAdmin('admin:overview:updated', { reason: 'application-created', applicationId: application.id });
-
-      res.status(201).json(application);
-    } catch (err: any) {
-      logger.error("Submit application error:", err);
-      res.status(500).json({ error: "Failed to submit application" });
-    }
-  }
-
-  // POST /api/applications/form (candidate — manual form with smart text assembly)
-  static async submitWithForm(req: Request, res: Response): Promise<void> {
-    try {
-      const { offerId, formData } = req.body;
-      const candidateId = req.user!.userId;
-
-      const offer = await OfferRepository.findById(offerId);
-      if (!offer || offer.status !== "open") {
-        res.status(400).json({ error: "Offer is closed or not found" });
-        return;
-      }
-
-      const existing = await ApplicationRepository.checkDuplicate(
-        candidateId,
-        offerId,
-      );
-      if (existing) {
-        res
-          .status(409)
-          .json({ error: "You have already applied to this offer" });
-        return;
-      }
-
-      logger.info(`📝 Assembling CV text from form data...`);
-      logger.info(`📝 Form data keys: ${Object.keys(formData || {}).join(', ')}`);
-
-      // Smart text assembly from form data
-      const cvText = CVTextExtractor.assembleFromFormData(formData);
-
-      logger.info(`✅ Form text assembled: ${cvText.length} characters`);
-      logger.info(`📝 First 200 chars: ${cvText.substring(0, 200)}`);
-
-      if (!cvText || cvText.length < 30) {
-        logger.warn(`⚠️ Form data produced insufficient text (${cvText.length} chars)`);
-        res.status(400).json({ 
-          error: "Form data incomplete. Please fill all required fields." 
-        });
-        return;
-      }
-
-      const application = await ApplicationRepository.create({
-        candidateId,
-        offerId,
-        formData,
-        cvTemplate:
-          typeof formData?.template === "string" && formData.template.trim()
-            ? formData.template.trim().toLowerCase()
-            : "modern",
-        cvText, // Store assembled text for AI analysis
-      });
-
-      await CandidateCVRepository.create({
-        candidateId,
-        name: `Generated CV - ${offer.title}`,
-        type: "generated",
-        source: "application_generated",
-        formData,
-        cvTemplate:
-          typeof formData?.template === "string" && formData.template.trim()
-            ? formData.template.trim().toLowerCase()
-            : "modern",
-      });
-
-      logger.info(`✅ Form application created: ${candidateId} -> ${offer.title}, CV text: ${cvText.length} chars`);
-
-      // Trigger automatic AI analysis in background
-      if (cvText && cvText.length > 30) {
-        logger.info(`🤖 Triggering automatic AI analysis for application ${application.id}`);
-        
-        // Run AI analysis asynchronously (don't wait for it)
-        analyseApplication({
-          cvText,
-          offerTitle: offer.title,
-          requiredSkills: offer.requiredSkills || [],
-          experienceYears: offer.experienceYears || 0,
-          description: offer.description || "",
-        })
-          .then(async (result) => {
-            // Save comprehensive AI result to database
-            await ApplicationRepository.saveAIResult(application.id, {
-              score: result.score,
-              analysis: JSON.stringify({
-                ...result,
-                analysisDate: new Date().toISOString(),
-                cvTextLength: cvText.length,
-                analysisType: 'automatic_form'
-              }),
-            });
-            logger.info(`✅ Automatic AI analysis complete for ${application.id}: score ${result.score} (${result.aiProvider})`);
-            
-            // Notify HR via WebSocket with detailed results
-            SocketService.emitToSite(offer.site, "application:analysed", {
-              applicationId: application.id,
-              candidateId: candidateId,
-              score: result.score,
-              recommendation: result.recommendation,
-              confidence: result.confidence,
-              aiProvider: result.aiProvider,
-              strengths: result.strengths,
-              gaps: result.gaps,
-              analysisType: 'automatic_form'
-            });
-
-            // Notify candidate via WebSocket
-            SocketService.emitToUser(candidateId, "ai:analysis_complete", {
-              applicationId: application.id,
-              jobTitle: offer.title,
-              score: result.score,
-              recommendation: result.recommendation,
-              tipsForCandidate: result.tipsForCandidate,
-              analysisType: 'automatic_form'
-            });
-          })
-          .catch((error) => {
-            logger.error(`❌ Automatic AI analysis failed for ${application.id}:`, error.message);
-            
-            // Notify about analysis failure
-            SocketService.emitToSite(offer.site, "application:analysis_failed", {
-              applicationId: application.id,
-              candidateId: candidateId,
-              error: error.message,
-              analysisType: 'automatic_form'
-            });
-          });
-      } else {
-        logger.warn(`⚠️ Skipping AI analysis - insufficient CV text (${cvText?.length || 0} chars)`);
-      }
-
-      SocketService.emitToSite(offer.site, "application:new", application);
-      SocketService.emitToAdmin('admin:overview:updated', { reason: 'application-created', applicationId: application.id });
-
-      res.status(201).json(application);
-    } catch (err: any) {
-      logger.error("Submit form application error:", err);
-      res.status(500).json({ error: "Failed to submit application" });
-    }
-  }
-
   // POST /api/applications/from-cv (candidate — apply using an existing saved CV)
   static async submitFromSavedCV(req: Request, res: Response): Promise<void> {
     try {
@@ -396,45 +77,25 @@ export class ApplicationsController {
         return;
       }
 
-      let cvUrl: string | undefined;
-      let formData: any;
-      let cvTemplate: string | undefined;
-      let cvText = "";
+      const cvUrl = selectedCV.cvUrl || undefined;
+      const formData = (selectedCV.formData as Record<string, any>) || undefined;
+      const cvTemplate = selectedCV.cvTemplate || undefined;
+      const cvText = selectedCV.cvText || "";
 
-      if (selectedCV.type === "uploaded") {
-        if (!selectedCV.cvUrl) {
-          res.status(400).json({ error: "Selected uploaded CV has no file reference" });
-          return;
-        }
-
-        cvUrl = selectedCV.cvUrl;
-        const filename = cvUrl.replace("/uploads/", "");
-        const uploadPath = path.join(__dirname, "../../uploads", filename);
-
-        try {
-          cvText = await extractTextFromPDF(uploadPath);
-        } catch {
-          cvText = `[CV file linked: ${filename}. Text extraction pending or failed. Manual review required.]`;
-        }
-
-        await UserRepository.update(candidateId, { cvUrl });
-      } else {
-        formData = (selectedCV.formData as Record<string, any>) || {};
-        cvTemplate = selectedCV.cvTemplate || "modern";
-        cvText = CVTextExtractor.assembleFromFormData(formData);
-      }
-
-      if (!cvText || cvText.length < 10) {
-        cvText = `[CV selected from profile library: ${selectedCV.id}. Manual review may be required.]`;
+      if (!cvText || cvText.trim().length < 10) {
+        res.status(400).json({ error: "Selected CV has no usable text snapshot" });
+        return;
       }
 
       const application = await ApplicationRepository.create({
         candidateId,
         offerId,
+        candidateCVId: selectedCV.id,
         cvUrl,
         formData,
         cvTemplate,
         cvText,
+        cvTextSnapshot: cvText,
         coverNote,
       });
 
@@ -606,6 +267,36 @@ export class ApplicationsController {
     }
   }
 
+  // PATCH /api/applications/:id/analysis
+  static async saveAnalysis(req: Request, res: Response): Promise<void> {
+    try {
+      const { aiScore, aiAnalysis } = req.body;
+
+      if (typeof aiScore !== "number" || Number.isNaN(aiScore)) {
+        res.status(400).json({ error: "aiScore must be a valid number" });
+        return;
+      }
+
+      if (aiAnalysis === undefined || aiAnalysis === null) {
+        res.status(400).json({ error: "aiAnalysis is required" });
+        return;
+      }
+
+      const updated = await ApplicationRepository.saveAIResult(
+        req.params.id as string,
+        {
+          score: Math.max(0, Math.min(100, Math.round(aiScore))),
+          analysis: aiAnalysis,
+        },
+      );
+
+      res.json(updated);
+    } catch (err: any) {
+      logger.error("Save merged analysis error:", err);
+      res.status(500).json({ error: "Failed to save analysis" });
+    }
+  }
+
   // ✅ SMART 3-AI ANALYSIS — PuterJS + Gemini + OpenRouter
   // POST /api/applications/:id/analyse
   static async analyse(req: Request, res: Response): Promise<void> {
@@ -617,85 +308,19 @@ export class ApplicationsController {
       }
 
       logger.info(`🔍 Analyzing application ${req.params.id}`);
-      logger.info(`📄 Current cvText length: ${app.cvText?.length || 0}`);
-      logger.info(`📋 Has formData: ${!!app.formData}`);
-      logger.info(`📎 Has cvUrl: ${!!app.cvUrl}`);
+      const cvText = app.cvTextSnapshot || app.candidateCV?.cvText || "";
 
-      // Smart CV text preparation
-      let cvText = app.cvText || "";
-      
-      // If no CV text but we have form data, assemble it
-      if (!cvText && app.formData) {
-        logger.info(`📝 No cvText found, assembling from formData...`);
-        cvText = CVTextExtractor.assembleFromFormData(app.formData as Record<string, any>);
-        logger.info(`✅ Assembled ${cvText.length} characters from form data`);
-        
-        // Save the assembled text back to database
-        if (cvText && cvText.length > 30) {
-          await prisma.application.update({
-            where: { id: req.params.id as string },
-            data: { cvText }
-          });
-          logger.info(`💾 Saved assembled text to database`);
-        }
-      }
-
-      // If still no text, try to extract from PDF if available
-      if ((!cvText || cvText.length < 30) && app.cvUrl) {
-        logger.info(`📄 Attempting to extract text from PDF: ${app.cvUrl}`);
-        try {
-          // Try multiple path variations
-          const possiblePaths = [
-            `backend/uploads/${app.cvUrl.replace('/uploads/', '')}`,
-            `uploads/${app.cvUrl.replace('/uploads/', '')}`,
-            app.cvUrl.replace('/uploads/', 'backend/uploads/'),
-            app.cvUrl.replace('/uploads/', 'uploads/')
-          ];
-          
-          let fileBuffer: Buffer | null = null;
-          let usedPath = '';
-          
-          for (const filePath of possiblePaths) {
-            if (fs.existsSync(filePath)) {
-              fileBuffer = fs.readFileSync(filePath);
-              usedPath = filePath;
-              logger.info(`✅ Found file at: ${filePath}`);
-              break;
-            } else {
-              logger.info(`❌ File not found at: ${filePath}`);
-            }
-          }
-          
-          if (fileBuffer) {
-            const base64Data = fileBuffer.toString('base64');
-            cvText = await CVTextExtractor.extractFromPDF(base64Data);
-            logger.info(`✅ Extracted ${cvText.length} characters from PDF`);
-            
-            // Save extracted text to database
-            if (cvText && cvText.length > 30) {
-              await prisma.application.update({
-                where: { id: req.params.id as string },
-                data: { cvText }
-              });
-              logger.info(`💾 Saved extracted text to database`);
-            }
-          } else {
-            logger.error(`❌ Could not find PDF file at any expected location`);
-          }
-        } catch (error) {
-          logger.error(`❌ Failed to extract text from ${app.cvUrl}:`, error);
-        }
-      }
+      logger.info(`📄 Snapshot text length: ${app.cvTextSnapshot?.length || 0}`);
+      logger.info(`📎 Saved CV text length: ${app.candidateCV?.cvText?.length || 0}`);
 
       if (!cvText || cvText.length < 30) {
         logger.error(`❌ Insufficient CV text: ${cvText?.length || 0} characters`);
         res.status(400).json({
-          error: "No CV text available for analysis. Upload a readable PDF or fill the form completely.",
+          error: "No immutable CV snapshot available for analysis.",
           debug: {
             cvTextLength: cvText?.length || 0,
-            hasFormData: !!app.formData,
-            hasCvUrl: !!app.cvUrl,
-            cvUrl: app.cvUrl
+            hasSnapshot: !!app.cvTextSnapshot,
+            hasSavedCV: !!app.candidateCV?.cvText,
           }
         });
         return;

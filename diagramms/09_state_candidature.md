@@ -5,15 +5,24 @@
 stateDiagram-v2
     direction TB
 
-    [*] --> Nouvelle : Candidat soumet PDF ou formulaire
+    [*] --> Nouvelle : Candidat soumet via CV library /api/applications/from-cv
 
     state Nouvelle {
         [*] --> EnAttente
         note right of EnAttente
             Carte dans colonne Nouveau du Kanban RH
             Socket.io envoie application:new au RH
+            Analyse IA asynchrone lancee depuis cvTextSnapshot
         end note
     }
+
+    state IA {
+        [*] --> EnCours
+        EnCours --> Completee : ai:analysis_complete + application:analysed
+    }
+
+    Nouvelle --> IA : background analysis
+    IA --> Nouvelle : resultat persiste
 
     Nouvelle --> EnExamen : RH deplace la carte
     Nouvelle --> Refusee : RH rejette directement
@@ -35,6 +44,7 @@ stateDiagram-v2
         note right of DateFixee
             POST /api/interviews cree
             Socket.io interview:scheduled vers candidat
+            Socket.io interview:scheduled vers room site RH
             Email avec fichier ics calendrier
             Rappel J-1 automatique via node-cron
         end note

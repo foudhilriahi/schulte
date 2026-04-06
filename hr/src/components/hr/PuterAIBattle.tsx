@@ -34,7 +34,7 @@ const PUTER_MODELS = [
 ];
 
 interface PuterAIBattleProps {
-  cvText: string;
+  analysisText: string;
   jobTitle: string;
   requiredSkills: string[];
   experienceYears: number;
@@ -54,7 +54,7 @@ interface ModelResult {
 }
 
 export default function PuterAIBattle({
-  cvText,
+  analysisText,
   jobTitle,
   requiredSkills,
   experienceYears,
@@ -104,7 +104,7 @@ MINIMUM EXPERIENCE: ${experienceYears} years
 JOB DESCRIPTION: ${description}
 
 CANDIDATE CV:
-${cvText.substring(0, 5000)}
+${analysisText.substring(0, 5000)}
 
 EVALUATION CRITERIA:
 1. TECHNICAL SKILLS MATCH (40%): required skills present? proficiency level? certifications?
@@ -274,7 +274,7 @@ Return ONLY valid JSON — no markdown, no backticks, no explanation:
     return 'text-red-600 bg-red-100';
   };
 
-  if (!cvText || cvText.length < 50) {
+  if (!analysisText || analysisText.length < 50) {
     return (
       <div className="p-4 bg-gray-50 rounded-lg">
         <p className="text-sm text-gray-600">No CV text available for Puter.js analysis</p>

@@ -2,7 +2,6 @@ import { Router } from "express";
 import { ApplicationsController } from "../controllers/applications.controller";
 import { authenticate } from "../middleware/authenticate";
 import { requireRole } from "../middleware/requireRole";
-import { upload } from "../services/upload.service";
 
 const router = Router();
 
@@ -12,19 +11,6 @@ router.get(
   authenticate,
   requireRole("CANDIDATE"),
   ApplicationsController.getMine,
-);
-router.post(
-  "/",
-  authenticate,
-  requireRole("CANDIDATE"),
-  upload.single("cvFile"),
-  ApplicationsController.submitWithCV,
-);
-router.post(
-  "/form",
-  authenticate,
-  requireRole("CANDIDATE"),
-  ApplicationsController.submitWithForm,
 );
 router.post(
   "/from-cv",
@@ -73,6 +59,12 @@ router.patch(
   authenticate,
   requireRole("HR"),
   ApplicationsController.updateTags,
+);
+router.patch(
+  "/:id/analysis",
+  authenticate,
+  requireRole("HR", "ADMIN"),
+  ApplicationsController.saveAnalysis,
 );
 router.post(
   "/:id/analyse",

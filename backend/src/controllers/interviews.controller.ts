@@ -112,6 +112,7 @@ export class InterviewsController {
         candidateName: interview.application.candidate.name,
         candidateEmail: interview.application.candidate.email ?? "",
         offerTitle: interview.application.offer.title,
+        offerSite: interview.application.offer.site,
         scheduledAt: interview.scheduledAt,
         location: interview.location,
         notes: interview.notesForCandidate ?? undefined,

@@ -2,7 +2,6 @@
 
 import { use, useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { ApplicationForm } from '@/components/application-form'
 import { CVSelector } from '@/components/cv-selector'
 import { useOffer } from '@/hooks/useOffers'
 import { useMyApplications } from '@/hooks/useApplications'
@@ -185,6 +184,13 @@ export default function ApplyPage({ params }: ApplyPageProps) {
     router.push(`/apply/${jobId}/confirm?cvId=${cv.id}`)
   }
 
+  const handleDefaultCVApply = () => {
+    if (cvs.length === 0) return
+
+    const defaultCV = cvs.find((cv) => cv.isDefault) || cvs[0]
+    router.push(`/apply/${jobId}/confirm?cvId=${defaultCV.id}`)
+  }
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       month: 'short',
@@ -223,47 +229,36 @@ export default function ApplyPage({ params }: ApplyPageProps) {
           {cvs.length > 0 && (
             <div className="space-y-3">
               <h2 className="text-sm font-semibold text-foreground">Quick Apply</h2>
-              {cvs.filter(cv => cv.isDefault).map(cv => (
-                <Card 
-                  key={cv.id}
-                  className="cursor-pointer hover:shadow-md transition-shadow border-blue-200 bg-blue-50/50"
-                  onClick={() => handleCVSelect(cv)}
-                >
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                        cv.type === 'uploaded' 
-                          ? 'bg-blue-100 text-blue-600' 
-                          : 'bg-purple-100 text-purple-600'
-                      }`}>
-                        <FileText className="h-5 w-5" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h3 className="font-medium text-foreground truncate">{cv.name}</h3>
-                          <Badge variant="secondary" className="text-xs">Default</Badge>
-                        </div>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <Badge 
-                            variant={cv.type === 'uploaded' ? 'default' : 'secondary'} 
-                            className="text-xs"
-                          >
-                            {cv.type === 'uploaded' ? 'Uploaded' : 'Generated'}
-                          </Badge>
-                          <span>•</span>
-                          <span>{formatDate(cv.createdAt)}</span>
-                          {cv.size && (
-                            <>
-                              <span>•</span>
-                              <span>{formatFileSize(cv.size)}</span>
-                            </>
-                          )}
-                        </div>
-                      </div>
+              <Card
+                className="border-blue-200 bg-blue-50/50"
+              >
+                <CardContent className="p-4 space-y-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center bg-blue-100 text-blue-600">
+                      <FileText className="h-5 w-5" />
                     </div>
-                  </CardContent>
-                </Card>
-              ))}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="font-medium text-foreground truncate">
+                          {cvs.find((cv) => cv.isDefault)?.name || cvs[0].name}
+                        </h3>
+                        <Badge variant="secondary" className="text-xs">Default</Badge>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        This CV will be used automatically if you continue without choosing another one.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button onClick={handleDefaultCVApply} className="flex-1">
+                      Apply with Default CV
+                    </Button>
+                    <Button variant="outline" onClick={() => setShowCVSelector(true)}>
+                      Choose Another
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           )}
 

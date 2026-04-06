@@ -27,9 +27,9 @@ Ils peuvent être intégrés directement dans le rapport PFE via tout éditeur M
 | Fichier | Description |
 |---|---|
 | [03_sequence_auth.md](./03_sequence_auth.md) | Authentification des 3 rôles (Admin email, RH email, Candidat téléphone) + rafraîchissement silencieux JWT |
-| [04_sequence_candidature.md](./04_sequence_candidature.md) | Dépôt de candidature complet : chemin PDF (Multer + pdf-parse) et formulaire 5 étapes (jsPDF) |
-| [05_sequence_ia.md](./05_sequence_ia.md) | Pipeline IA — Puter.js GPT-4o (navigateur) avec fallback automatique Gemini 1.5 Flash (backend) |
-| [06_sequence_temps_reel.md](./06_sequence_temps_reel.md) | Flux temps réel Socket.io — RH déplace carte Kanban → téléphone candidat mis à jour instantanément |
+| [04_sequence_candidature.md](./04_sequence_candidature.md) | Dépôt de candidature actuel : sélection CV bibliothèque, CV par défaut, endpoint `/applications/from-cv`, snapshot immutable et analyse async |
+| [05_sequence_ia.md](./05_sequence_ia.md) | Pipeline IA dual provider : Puter.js + backend Gemini avec prompt partagé, merge conservateur et persistance |
+| [06_sequence_temps_reel.md](./06_sequence_temps_reel.md) | Flux temps réel Socket.io : status, analyse terminée, entretien synchronisé côté candidat et room site RH |
 | [07_sequence_entretien.md](./07_sequence_entretien.md) | Planification d'entretien + rappel J-1 cron + décision finale (pass/fail/no_show) |
 | [08_sequence_admin.md](./08_sequence_admin.md) | Administration — CRUD comptes RH + gestion templates + propagation Socket.io `template:updated` |
 
@@ -56,8 +56,8 @@ Ils peuvent être intégrés directement dans le rapport PFE via tout éditeur M
 
 | Fichier | Description |
 |---|---|
-| [12_architecture.md](./12_architecture.md) | Vue globale : 3 apps Next.js, backend Express, PostgreSQL, Socket.io, services externes (Puter.js, Gemini, Gmail, Vercel, Railway) |
-| [13_flowchart_depot_cv.md](./13_flowchart_depot_cv.md) | Flowchart détaillé du traitement du CV PDF : validation type/taille, pdf-parse, extraction email, stockage UUID, cas d'erreur |
+| [12_architecture.md](./12_architecture.md) | Vue globale : Admin/RH React Vite + PWA candidat Next.js, backend Express, PostgreSQL, Socket.io, services externes (Puter.js, Gemini, Gmail) |
+| [13_flowchart_depot_cv.md](./13_flowchart_depot_cv.md) | Flowchart actuel CV library -> CV par défaut/choix -> candidature from-cv -> snapshot -> analyse async |
 
 ---
 

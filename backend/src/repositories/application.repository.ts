@@ -55,6 +55,14 @@ export class ApplicationRepository {
             city: true,
           },
         },
+        candidateCV: {
+          select: {
+            id: true,
+            cvText: true,
+            name: true,
+            source: true,
+          },
+        },
         offer: {
           select: {
             id: true,
@@ -78,6 +86,14 @@ export class ApplicationRepository {
       include: {
         candidate: true,
         offer: true,
+        candidateCV: {
+          select: {
+            id: true,
+            cvText: true,
+            name: true,
+            source: true,
+          },
+        },
         interview: true,
       },
     });
@@ -86,8 +102,10 @@ export class ApplicationRepository {
   static async create(data: {
     candidateId: string;
     offerId: string;
+    candidateCVId?: string;
     cvUrl?: string;
     cvText?: string;
+    cvTextSnapshot?: string;
     formData?: any;
     cvTemplate?: string;
     coverNote?: string;

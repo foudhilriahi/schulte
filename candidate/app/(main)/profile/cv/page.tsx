@@ -2,17 +2,13 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Download, FileText, Upload, Trash2, Star, Plus, Eye } from 'lucide-react'
+import { ArrowLeft, Download, FileText, Trash2, Star, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
 import { useAuthStore } from '@/store/auth'
 import { api } from '@/lib/axios'
-import { loadLatestDraft, loadStoredCVs } from '@/lib/cv-storage'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
 
 interface CVItem {
   id: string
@@ -31,18 +27,6 @@ export default function MyCVPage() {
   const { user } = useAuthStore()
   const [cvs, setCvs] = useState<CVItem[]>([])
   const [isUploading, setIsUploading] = useState(false)
-  const [isBuilding, setIsBuilding] = useState(false)
-  const [builder, setBuilder] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    city: '',
-    currentRole: '',
-    yearsExperience: '',
-    skills: '',
-    coverNote: '',
-    template: 'modern' as 'modern' | 'classic',
-  })
 
   const mapApiCVToUI = (cv: any): CVItem => ({
     id: cv.id,
@@ -55,51 +39,6 @@ export default function MyCVPage() {
     data: cv.formData,
     cvUrl: cv.cvUrl,
   })
-
-  const base64ToFile = (base64Data: string, fileName: string): File => {
-    const byteCharacters = atob(base64Data)
-    const byteNumbers = new Array(byteCharacters.length)
-    for (let i = 0; i < byteCharacters.length; i++) {
-      byteNumbers[i] = byteCharacters.charCodeAt(i)
-    }
-    const byteArray = new Uint8Array(byteNumbers)
-    return new File([byteArray], fileName, { type: 'application/pdf' })
-  }
-
-  const syncLocalCVsToBackend = async () => {
-    const localCVs = loadStoredCVs(user?.id)
-    if (!localCVs.length) return false
-
-    let synced = false
-
-    for (const cv of localCVs) {
-      try {
-        if (cv.type === 'uploaded' && cv.data && !cv.cvUrl) {
-          const file = base64ToFile(String(cv.data), `${cv.name}.pdf`)
-          const payload = new FormData()
-          payload.append('cvFile', file)
-          await api.post('/cvs/upload', payload, {
-            headers: { 'Content-Type': 'multipart/form-data' },
-          })
-          synced = true
-        }
-
-        if (cv.type === 'generated' && cv.data) {
-          await api.post('/cvs/generated', {
-            name: cv.name,
-            formData: cv.data,
-            template: cv.template || 'modern',
-            isDefault: cv.isDefault,
-          })
-          synced = true
-        }
-      } catch {
-        // Keep going so one bad legacy record does not block the rest.
-      }
-    }
-
-    return synced
-  }
 
   useEffect(() => {
     loadCVs()
@@ -118,42 +57,12 @@ export default function MyCVPage() {
   }, [])
 
   const loadCVs = async () => {
-    if (typeof window === 'undefined') return
-
     try {
       const response = await api.get('/cvs/mine')
       const apiCVs = Array.isArray(response.data) ? response.data.map(mapApiCVToUI) : []
-      if (apiCVs.length === 0) {
-        const synced = await syncLocalCVsToBackend()
-        if (synced) {
-          const refreshed = await api.get('/cvs/mine')
-          const refreshedCVs = Array.isArray(refreshed.data)
-            ? refreshed.data.map(mapApiCVToUI)
-            : []
-          setCvs(refreshedCVs)
-          return
-        }
-      }
       setCvs(apiCVs)
       return
     } catch {
-      // Fallback below
-    }
-
-    const legacyDraft = loadLatestDraft(user?.id)
-    if (legacyDraft) {
-      setCvs([
-        {
-          id: 'legacy-generated-cv',
-          name: `Generated CV - ${legacyDraft.template || 'Modern'}`,
-          type: 'generated',
-          createdAt: new Date().toISOString(),
-          isDefault: true,
-          template: legacyDraft.template === 'classic' ? 'classic' : 'modern',
-          data: legacyDraft,
-        },
-      ])
-    } else {
       setCvs([])
     }
   }
@@ -187,64 +96,7 @@ export default function MyCVPage() {
       toast.error('Failed to upload CV')
     } finally {
       setIsUploading(false)
-    }
-  }
-
-  const handleBuildCV = async () => {
-    if (!builder.name.trim() || !builder.email.trim() || !builder.phone.trim()) {
-      toast.error('Name, email and phone are required to build a CV')
-      return
-    }
-
-    setIsBuilding(true)
-    try {
-      const skillsArray = builder.skills
-        .split(',')
-        .map((s) => s.trim())
-        .filter(Boolean)
-
-      const formData = {
-        personal: {
-          name: builder.name.trim(),
-          email: builder.email.trim(),
-          phone: builder.phone.trim(),
-          city: builder.city.trim(),
-        },
-        experience: [
-          {
-            title: builder.currentRole.trim(),
-            duration: builder.yearsExperience.trim(),
-            company: '',
-          },
-        ],
-        skills: skillsArray,
-        coverNote: builder.coverNote.trim(),
-        template: builder.template,
-      }
-
-      await api.post('/cvs/generated', {
-        name: `Generated CV - ${builder.name.trim()}`,
-        formData,
-        template: builder.template,
-      })
-
-      toast.success('Generated CV saved to your profile')
-      setBuilder({
-        name: '',
-        email: '',
-        phone: '',
-        city: '',
-        currentRole: '',
-        yearsExperience: '',
-        skills: '',
-        coverNote: '',
-        template: 'modern',
-      })
-      await loadCVs()
-    } catch {
-      toast.error('Failed to build and save CV')
-    } finally {
-      setIsBuilding(false)
+      e.target.value = ''
     }
   }
 
@@ -367,96 +219,16 @@ export default function MyCVPage() {
             </CardContent>
           </Card>
 
-          {/* Build CV */}
-          <Card>
+          <Card className="border border-slate-200">
             <CardHeader className="pb-3">
               <CardTitle className="text-base">Build New CV</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
-              <div>
-                <Label className="text-sm">Full Name *</Label>
-                <Input
-                  value={builder.name}
-                  onChange={(e) => setBuilder((p) => ({ ...p, name: e.target.value }))}
-                  placeholder="Your full name"
-                />
-              </div>
-              <div>
-                <Label className="text-sm">Email *</Label>
-                <Input
-                  type="email"
-                  value={builder.email}
-                  onChange={(e) => setBuilder((p) => ({ ...p, email: e.target.value }))}
-                  placeholder="you@example.com"
-                />
-              </div>
-              <div>
-                <Label className="text-sm">Phone *</Label>
-                <Input
-                  value={builder.phone}
-                  onChange={(e) => setBuilder((p) => ({ ...p, phone: e.target.value }))}
-                  placeholder="+216 XX XXX XXX"
-                />
-              </div>
-              <div>
-                <Label className="text-sm">City</Label>
-                <Input
-                  value={builder.city}
-                  onChange={(e) => setBuilder((p) => ({ ...p, city: e.target.value }))}
-                  placeholder="Your city"
-                />
-              </div>
-              <div>
-                <Label className="text-sm">Current Role</Label>
-                <Input
-                  value={builder.currentRole}
-                  onChange={(e) => setBuilder((p) => ({ ...p, currentRole: e.target.value }))}
-                  placeholder="e.g. Production Planner"
-                />
-              </div>
-              <div>
-                <Label className="text-sm">Years of Experience</Label>
-                <Input
-                  value={builder.yearsExperience}
-                  onChange={(e) => setBuilder((p) => ({ ...p, yearsExperience: e.target.value }))}
-                  placeholder="e.g. 4 years"
-                />
-              </div>
-              <div>
-                <Label className="text-sm">Skills (comma separated)</Label>
-                <Input
-                  value={builder.skills}
-                  onChange={(e) => setBuilder((p) => ({ ...p, skills: e.target.value }))}
-                  placeholder="Excel, SAP, Planning"
-                />
-              </div>
-              <div>
-                <Label className="text-sm">Cover Note</Label>
-                <Textarea
-                  value={builder.coverNote}
-                  onChange={(e) => setBuilder((p) => ({ ...p, coverNote: e.target.value }))}
-                  placeholder="Short profile summary"
-                  className="min-h-[90px]"
-                />
-              </div>
-              <div className="flex gap-2">
-                <Button
-                  variant={builder.template === 'modern' ? 'default' : 'outline'}
-                  onClick={() => setBuilder((p) => ({ ...p, template: 'modern' }))}
-                  type="button"
-                >
-                  Modern
-                </Button>
-                <Button
-                  variant={builder.template === 'classic' ? 'default' : 'outline'}
-                  onClick={() => setBuilder((p) => ({ ...p, template: 'classic' }))}
-                  type="button"
-                >
-                  Classic
-                </Button>
-              </div>
-              <Button onClick={handleBuildCV} disabled={isBuilding} className="w-full">
-                {isBuilding ? 'Saving...' : 'Build & Save CV'}
+            <CardContent>
+              <p className="text-sm text-muted-foreground mb-3">
+                Use the step-by-step wizard to create a generated CV in your library.
+              </p>
+              <Button onClick={() => router.push('/profile/cv/build')} className="w-full">
+                Open CV Builder
               </Button>
             </CardContent>
           </Card>
@@ -518,8 +290,19 @@ export default function MyCVPage() {
                         variant="outline"
                         size="sm"
                         onClick={() => handleSetDefault(cv.id)}
+                        title="Set as default CV"
                       >
                         <Star className="h-4 w-4" />
+                      </Button>
+                    )}
+                    {cv.isDefault && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled
+                        title="Already default"
+                      >
+                        Default
                       </Button>
                     )}
                     <Button

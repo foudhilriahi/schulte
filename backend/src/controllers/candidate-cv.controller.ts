@@ -1,9 +1,83 @@
 import { Request, Response } from "express";
 import { CandidateCVRepository } from "../repositories/candidate-cv.repository";
+import { extractTextFromPDF } from "../services/upload.service";
+import { CVTextExtractor } from "../services/ai.service";
 import logger from "../utils/logger";
 
 const toTemplate = (value: any): "modern" | "classic" => {
   return value === "classic" ? "classic" : "modern";
+};
+
+const tunisianCities = new Set([
+  "Tunis",
+  "Ariana",
+  "Ben Arous",
+  "Manouba",
+  "Nabeul",
+  "Zaghouan",
+  "Bizerte",
+  "Béja",
+  "Jendouba",
+  "Le Kef",
+  "Siliana",
+  "Sousse",
+  "Monastir",
+  "Mahdia",
+  "Kairouan",
+  "Kasserine",
+  "Sidi Bouzid",
+  "Sfax",
+  "Gabès",
+  "Médenine",
+  "Tataouine",
+  "Tozeur",
+  "Kébili",
+  "Gafsa",
+]);
+
+const degreeOptions = new Set([
+  "Baccalauréat",
+  "BTS",
+  "Licence",
+  "Licence Appliquée",
+  "Master",
+  "Ingénieur",
+  "Doctorat",
+  "CAP",
+  "Autre",
+]);
+
+const namePattern = /^[A-Za-zÀ-ÿ'\-\s]{2,80}$/;
+const phonePattern = /^\+?[0-9\s\-()]{8,20}$/;
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const isValidString = (value: unknown, minLength = 1, maxLength = 200) => {
+  return typeof value === "string" && value.trim().length >= minLength && value.trim().length <= maxLength;
+};
+
+const validateGeneratedCvData = (formData: any): string | null => {
+  const personal = formData?.personal;
+
+  if (!personal || typeof personal !== "object") return "Personal details are required";
+  if (!isValidString(personal.name, 2, 80) || !namePattern.test(personal.name.trim())) return "Enter a valid full name";
+  if (!isValidString(personal.email, 5, 120) || !emailPattern.test(personal.email.trim())) return "Enter a valid email address";
+  if (!isValidString(personal.phone, 8, 20) || !phonePattern.test(personal.phone.trim())) return "Enter a valid phone number";
+  if (!isValidString(personal.city, 1, 80) || !tunisianCities.has(personal.city.trim())) return "Select a real Tunisian city";
+
+  if (!Array.isArray(formData?.education) || formData.education.length === 0) return "Add at least one education entry";
+  for (const education of formData.education) {
+    if (!education || typeof education !== "object") return "Education entries are invalid";
+    if (!isValidString(education.degree, 1, 60) || !degreeOptions.has(education.degree.trim())) return "Select a valid degree";
+    if (!isValidString(education.field, 2, 80)) return "Education field is required";
+    if (!isValidString(education.institution, 2, 120)) return "Institution is required";
+    if (!isValidString(education.year, 4, 4) || !/^\d{4}$/.test(education.year.trim())) return "Use a 4-digit year";
+  }
+
+  if (!Array.isArray(formData?.skills) || formData.skills.length === 0) return "Add at least one skill";
+
+  if (formData?.coverNote !== undefined && typeof formData.coverNote !== "string") return "Cover note must be a string";
+
+  return null;
 };
 
 export class CandidateCVController {
@@ -29,6 +103,14 @@ export class CandidateCVController {
       }
 
       const name = file.originalname.replace(/\.pdf$/i, "").trim() || "Uploaded CV";
+      const cvText = await extractTextFromPDF(file.path);
+
+      if (!cvText || cvText.trim().length < 50) {
+        res.status(400).json({
+          error: "Uploaded PDF text is too short. Please upload a text-based PDF or use CV builder.",
+        });
+        return;
+      }
 
       const cv = await CandidateCVRepository.create({
         candidateId,
@@ -36,6 +118,7 @@ export class CandidateCVController {
         type: "uploaded",
         source: "profile_upload",
         cvUrl: `/uploads/${file.filename}`,
+        cvText,
         size: file.size,
       });
 
@@ -56,12 +139,19 @@ export class CandidateCVController {
         return;
       }
 
+      const validationError = validateGeneratedCvData(formData);
+      if (validationError) {
+        res.status(400).json({ error: validationError });
+        return;
+      }
+
       const cv = await CandidateCVRepository.create({
         candidateId,
         name: typeof name === "string" && name.trim() ? name.trim() : "Generated CV",
         type: "generated",
         source: "profile_generated",
         formData,
+        cvText: CVTextExtractor.assembleFromFormData(formData),
         cvTemplate: toTemplate(template),
         isDefault: typeof isDefault === "boolean" ? isDefault : undefined,
       });

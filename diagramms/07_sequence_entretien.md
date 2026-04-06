@@ -12,6 +12,7 @@ sequenceDiagram
     participant Email as Nodemailer
     participant Cron as node-cron
     participant PWA as Candidat PWA
+    participant HRSite as Room site RH
 
     RH->>Drawer: Clique Planifier un entretien
     Drawer->>Modal: Ouvre ScheduleModal
@@ -39,6 +40,9 @@ sequenceDiagram
             Emitter->>Socket: emit interview:scheduled vers candidate
             Socket-->>PWA: Carte entretien avec date lieu notes
         and
+            Emitter->>Socket: emit interview:scheduled vers room site RH
+            Socket-->>HRSite: Synchronisation planning cote RH
+        and
             Emitter->>Email: sendInterviewScheduled avec fichier ics
             Email-->>PWA: Email avec calendrier ics si email disponible
         end
@@ -56,7 +60,7 @@ sequenceDiagram
     Cron->>Email: sendReminder si email disponible
     Cron->>DB: markReminderSent
 
-    Note over RH, PWA: Jour de entretien le RH saisit le resultat
+    Note over RH, PWA: Jour J le RH peut enregistrer un resultat entretien
 
     RH->>Drawer: Ouvre OutcomeModal et choisit le resultat
 

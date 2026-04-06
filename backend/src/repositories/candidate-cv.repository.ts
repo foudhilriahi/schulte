@@ -7,6 +7,7 @@ interface CreateCandidateCVInput {
   source: "profile_upload" | "application_upload" | "application_generated" | "profile_generated";
   cvUrl?: string;
   formData?: any;
+  cvText: string;
   cvTemplate?: string;
   size?: number;
   isDefault?: boolean;
@@ -49,6 +50,7 @@ export class CandidateCVRepository {
         source: input.source,
         cvUrl: input.cvUrl,
         formData: input.formData,
+        cvText: input.cvText,
         cvTemplate: input.cvTemplate,
         size: input.size,
         isDefault: shouldBeDefault,

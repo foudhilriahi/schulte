@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
+import { CVSelector } from '@/components/cv-selector'
 import { useOffer } from '@/hooks/useOffers'
 import { useSubmitSavedCVApplication } from '@/hooks/useApplications'
 import { toast } from 'sonner'
@@ -44,38 +45,59 @@ export default function ConfirmApplicationPage({ params }: ConfirmApplicationPag
   const [selectedCV, setSelectedCV] = useState<CVItem | null>(null)
   const [coverNote, setCoverNote] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [showCVSelector, setShowCVSelector] = useState(false)
+  const [isLoadingCV, setIsLoadingCV] = useState(true)
 
   useEffect(() => {
-    if (cvId && typeof window !== 'undefined') {
+    if (typeof window !== 'undefined') {
+      setIsLoadingCV(true)
       api
         .get('/cvs/mine')
         .then((res) => {
           const list = Array.isArray(res.data) ? res.data : []
-          const cv = list.find((c: any) => c.id === cvId)
-          if (!cv) {
-            toast.error('CV not found')
+          const fallbackCv = list.find((c: any) => c.id === cvId) || list.find((c: any) => c.isDefault) || list[0]
+
+          if (!fallbackCv) {
+            toast.error('No saved CV found')
             router.push(`/apply/${jobId}`)
             return
           }
 
-          setSelectedCV({
-            id: cv.id,
-            name: cv.name,
-            type: cv.type === 'generated' ? 'generated' : 'uploaded',
-            createdAt: cv.createdAt,
-            isDefault: !!cv.isDefault,
-            size: typeof cv.size === 'number' ? cv.size : undefined,
-            template: cv.cvTemplate === 'classic' ? 'classic' : 'modern',
-            data: cv.formData,
-            cvUrl: cv.cvUrl,
-          })
+          const normalizedCv = {
+            id: fallbackCv.id,
+            name: fallbackCv.name,
+            type: fallbackCv.type === 'generated' ? 'generated' : 'uploaded',
+            createdAt: fallbackCv.createdAt,
+            isDefault: !!fallbackCv.isDefault,
+            size: typeof fallbackCv.size === 'number' ? fallbackCv.size : undefined,
+            template: fallbackCv.cvTemplate === 'classic' ? 'classic' : 'modern',
+            data: fallbackCv.formData,
+            cvUrl: fallbackCv.cvUrl,
+          }
+
+          setSelectedCV(normalizedCv)
+
+          if (!cvId) {
+            router.replace(`/apply/${jobId}/confirm?cvId=${normalizedCv.id}`)
+          }
         })
         .catch(() => {
           toast.error('Failed to load selected CV')
           router.push(`/apply/${jobId}`)
         })
+        .finally(() => {
+          setIsLoadingCV(false)
+        })
     }
   }, [cvId, jobId, router, user?.id])
+
+  const handleCVSwitch = (cv: CVItem | null) => {
+    if (!cv) return
+
+    setSelectedCV(cv)
+    setShowCVSelector(false)
+    router.replace(`/apply/${jobId}/confirm?cvId=${cv.id}`)
+  }
 
   const handleDownloadCV = async () => {
     if (!selectedCV) return
@@ -145,6 +167,15 @@ export default function ConfirmApplicationPage({ params }: ConfirmApplicationPag
     })
   }
 
+  if (isLoadingCV) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen pb-20 px-4">
+        <div className="animate-spin rounded-full h-7 w-7 border-b-2 border-blue-600" />
+        <p className="text-sm text-muted-foreground mt-3">Loading selected CV...</p>
+      </div>
+    )
+  }
+
   if (!selectedCV) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen pb-20 px-4">
@@ -204,10 +235,15 @@ export default function ConfirmApplicationPage({ params }: ConfirmApplicationPag
           {/* Selected CV */}
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-base flex items-center gap-2">
-                <FileText className="h-5 w-5 text-green-600" />
-                Selected CV
-              </CardTitle>
+              <div className="flex items-center justify-between gap-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <FileText className="h-5 w-5 text-green-600" />
+                  Selected CV
+                </CardTitle>
+                <Button variant="outline" size="sm" onClick={() => setShowCVSelector(true)}>
+                  Change CV
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -272,7 +308,7 @@ export default function ConfirmApplicationPage({ params }: ConfirmApplicationPag
           <div className="sticky bottom-4 pt-4">
             <Button
               onClick={handleSubmit}
-              disabled={isSubmitting}
+              disabled={isSubmitting || !selectedCV}
               className="w-full h-12 bg-green-600 hover:bg-green-700 text-white shadow-lg"
             >
               {isSubmitting ? (
@@ -290,6 +326,14 @@ export default function ConfirmApplicationPage({ params }: ConfirmApplicationPag
           </div>
         </div>
       </main>
+
+      <CVSelector
+        open={showCVSelector}
+        onClose={() => setShowCVSelector(false)}
+        onSelectCV={handleCVSwitch}
+        onUploadNew={() => router.push('/profile/cv')}
+        allowCreateNew={false}
+      />
     </div>
   )
 }

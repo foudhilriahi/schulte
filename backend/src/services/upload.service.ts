@@ -40,11 +40,13 @@ export const upload = multer({
 });
 
 export async function extractTextFromPDF(filePath: string): Promise<string> {
-  const pdfParse = (await import("pdf-parse")).default as unknown as (
-    buf: Buffer,
-  ) => Promise<{ text: string }>;
+  const { PDFParse } = await import("pdf-parse");
   const buffer = fs.readFileSync(filePath);
-  const data = await pdfParse(buffer);
+  const parser = new PDFParse({ data: buffer });
+  const data = await parser.getText();
+  if (typeof parser.destroy === "function") {
+    await parser.destroy();
+  }
   return data.text;
 }
 

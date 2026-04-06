@@ -19,8 +19,8 @@ stateDiagram-v2
         end note
     }
 
-    Creation --> Brouillon : Enregistre comme brouillon status paused
-    Creation --> Ouverte : Publie immediatement status open
+    Validation --> Brouillon : Enregistre comme brouillon status paused
+    Validation --> Ouverte : Publie immediatement status open
 
     state Ouverte {
         [*] --> Publiee

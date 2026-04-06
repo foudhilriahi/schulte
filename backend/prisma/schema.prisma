@@ -88,6 +88,7 @@ model CandidateCV {
   source       String
   cvUrl        String?
   formData     Json?
+  cvText       String
   cvTemplate   String?
   size         Int?
   isDefault    Boolean  @default(false)
@@ -95,6 +96,7 @@ model CandidateCV {
   updatedAt    DateTime @updatedAt
 
   candidate    User     @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  applications Application[]
 
   @@index([candidateId, createdAt])
 }
@@ -146,11 +148,13 @@ model Application {
   id           String            @id @default(uuid())
   candidateId  String
   offerId      String
+  candidateCVId String?
   status       ApplicationStatus @default(new)
   
   // Data extraction & AI
   cvUrl        String?
   cvText       String?
+  cvTextSnapshot String?
   formData     Json?
   cvTemplate   String?
   coverNote    String?
@@ -167,6 +171,7 @@ model Application {
 
   candidate    User              @relation(fields: [candidateId], references: [id], onDelete: Cascade)
   offer        JobOffer          @relation(fields: [offerId], references: [id], onDelete: Cascade)
+  candidateCV  CandidateCV?      @relation(fields: [candidateCVId], references: [id], onDelete: SetNull)
   interview    Interview?
 
   @@unique([candidateId, offerId])

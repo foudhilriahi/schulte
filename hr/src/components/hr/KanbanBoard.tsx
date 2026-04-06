@@ -5,6 +5,7 @@ import CandidateDrawer from "./CandidateDrawer";
 import KanbanFilters from "./KanbanFilters";
 import ScheduleInterviewModal from "./ScheduleInterviewModal";
 import { api } from "@/lib/axios";
+import { getApplicationAnalysisText } from "@/lib/applicationText";
 import { toast } from "sonner";
 import type { KanbanStatus } from "@/data/hrMockData";
 import { useSocket } from "@/hooks/useSocket";
@@ -65,14 +66,14 @@ const KanbanBoard = () => {
           contractType: a.offer?.contractType || "CDI",
           city: a.offer?.site || "Bouarada",
           aiScore: a.aiScore ?? 0,
-              aiAnalysis: a.aiAnalysis || null,
-              starRating: a.hrRating ?? 0,
+            aiAnalysis: a.aiAnalysis || null,
+            starRating: a.hrRating ?? 0,
           status: statusMap[a.status] || "new",
           skills: a.candidate?.skills || [],
-              cvText: a.cvText || "",
-              requiredSkills: a.offer?.requiredSkills || [],
-              experienceYears: a.offer?.experienceYears || 0,
-              description: a.offer?.description || "",
+            analysisText: getApplicationAnalysisText(a),
+            requiredSkills: a.offer?.requiredSkills || [],
+            experienceYears: a.offer?.experienceYears || 0,
+            description: a.offer?.description || "",
           experience: "",
           education: "",
           notes: a.hrNotes || "",

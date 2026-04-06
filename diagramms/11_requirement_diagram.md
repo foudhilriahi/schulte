@@ -19,16 +19,23 @@ requirementDiagram
 
     requirement REQ_CANDIDAT_DEPOT_PDF {
         id: 1.2
-        text: "Le candidat peut deposer un CV au format PDF max 5 Mo"
+        text: "Le candidat peut deposer un CV PDF max 5 Mo dans sa bibliotheque CV"
         risk: high
         verifymethod: test
     }
 
-    requirement REQ_CANDIDAT_FORMULAIRE {
+    requirement REQ_CANDIDAT_CV_BUILDER {
         id: 1.3
-        text: "Le candidat peut remplir un formulaire en 5 etapes avec sauvegarde automatique"
+        text: "Le candidat peut generer un CV via builder valide et l'enregistrer dans sa bibliotheque"
         risk: medium
         verifymethod: demonstration
+    }
+
+    requirement REQ_CANDIDAT_APPLY_CV_ONLY {
+        id: 1.6
+        text: "Le depot de candidature utilise uniquement un CV deja en bibliotheque avec CV par defaut"
+        risk: high
+        verifymethod: test
     }
 
     requirement REQ_CANDIDAT_SUIVI {
@@ -54,9 +61,16 @@ requirementDiagram
 
     requirement REQ_RH_IA {
         id: 2.2
-        text: "Le RH peut analyser un CV avec l'IA avec strategie primaire + fallback et resultat en quelques secondes"
+        text: "Le RH obtient une analyse IA dual provider fusionnee et persistante avec prompt partage"
         risk: high
         verifymethod: test
+    }
+
+    requirement REQ_CANDIDAT_TIPS_ONLY {
+        id: 2.5
+        text: "Le candidat voit des conseils IA uniquement; le score numerique est reserve RH"
+        risk: medium
+        verifymethod: demonstration
     }
 
     requirement REQ_RH_ENTRETIEN {
@@ -124,11 +138,13 @@ requirementDiagram
 
     PFE_Schulte - traces -> REQ_CANDIDAT_INSCRIPTION
     PFE_Schulte - traces -> REQ_CANDIDAT_DEPOT_PDF
-    PFE_Schulte - traces -> REQ_CANDIDAT_FORMULAIRE
+    PFE_Schulte - traces -> REQ_CANDIDAT_CV_BUILDER
     PFE_Schulte - traces -> REQ_CANDIDAT_SUIVI
     PFE_Schulte - traces -> REQ_CANDIDAT_PWA
+    PFE_Schulte - traces -> REQ_CANDIDAT_APPLY_CV_ONLY
     PFE_Schulte - traces -> REQ_RH_KANBAN
     PFE_Schulte - traces -> REQ_RH_IA
+    PFE_Schulte - traces -> REQ_CANDIDAT_TIPS_ONLY
     PFE_Schulte - traces -> REQ_RH_ENTRETIEN
     PFE_Schulte - traces -> REQ_RH_SITE
     PFE_Schulte - traces -> REQ_ADMIN_HR

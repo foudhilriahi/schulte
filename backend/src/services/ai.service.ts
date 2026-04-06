@@ -31,6 +31,8 @@
 //    ❌ qwen3-8b:free             — removed
 // ============================================================
 
+import fs from 'fs';
+import path from 'path';
 import { env } from '../config/env';
 import logger from '../utils/logger';
 
@@ -45,13 +47,17 @@ export interface AnalyseInput {
 }
 
 export interface AnalysisResult {
+  thinking: string;
   score: number;
+  confidence: 'high' | 'medium' | 'low';
+  confidenceScore?: number;
+  reasoning: string;
   strengths: string[];
   gaps: string[];
-  recommendation: 'Hire' | 'Interview' | 'Reject';
+  recommendation: 'Hire' | 'Interview' | 'Request More Info' | 'Reject';
   tipsForCandidate: string[];
+  tips_for_candidate?: string[];
   aiProvider?: string;
-  confidence?: number;
   language?: string;
 }
 export interface BattleResult {
@@ -123,37 +129,56 @@ const OR_MODELS: AIModel[] = [
 ];
 // ─── Prompt ───────────────────────────────────────────────
 
+let sharedPromptTemplate: string | null = null;
+
+function getSharedPromptTemplate(): string {
+  if (sharedPromptTemplate) return sharedPromptTemplate;
+
+  const promptPath = path.resolve(process.cwd(), '../hr/public/shared/analysis-prompt.txt');
+  sharedPromptTemplate = fs.readFileSync(promptPath, 'utf8');
+  return sharedPromptTemplate;
+}
+
+function injectPromptValue(template: string, token: string, value: string): string {
+  return template.split(token).join(value);
+}
+
 export function buildPrompt(input: AnalyseInput): string {
-  return `You are a senior HR recruiter at Schulte Automotive Tunisia, a German-owned cable assembly factory.
-Analyze this candidate's CV against the job requirements with professional depth.
+  let prompt = getSharedPromptTemplate();
+  prompt = injectPromptValue(prompt, '{{offerTitle}}', input.offerTitle);
+  prompt = injectPromptValue(prompt, '{{requiredSkills}}', input.requiredSkills.join(', '));
+  prompt = injectPromptValue(prompt, '{{experienceYears}}', String(input.experienceYears));
+  prompt = injectPromptValue(prompt, '{{description}}', input.description);
+  prompt = injectPromptValue(prompt, '{{cvText}}', input.cvText.substring(0, 5000));
+  return prompt;
+}
 
-JOB POSITION: ${input.offerTitle}
-REQUIRED SKILLS: ${input.requiredSkills.join(', ')}
-MINIMUM EXPERIENCE: ${input.experienceYears} years
-JOB DESCRIPTION: ${input.description}
+function toConfidenceLevel(cvText: string): 'high' | 'medium' | 'low' {
+  const len = (cvText || '').trim().length;
+  if (len < 200) return 'low';
+  if (len < 1200) return 'medium';
+  return 'high';
+}
 
-CANDIDATE CV:
-${input.cvText.substring(0, 5000)}
+function toConfidenceScore(level: 'high' | 'medium' | 'low'): number {
+  if (level === 'high') return 85;
+  if (level === 'medium') return 60;
+  return 30;
+}
 
-EVALUATION CRITERIA:
-1. TECHNICAL SKILLS MATCH (40%): required skills present? proficiency level? certifications?
-2. EXPERIENCE RELEVANCE (30%): years vs required, industry fit (automotive preferred), progression
-3. EDUCATION (15%): degree relevance, certifications
-4. SOFT SKILLS (15%): French/English/German/Arabic, teamwork, leadership, communication
-
-SCORING:
-- 85–100 → Hire
-- 70–84  → Interview
-- 50–69  → Interview (conditional)
-- <50    → Reject
-
-Return ONLY valid JSON — no markdown, no backticks, no explanation:
-{"score":<0-100>,"strengths":["s1","s2","s3"],"gaps":["g1","g2"],"recommendation":"<Hire|Interview|Reject>","tipsForCandidate":["t1","t2"],"confidence":<0-100>,"language":"<detected CV language>"}`;
+function recommendationFromScore(
+  score: number,
+  confidence: 'high' | 'medium' | 'low',
+): AnalysisResult['recommendation'] {
+  if (confidence === 'low') return 'Request More Info';
+  if (score >= 85) return 'Hire';
+  if (score >= 60) return 'Interview';
+  return 'Reject';
 }
 
 // ─── JSON parser ──────────────────────────────────────────
 
-export function parseAIResponse(raw: string, provider: string): AnalysisResult {
+export function parseAIResponse(raw: string, provider: string, input?: AnalyseInput): AnalysisResult {
   let s = raw.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
   const a = s.indexOf('{');
   const b = s.lastIndexOf('}');
@@ -162,13 +187,43 @@ export function parseAIResponse(raw: string, provider: string): AnalysisResult {
   const p = JSON.parse(s);
 
   const score = Math.max(0, Math.min(100, Math.round(Number(p.score) || 60)));
-  const validRecs = ['Hire', 'Interview', 'Reject'];
-  const recommendation: AnalysisResult['recommendation'] = validRecs.includes(p.recommendation)
+  const confidenceFromText = toConfidenceLevel(input?.cvText || '');
+  const confidence: AnalysisResult['confidence'] = confidenceFromText;
+
+  const validRecs = ['Hire', 'Interview', 'Request More Info', 'Reject'];
+  let recommendation: AnalysisResult['recommendation'] = validRecs.includes(p.recommendation)
     ? (p.recommendation as AnalysisResult['recommendation'])
-    : 'Interview';
+    : recommendationFromScore(score, confidence);
+
+  if (confidence === 'low') {
+    recommendation = 'Request More Info';
+  } else if (recommendation === 'Request More Info') {
+    recommendation = recommendationFromScore(score, confidence);
+  }
+
+  const defaultLowConfidenceReasoning =
+    "Le CV fourni contient des informations limitees, ce qui rend une evaluation complete difficile. Cette analyse est basee sur les elements disponibles et peut ne pas refleter tout le profil du candidat.";
+  const rawReasoning = String(p.reasoning || '').trim();
+  const reasoning =
+    confidence === 'low'
+      ? rawReasoning
+        ? rawReasoning
+        : defaultLowConfidenceReasoning
+      : rawReasoning ||
+        'Le profil semble globalement pertinent, mais une validation humaine reste necessaire avant la decision finale.';
+
+  const tips = Array.isArray(p.tips_for_candidate)
+    ? p.tips_for_candidate.slice(0, 3).map(String)
+    : Array.isArray(p.tipsForCandidate)
+      ? p.tipsForCandidate.slice(0, 3).map(String)
+      : ['Highlight relevant skills clearly', 'Quantify your experience with concrete examples'];
 
   return {
+    thinking: String(p.thinking || 'Hard skills, experience, and CV quality were evaluated before deriving the final score.'),
     score,
+    confidence,
+    confidenceScore: toConfidenceScore(confidence),
+    reasoning,
     strengths: Array.isArray(p.strengths)
       ? p.strengths.slice(0, 5).map(String)
       : ['Profile received and processed'],
@@ -176,11 +231,9 @@ export function parseAIResponse(raw: string, provider: string): AnalysisResult {
       ? p.gaps.slice(0, 3).map(String)
       : ['Manual review recommended'],
     recommendation,
-    tipsForCandidate: Array.isArray(p.tipsForCandidate)
-      ? p.tipsForCandidate.slice(0, 3).map(String)
-      : ['Highlight relevant skills clearly'],
+    tipsForCandidate: tips,
+    tips_for_candidate: tips,
     aiProvider: provider,
-    confidence: Math.max(0, Math.min(100, Math.round(Number(p.confidence) || 75))),
     language: String(p.language || 'Unknown'),
   };
 }
@@ -211,7 +264,7 @@ async function callGemini(model: AIModel, input: AnalyseInput): Promise<Analysis
   const text: string = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
   if (!text) throw new Error(`Gemini ${model.modelId}: empty response`);
 
-  return parseAIResponse(text, `${model.label} (Gemini)`);
+  return parseAIResponse(text, `${model.label} (Gemini)`, input);
 }
 
 // ─── OpenRouter caller ────────────────────────────────────
@@ -240,7 +293,7 @@ async function callOpenRouter(model: AIModel, input: AnalyseInput): Promise<Anal
   const text: string = data?.choices?.[0]?.message?.content ?? '';
   if (!text) throw new Error(`OpenRouter ${model.modelId}: empty response`);
 
-  return parseAIResponse(text, `${model.label} (OpenRouter)`);
+  return parseAIResponse(text, `${model.label} (OpenRouter)`, input);
 }
 // ─── Router ───────────────────────────────────────────────
 
@@ -264,6 +317,17 @@ function buildConsensus(results: AnalysisResult[]): AnalysisResult {
   const topRec = Object.entries(tally)
     .sort((a, b) => b[1] - a[1])[0][0] as AnalysisResult['recommendation'];
 
+  const confidenceTally: Record<'high' | 'medium' | 'low', number> = {
+    high: 0,
+    medium: 0,
+    low: 0,
+  };
+  results.forEach((r) => {
+    confidenceTally[r.confidence] += 1;
+  });
+  const confidence = (Object.entries(confidenceTally)
+    .sort((a, b) => b[1] - a[1])[0][0] || 'medium') as AnalysisResult['confidence'];
+
   const representative = results.reduce((best, r) =>
     Math.abs(r.score - avgScore) < Math.abs(best.score - avgScore) ? r : best
   );
@@ -272,7 +336,8 @@ function buildConsensus(results: AnalysisResult[]): AnalysisResult {
     ...representative,
     score: Math.round(avgScore),
     recommendation: topRec,
-    confidence: Math.round(results.reduce((s, r) => s + (r.confidence ?? 75), 0) / results.length),
+    confidence,
+    confidenceScore: toConfidenceScore(confidence),
     aiProvider: `Consensus (${results.length} models): ${results.map(r => r.aiProvider).join(', ')}`,
   };
 }
@@ -286,7 +351,11 @@ function buildFallback(input: AnalyseInput): AnalysisResult {
   const score = Math.max(40, Math.min(70, Math.round(ratio * 80 + 20)));
 
   return {
+    thinking: 'Hard skills overlap is estimated from keyword matches, then adjusted for role fit and limited context quality.',
     score,
+    confidence: toConfidenceLevel(input.cvText),
+    confidenceScore: toConfidenceScore(toConfidenceLevel(input.cvText)),
+    reasoning: 'Le systeme automatique detecte certains elements compatibles avec le poste, mais l evaluation reste limitee sans analyse IA complete. Une revue RH est recommandee pour confirmer les points cles.',
     strengths: [
       'CV received and processed',
       found.length > 0 ? `Matching skills detected: ${found.join(', ')}` : 'Profile submitted for review',
@@ -296,13 +365,16 @@ function buildFallback(input: AnalyseInput): AnalysisResult {
       input.requiredSkills.length > found.length ? 'Some required skills not explicitly mentioned' : 'Minor gaps identified',
       'AI analysis temporarily unavailable — manual review required',
     ],
-    recommendation: score >= 60 ? 'Interview' : 'Reject',
+    recommendation: recommendationFromScore(score, toConfidenceLevel(input.cvText)),
     tipsForCandidate: [
       'List all technical and domain skills explicitly in your CV',
       'Highlight any automotive or manufacturing experience',
     ],
+    tips_for_candidate: [
+      'List all technical and domain skills explicitly in your CV',
+      'Highlight any automotive or manufacturing experience',
+    ],
     aiProvider: 'Keyword Fallback (all AI services unavailable)',
-    confidence: 40,
     language: 'Auto-detected',
   };
 }
@@ -312,9 +384,11 @@ export class CVTextExtractor {
   /** Extract text from a base64-encoded PDF buffer */
   static async extractFromPDF(base64Data: string): Promise<string> {
     try {
-      const pdfParse = require('pdf-parse');
-      const buffer   = Buffer.from(base64Data, 'base64');
-      const data     = await pdfParse(buffer);
+      const { PDFParse } = await import('pdf-parse');
+      const buffer = Buffer.from(base64Data, 'base64');
+      const parser = new PDFParse({ data: buffer });
+      const data = await parser.getText();
+      if (typeof parser.destroy === 'function') await parser.destroy();
       const text     = data.text.replace(/\s+/g, ' ').trim();
 
       logger.info(`📄 PDF extracted: ${text.length} chars`);

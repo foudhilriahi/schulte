@@ -66,9 +66,8 @@ export default function SocketListener() {
   useSocketEvent('ai:analysis_complete', useCallback((data: any) => {
     queryClient.invalidateQueries({ queryKey: ['applications'] })
     queryClient.invalidateQueries({ queryKey: ['application', data.applicationId] })
-    
-    const scoreEmoji = data.score >= 70 ? '🎉' : data.score >= 50 ? '👍' : '📊'
-    toast.success(`${scoreEmoji} Analyse IA terminée : ${data.score}/100 pour ${data.jobTitle}`)
+
+    toast.success(`✨ Analyse IA terminée pour ${data.jobTitle}`)
     fetchNotifications()
   }, [queryClient, fetchNotifications]))
 
@@ -77,7 +76,7 @@ export default function SocketListener() {
     queryClient.invalidateQueries({ queryKey: ['applications'] })
     queryClient.invalidateQueries({ queryKey: ['application', data.applicationId] })
     
-    toast.info(`🔄 Analyse IA mise à jour : ${data.score}/100 pour ${data.jobTitle}`)
+    toast.info(`🔄 Analyse IA mise à jour pour ${data.jobTitle}`)
     fetchNotifications()
   }, [queryClient, fetchNotifications]))
 

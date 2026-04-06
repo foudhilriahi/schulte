@@ -7,7 +7,12 @@ import { api } from "@/lib/axios";
 import { authSession } from "@/lib/authSession";
 import { toast } from "sonner";
 import ScheduleInterviewModal from "./ScheduleInterviewModal";
-import PuterAIBattle from "./PuterAIBattle";
+import {
+  runDualAnalysis,
+  persistDualAnalysis,
+  normalizeStoredDualAnalysis,
+  type DualAnalysisResult,
+} from "@/lib/dual-ai-analysis";
 
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:4000/api";
 
@@ -24,19 +29,15 @@ const CandidateDrawer = ({
 }: CandidateDrawerProps) => {
   const [notes, setNotes] = useState("");
   const [rating, setRating] = useState(0);
-  const [aiResult, setAiResult] = useState<any>(null);
+  const [analysis, setAnalysis] = useState<DualAnalysisResult | null>(null);
   const [analysing, setAnalysing] = useState(false);
-  const [aiSource, setAiSource] = useState<'backend' | 'puter' | null>(null);
-  const [puterResults, setPuterResults] = useState<any[]>([]);
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
 
   useEffect(() => {
     if (!open || !candidate) return;
     setNotes(candidate.notes || "");
     setRating(candidate.starRating || 0);
-    setAiResult(null);
-    setAiSource(null);
-    setPuterResults([]);
+    setAnalysis(normalizeStoredDualAnalysis(candidate.aiAnalysis));
   }, [candidate?.id, open]);
 
   if (!open || !candidate) return null;
@@ -60,59 +61,36 @@ const CandidateDrawer = ({
     }
   };
 
-  const runBackendAI = async () => {
+  const runDualAI = async () => {
     setAnalysing(true);
-    setAiResult(null);
-    setAiSource(null);
     
     try {
-      // Call backend API for AI analysis (Gemini + OpenRouter battle)
-      const response = await api.post(`/applications/${candidate.id}/analyse`);
-      const result = response.data;
-      
-      setAiResult(result);
-      setAiSource('backend');
-      
-      toast.success(`✨ Backend AI Analysis Complete (${result.aiProvider})`);
+      const dualResult = await runDualAnalysis(candidate.id, {
+        cvText: candidate.analysisText || "",
+        offerTitle: candidate.jobTitle || "",
+        requiredSkills: candidate.requiredSkills || [],
+        experienceYears: candidate.experienceYears || 0,
+        description: candidate.description || "",
+      });
+
+      await persistDualAnalysis(candidate.id, dualResult);
+      setAnalysis(dualResult);
+
+      if (dualResult.providers.length === 1) {
+        toast.success(`Dual analysis complete (single provider succeeded: ${dualResult.providers[0].name})`);
+      } else {
+        toast.success("Dual analysis complete and saved.");
+      }
     } catch (error: any) {
-      console.error('Backend AI analysis error:', error);
-      const errorMsg = error.response?.data?.error || 'Backend AI analysis unavailable';
+      console.error("Dual AI analysis error:", error);
+      const errorMsg = error?.response?.data?.error || error?.message || "Dual AI analysis unavailable";
       toast.error(errorMsg);
     } finally {
       setAnalysing(false);
     }
   };
 
-  // Parse existing AI analysis from database
-  const parseExistingAnalysis = (aiAnalysis: string) => {
-    try {
-      const parsed = JSON.parse(aiAnalysis);
-      return parsed;
-    } catch {
-      return null;
-    }
-  };
-
-  // Get current AI result (either fresh or from database)
-  const getCurrentAIResult = () => {
-    if (aiResult) return aiResult;
-    if (candidate.aiAnalysis) {
-      const parsed = parseExistingAnalysis(candidate.aiAnalysis);
-      if (parsed) return parsed;
-    }
-    return null;
-  };
-
-  const currentAIResult = getCurrentAIResult();
-
-  const handlePuterResults = (results: any[]) => {
-    setPuterResults(results);
-    // If we don't have backend results, use Puter consensus as main result
-    if (!aiResult && results.length > 0) {
-      setAiResult(results[0]); // Use first result or create consensus
-      setAiSource('puter');
-    }
-  };
+  const confidenceLevel = analysis?.mergedConfidence || "";
 
   return (
     <>
@@ -218,219 +196,108 @@ const CandidateDrawer = ({
               </div>
             </section>
 
-            {/* Backend AI Analysis */}
+            {/* Dual AI Analysis */}
             <section>
               <h3 className="text-sm font-semibold text-[#1A2B4A] mb-2">
-                Backend AI Analysis
+                Dual AI Analysis
               </h3>
-              {!currentAIResult ? (
+              {!analysis ? (
                 <Button
-                  onClick={runBackendAI}
+                  onClick={runDualAI}
                   disabled={analysing}
                   className="w-full gap-2 bg-[#1A2B4A]"
                 >
                   {analysing ? (
                     <>
                       <Bot className="h-4 w-4 animate-pulse" />
-                      Analysing...
+                      Analysing in parallel...
                     </>
                   ) : (
                     <>
                       <Zap className="h-4 w-4" />
-                      Analyse with Backend AI
+                      Run Dual Analysis (Puter + Gemini)
                     </>
                   )}
                 </Button>
               ) : (
                 <div className="space-y-3">
-                  {/* Score */}
+                  {/* Merged Score */}
                   <div className="flex items-center gap-3">
                     <span
                       className={`flex h-12 w-12 items-center justify-center rounded-full text-lg font-bold ${
-                        (currentAIResult?.score || candidate.aiScore || 0) >= 70
+                        analysis.mergedScore >= 70
                           ? "bg-emerald-100 text-emerald-800"
-                          : (currentAIResult?.score || candidate.aiScore || 0) >= 40
+                          : analysis.mergedScore >= 40
                             ? "bg-amber-100 text-amber-800"
                             : "bg-red-100 text-red-800"
                       }`}
                     >
-                      {currentAIResult?.score || candidate.aiScore || 0}
+                      {analysis.mergedScore}
                     </span>
                     <div className="flex flex-col gap-1">
                       <Badge
                         className={`${
-                          currentAIResult?.recommendation === "Hire"
+                          analysis.mergedRecommendation === "Hire"
                             ? "bg-emerald-100 text-emerald-800"
-                            : currentAIResult?.recommendation === "Interview"
+                            : analysis.mergedRecommendation === "Interview"
                               ? "bg-amber-100 text-amber-800"
+                            : analysis.mergedRecommendation === "Request More Info"
+                              ? "bg-blue-100 text-blue-800"
                               : "bg-red-100 text-red-800"
                         }`}
                       >
-                        {currentAIResult?.recommendation || "—"}
+                        {analysis.mergedRecommendation}
                       </Badge>
-                      {aiSource && (
+                      {confidenceLevel ? (
                         <Badge variant="outline" className="text-xs">
-                          {aiSource === 'backend' ? '🤖 Backend AI' : '✨ Puter.js'}
+                          Confidence: {confidenceLevel}
                         </Badge>
-                      )}
-                      {(currentAIResult?.confidence || 0) > 0 && (
-                        <Badge variant="outline" className="text-xs">
-                          {currentAIResult.confidence}% confidence
-                        </Badge>
-                      )}
+                      ) : null}
                     </div>
                   </div>
 
-                  {/* Detailed Analysis Breakdown */}
-                  {currentAIResult?.detailedAnalysis && (
-                    <div className="space-y-3 border-t pt-3">
-                      <h4 className="text-xs font-semibold text-[#1A2B4A]">Detailed Analysis</h4>
-                      
-                      {/* Technical Skills */}
-                      <div className="p-3 bg-blue-50 rounded-lg">
-                        <div className="flex items-center justify-between mb-2">
-                          <p className="text-xs font-semibold text-blue-800">Technical Skills Match</p>
-                          <Badge variant="outline" className="text-xs">
-                            {currentAIResult.detailedAnalysis.technicalSkillsMatch.score}/100
-                          </Badge>
-                        </div>
-                        <p className="text-xs text-blue-700 mb-2">
-                          {currentAIResult.detailedAnalysis.technicalSkillsMatch.reasoning}
-                        </p>
-                        {currentAIResult.detailedAnalysis.technicalSkillsMatch.matchedSkills.length > 0 && (
-                          <div className="mb-2">
-                            <p className="text-xs font-medium text-green-700">✅ Matched Skills:</p>
-                            <div className="flex flex-wrap gap-1 mt-1">
-                              {currentAIResult.detailedAnalysis.technicalSkillsMatch.matchedSkills.map((skill: string, i: number) => (
-                                <Badge key={i} variant="secondary" className="text-xs bg-green-100 text-green-800">
-                                  {skill}
-                                </Badge>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                        {currentAIResult.detailedAnalysis.technicalSkillsMatch.missingSkills.length > 0 && (
-                          <div>
-                            <p className="text-xs font-medium text-red-700">❌ Missing Skills:</p>
-                            <div className="flex flex-wrap gap-1 mt-1">
-                              {currentAIResult.detailedAnalysis.technicalSkillsMatch.missingSkills.map((skill: string, i: number) => (
-                                <Badge key={i} variant="secondary" className="text-xs bg-red-100 text-red-800">
-                                  {skill}
-                                </Badge>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Experience */}
-                      <div className="p-3 bg-purple-50 rounded-lg">
-                        <div className="flex items-center justify-between mb-2">
-                          <p className="text-xs font-semibold text-purple-800">Experience Relevance</p>
-                          <Badge variant="outline" className="text-xs">
-                            {currentAIResult.detailedAnalysis.experienceRelevance.score}/100
-                          </Badge>
-                        </div>
-                        <p className="text-xs text-purple-700 mb-2">
-                          {currentAIResult.detailedAnalysis.experienceRelevance.reasoning}
-                        </p>
-                        <div className="grid grid-cols-2 gap-2 text-xs">
-                          <div>
-                            <span className="font-medium">Years Found:</span> {currentAIResult.detailedAnalysis.experienceRelevance.yearsFound}
-                          </div>
-                          <div>
-                            <span className="font-medium">Industry:</span> {currentAIResult.detailedAnalysis.experienceRelevance.industryMatch}
-                          </div>
-                          <div className="col-span-2">
-                            <span className="font-medium">Career Progression:</span> {currentAIResult.detailedAnalysis.experienceRelevance.careerProgression}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Education */}
-                      <div className="p-3 bg-indigo-50 rounded-lg">
-                        <div className="flex items-center justify-between mb-2">
-                          <p className="text-xs font-semibold text-indigo-800">Education Fit</p>
-                          <Badge variant="outline" className="text-xs">
-                            {currentAIResult.detailedAnalysis.educationFit.score}/100
-                          </Badge>
-                        </div>
-                        <p className="text-xs text-indigo-700 mb-2">
-                          {currentAIResult.detailedAnalysis.educationFit.reasoning}
-                        </p>
-                        <div className="text-xs">
-                          <div className="mb-1">
-                            <span className="font-medium">Degree Relevance:</span> {currentAIResult.detailedAnalysis.educationFit.degreeRelevance}
-                          </div>
-                          {currentAIResult.detailedAnalysis.educationFit.certifications.length > 0 && (
-                            <div>
-                              <span className="font-medium">Certifications:</span> {currentAIResult.detailedAnalysis.educationFit.certifications.join(', ')}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Soft Skills */}
-                      <div className="p-3 bg-teal-50 rounded-lg">
-                        <div className="flex items-center justify-between mb-2">
-                          <p className="text-xs font-semibold text-teal-800">Soft Skills</p>
-                          <Badge variant="outline" className="text-xs">
-                            {currentAIResult.detailedAnalysis.softSkills.score}/100
-                          </Badge>
-                        </div>
-                        <p className="text-xs text-teal-700 mb-2">
-                          {currentAIResult.detailedAnalysis.softSkills.reasoning}
-                        </p>
-                        <div className="text-xs">
-                          <div className="mb-1">
-                            <span className="font-medium">Communication:</span> {currentAIResult.detailedAnalysis.softSkills.communicationSkills}
-                          </div>
-                          {currentAIResult.detailedAnalysis.softSkills.languages.length > 0 && (
-                            <div>
-                              <span className="font-medium">Languages:</span> {currentAIResult.detailedAnalysis.softSkills.languages.join(', ')}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Overall Assessment */}
-                      <div className="p-3 bg-gray-50 rounded-lg">
-                        <p className="text-xs font-semibold text-gray-800 mb-2">Overall Assessment</p>
-                        <p className="text-xs text-gray-700 leading-relaxed">
-                          {currentAIResult.detailedAnalysis.overallAssessment}
-                        </p>
-                      </div>
+                  {analysis.providers.length > 1 && (analysis.agreement ? (
+                    <div className="p-3 bg-emerald-50 rounded-lg border border-emerald-200 text-xs text-emerald-900">
+                      Both AI providers reached the same recommendation.
                     </div>
-                  )}
+                  ) : (
+                    <div className="p-3 bg-amber-50 rounded-lg border border-amber-200 text-xs text-amber-900">
+                      <p className="font-semibold mb-1">The two assessments disagree.</p>
+                      <p>{analysis.disagreementNote}</p>
+                      <p className="mt-1">Read both reasoning sections and make your own judgment.</p>
+                    </div>
+                  ))}
 
-                  {/* Basic Analysis (fallback) */}
-                  {!currentAIResult?.detailedAnalysis && (
-                    <>
-                      {currentAIResult?.strengths && (
-                        <div className="p-3 bg-emerald-50 rounded-lg">
-                          <p className="text-xs font-semibold text-emerald-800 mb-1">
-                            Strengths
-                          </p>
-                          <ul className="text-xs text-emerald-700 space-y-0.5">
-                            {currentAIResult.strengths.map((s: string, i: number) => (
-                              <li key={i}>• {s}</li>
-                            ))}
-                          </ul>
+                  <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                    {analysis.providers.map((provider) => (
+                      <div key={provider.name} className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="text-xs font-semibold text-blue-900">{provider.name}</p>
+                          <Badge variant="outline" className="text-xs">
+                            {provider.score}/100 • {provider.recommendation}
+                          </Badge>
                         </div>
-                      )}
-                      {currentAIResult?.gaps && (
-                        <div className="p-3 bg-amber-50 rounded-lg">
-                          <p className="text-xs font-semibold text-amber-800 mb-1">
-                            Gaps
-                          </p>
-                          <ul className="text-xs text-amber-700 space-y-0.5">
-                            {currentAIResult.gaps.map((g: string, i: number) => (
-                              <li key={i}>• {g}</li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-                    </>
+                        <p className="text-xs text-blue-900 leading-relaxed">{provider.reasoning}</p>
+
+                        <details className="mt-3">
+                          <summary className="cursor-pointer text-xs font-semibold text-slate-700">
+                            Show thinking
+                          </summary>
+                          <p className="text-xs text-slate-700 mt-1 leading-relaxed">{provider.thinking}</p>
+                        </details>
+                      </div>
+                    ))}
+                  </div>
+
+                  {analysis.mergedTips.length > 0 && (
+                    <div className="p-3 bg-slate-50 rounded-lg border">
+                      <p className="text-xs font-semibold text-slate-800 mb-1">Merged candidate tips</p>
+                      <ul className="text-xs text-slate-700 space-y-1">
+                        {analysis.mergedTips.map((tip, i) => (
+                          <li key={i}>• {tip}</li>
+                        ))}
+                      </ul>
+                    </div>
                   )}
 
                   <p className="text-[10px] text-muted-foreground">
@@ -439,26 +306,14 @@ const CandidateDrawer = ({
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={runBackendAI}
+                    onClick={runDualAI}
                     disabled={analysing}
                     className="text-xs"
                   >
-                    {analysing ? "Re-analysing..." : "Re-analyse"}
+                    {analysing ? "Re-analysing..." : "Re-analyse with both providers"}
                   </Button>
                 </div>
               )}
-            </section>
-
-            {/* Puter.js AI Battle - Second Opinion */}
-            <section>
-              <PuterAIBattle
-                cvText={candidate.cvText || ''}
-                jobTitle={candidate.jobTitle || ''}
-                requiredSkills={candidate.requiredSkills || []}
-                experienceYears={candidate.experienceYears || 0}
-                description={candidate.description || ''}
-                onResults={handlePuterResults}
-              />
             </section>
           </div>
 

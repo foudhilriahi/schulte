@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge'
 import { Star } from 'lucide-react'
 import CandidateDrawer from '@/components/hr/CandidateDrawer'
 import { api } from '@/lib/axios'
+import { getApplicationAnalysisText } from '@/lib/applicationText'
 import { toast } from 'sonner'
 
 const statusLabels: Record<string, string> = {
@@ -29,7 +30,7 @@ const CandidatesPage = () => {
         phone: a.candidate?.phone || '',
         email: a.candidate?.email || '',
         cvUrl: a.cvUrl || '',
-        cvText: a.cvText || '',
+        analysisText: getApplicationAnalysisText(a),
         formData: a.formData || null,
         jobTitle: a.offer?.title || '',
         contractType: a.offer?.contractType || 'CDI',

@@ -1,63 +1,42 @@
-# Flowchart — Depot de CV et Traitement Backend
-# Du choix candidat jusqu'au stockage securise en base
+# Flowchart — CV Library puis Depot de Candidature (Flow actuel)
 
 ```mermaid
 flowchart TD
-    A([Candidat clique Deposer mon CV]) --> B[Selectionne un fichier]
-    B --> C{Type de fichier est application/pdf ?}
+    A([Candidat ouvre Profil > Mes CV]) --> B{Choix de creation CV}
 
-    C -- Non --> D["Erreur Uniquement les fichiers PDF sont acceptes"]
-    D --> B
+    B -->|Upload PDF| C[Validation client type PDF + taille <= 5 Mo]
+    C --> D[POST /api/cvs/upload]
+    D --> E[pdf-parse extrait cvText]
+    E --> F{cvText >= 50 caracteres}
+    F -->|Non| G[400 PDF vide/illisible]
+    F -->|Oui| H[Save CandidateCV source=profile_upload]
 
-    C -- Oui --> E{Taille inferieure ou egale a 5 Mo ?}
-    E -- Non --> F["Erreur Fichier trop lourd max 5 Mo"]
-    F --> B
+    B -->|Builder| I[Formulaire valide multi-etapes]
+    I --> J[POST /api/cvs/generated]
+    J --> K[Validation backend formData]
+    K --> L[Save CandidateCV source=profile_generated]
 
-    E -- Oui --> G["Fichier valide cote client - nom taille confirmation affiches"]
-    G --> H[Candidat clique Soumettre]
-    H --> I[POST /api/applications FormData Bearer JWT]
+    H --> M[Utilisateur peut marquer un CV par defaut]
+    L --> M
+    M --> N[PATCH /api/cvs/:id/default]
 
-    I --> J[Middleware authenticate verifie JWT]
-    J --> K[Multer fileFilter verifie MIME application/pdf cote serveur]
+    N --> O([Candidat clique Postuler sur offre])
+    O --> P[GET /api/cvs/mine]
+    P --> Q{CV selectionne ?}
+    Q -->|Non| R[Utilise CV par defaut]
+    Q -->|Oui| S[Utilise cvId choisi]
 
-    K --> L{MIME valide cote serveur ?}
-    L -- Non --> N["400 Seuls les PDF sont acceptes"]
+    R --> T[POST /api/applications/from-cv]
+    S --> T
 
-    L -- Oui --> O["Multer renomme en UUID.pdf nom original supprime"]
-    O --> P[Multer verifie taille max 5 Mo]
-    P --> Q{Taille OK ?}
-    Q -- Non --> R["413 Fichier trop volumineux - supprime automatiquement"]
+    T --> U[Verifie ownership cvId + offre open + unicite offre/candidat]
+    U --> V[Cree Application + candidateCVId + cvTextSnapshot]
+    V --> W[201 Created]
+    V --> X[Emit application:new room RH]
+    X --> Y[Kanban RH mis a jour]
 
-    Q -- Oui --> S["Stockage dans /uploads/UUID.pdf"]
-    S --> T[Backend verifie offer.status est open]
-    T --> U{Offre encore ouverte ?}
-    U -- Non --> V["400 Offre fermee - fichier supprime"]
-
-    U -- Oui --> W[pdf-parse extrait le texte du fichier]
-    W --> X{Texte extrait superieur a 50 caracteres ?}
-
-    X -- Non PDF vide --> Y[Supprime UUID.pdf]
-    Y --> Z["400 Le PDF semble vide - utilisez le formulaire"]
-
-    X -- PDF illisible --> AA[pdf-parse leve une exception]
-    AA --> AB[Supprime UUID.pdf]
-    AB --> AC["400 Impossible ouvrir le PDF - essayez un autre"]
-
-    X -- Oui PDF lisible --> AD[extractEmail sur le texte CV par regex]
-    AD --> AE{Email trouve dans le CV ?}
-
-    AE -- Oui --> AF[Met a jour email candidat en base]
-    AE -- Non --> AG[Candidat sans email - continue]
-
-    AF --> AH[applicationRepo.create offerId candidateId cvUrl cvText]
-    AG --> AH
-
-    AH --> AI{Candidature deja existante pour cette offre ?}
-    AI -- Oui --> AK["409 Vous avez deja postule a ce poste"]
-    AI -- Non --> AL["Application creee status new"]
-
-    AL --> AM[Socket.io emit application:new vers room hr]
-    AM --> AN[Tableau Kanban RH - nouvelle carte instantanee]
-    AL --> AO[201 Created avec applicationId]
-    AO --> AP([PWA Animation confetti et redirection vers ma candidature])
+    V --> Z[Analyse IA asynchrone depuis snapshot]
+    Z --> AA[Save aiAnalysis/aiScore]
+    AA --> AB[Emit application:analysed RH]
+    AA --> AC[Emit ai:analysis_complete candidat]
 ```

@@ -1,6 +1,6 @@
 'use client'
 
-import { ArrowLeft, Lightbulb, TrendingUp } from 'lucide-react'
+import { ArrowLeft, Lightbulb } from 'lucide-react'
 import { TimelineStepper } from '@/components/timeline-stepper'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -60,36 +60,6 @@ export function ApplicationDetailScreen({ application, onBack }: ApplicationDeta
           <h2 className="font-medium text-foreground mb-4">Application Status</h2>
           <TimelineStepper application={application} />
         </div>
-
-        {/* AI Score Display */}
-        {application.aiScore && application.aiScore > 0 && (
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base flex items-center gap-2">
-                <TrendingUp className="h-4 w-4 text-blue-600" />
-                Match Score
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-4">
-                <div className={`w-16 h-16 rounded-full flex items-center justify-center text-lg font-bold ${
-                  application.aiScore >= 70 
-                    ? 'bg-green-100 text-green-800' 
-                    : application.aiScore >= 40 
-                      ? 'bg-yellow-100 text-yellow-800' 
-                      : 'bg-red-100 text-red-800'
-                }`}>
-                  {application.aiScore}%
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm text-muted-foreground">
-                    Your profile matches {application.aiScore}% of the job requirements
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
 
         {/* AI Tips Section */}
         {hasAITips && (

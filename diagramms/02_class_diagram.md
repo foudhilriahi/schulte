@@ -51,6 +51,8 @@ classDiagram
         +String id
         +String offerId
         +String candidateId
+        +String candidateCvId
+        +String cvTextSnapshot
         +String cvUrl
         +String cvText
         +String formData
@@ -63,6 +65,21 @@ classDiagram
         +String hrTags
         +DateTime appliedAt
         +DateTime updatedAt
+    }
+
+    class CandidateCV {
+        +String id
+        +String candidateId
+        +String name
+        +String type
+        +String source
+        +String cvUrl
+        +String cvText
+        +String formData
+        +String cvTemplate
+        +Int size
+        +Boolean isDefault
+        +DateTime createdAt
     }
 
     class Interview {
@@ -125,6 +142,15 @@ classDiagram
         +bulkUpdateStatus(ids, status) void
     }
 
+    class CandidateCVRepository {
+        <<Repository>>
+        +findByCandidate(candidateId) CandidateCV
+        +findByIdForCandidate(candidateId, cvId) CandidateCV
+        +create(data) CandidateCV
+        +setDefault(candidateId, cvId) CandidateCV
+        +delete(candidateId, cvId) CandidateCV
+    }
+
     class InterviewRepository {
         <<Repository>>
         +create(data) Interview
@@ -157,6 +183,13 @@ classDiagram
         +buildPrompt(input) String
         +parseResponse(raw) String
         +assembleFormText(formData) String
+    }
+
+    class DualAnalysisService {
+        <<Service>>
+        +runPuterAndBackend(application) String
+        +mergeResults(results) String
+        +persistMerged(applicationId, merged) void
     }
 
     class GeminiStrategy {
@@ -204,10 +237,12 @@ classDiagram
     User "1" --> "*" JobOffer : cree
     User "1" --> "*" OfferTemplate : cree
     User "1" --> "*" Application : soumet
+    User "1" --> "*" CandidateCV : possede
     User "1" --> "*" Notification : recoit
     User "1" --> "*" Interview : planifie
     OfferTemplate "1" --> "*" JobOffer : sert de base
     JobOffer "1" --> "*" Application : recoit
+    CandidateCV "1" --> "*" Application : alimente candidature
     Application "1" --> "0..1" Interview : donne lieu a
     Application "1" --> "*" Notification : genere
 
@@ -220,6 +255,7 @@ classDiagram
     CronService ..> EmailService : envoie
 
     ApplicationRepository ..> Application : gere
+    CandidateCVRepository ..> CandidateCV : gere
     OfferRepository ..> JobOffer : gere
     UserRepository ..> User : gere
     InterviewRepository ..> Interview : gere

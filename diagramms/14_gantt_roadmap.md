@@ -18,11 +18,11 @@ gantt
 
     section Mois 2 Flux de Candidature
     Upload PDF Multer UUID pdf-parse             :done, m2t1, 2025-03-03, 5d
-    Formulaire 5 etapes auto-save localStorage  :done, m2t2, 2025-03-08, 5d
+    CV Builder multi-etapes validation renforcee :done, m2t2, 2025-03-08, 5d
     Generateur CV jsPDF Moderne et Classique     :done, m2t3, 2025-03-13, 4d
     Kanban glisser-deposer dnd-kit               :done, m2t4, 2025-03-17, 5d
     Drawer candidat visionneuse PDF              :done, m2t5, 2025-03-22, 4d
-    IA Puter.js + Gemini fallback + parsing      :done, m2t6, 2025-03-26, 3d
+    IA dual provider + prompt partage + merge    :done, m2t6, 2025-03-26, 3d
     Observer Socket.io + email par statut        :done, m2t7, 2025-03-29, 1d
 
     section Mois 3 Fonctionnalites Avancees
