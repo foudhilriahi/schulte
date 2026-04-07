@@ -13,6 +13,16 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { socketService } from '@/lib/socket'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 
 const HRAccountsPage = () => {
   const [accounts, setAccounts] = useState<any[]>([])
@@ -22,11 +32,32 @@ const HRAccountsPage = () => {
   const [createOpen, setCreateOpen] = useState(false)
   const [editOpen, setEditOpen] = useState(false)
   const [resetOpen, setResetOpen] = useState(false)
+  const [deactivateOpen, setDeactivateOpen] = useState(false)
   const [selected, setSelected] = useState<any>(null)
+  const [pendingDeactivate, setPendingDeactivate] = useState<any | null>(null)
+  const [creatingAccount, setCreatingAccount] = useState(false)
+  const [updatingAccount, setUpdatingAccount] = useState(false)
+  const [resettingPassword, setResettingPassword] = useState(false)
 
   // Form state
   const [form, setForm] = useState({ name: '', email: '', password: '', site: 'bouarada' })
   const [resetPw, setResetPw] = useState('')
+  
+  // Reset form on modal close
+  const handleCreateOpenChange = (open: boolean) => {
+    setCreateOpen(open)
+    if (!open) setForm({ name: '', email: '', password: '', site: 'bouarada' })
+  }
+  
+  const handleEditOpenChange = (open: boolean) => {
+    setEditOpen(open)
+    if (!open) setForm({ name: '', email: '', password: '', site: 'bouarada' })
+  }
+  
+  const handleResetOpenChange = (open: boolean) => {
+    setResetOpen(open)
+    if (!open) setResetPw('')
+  }
 
   const fetchAccounts = async () => {
     try {
@@ -61,15 +92,17 @@ const HRAccountsPage = () => {
       return
     }
 
+    setCreatingAccount(true)
     try {
       await api.post('/admin/hr-accounts', { ...form, email })
       toast.success('HR account created.')
-      setCreateOpen(false)
-      setForm({ name: '', email: '', password: '', site: 'bouarada' })
+      handleCreateOpenChange(false)
       fetchAccounts()
     } catch (err: any) {
       const details = err?.response?.data?.details
       toast.error(details?.[0] || err?.response?.data?.error || 'Error creating account')
+    } finally {
+      setCreatingAccount(false)
     }
   }
 
@@ -103,14 +136,17 @@ const HRAccountsPage = () => {
       return
     }
 
+    setUpdatingAccount(true)
     try {
       await api.patch(`/admin/hr-accounts/${selected.id}`, payload)
       toast.success('Account updated.')
-      setEditOpen(false)
+      handleEditOpenChange(false)
       fetchAccounts()
     } catch (err: any) {
       const details = err?.response?.data?.details
       toast.error(details?.[0] || err?.response?.data?.error || 'Error updating account')
+    } finally {
+      setUpdatingAccount(false)
     }
   }
 
@@ -129,30 +165,39 @@ const HRAccountsPage = () => {
       return
     }
 
+    setResettingPassword(true)
     try {
       await api.patch(`/admin/hr-accounts/${selected.id}`, { password })
       toast.success('Password reset.')
-      setResetOpen(false)
-      setResetPw('')
+      handleResetOpenChange(false)
+      fetchAccounts()
     } catch (err: any) {
       const details = err?.response?.data?.details
       toast.error(details?.[0] || err?.response?.data?.error || 'Error resetting password')
+    } finally {
+      setResettingPassword(false)
     }
   }
 
-  const handleToggle = async (user: any) => {
+  const openDeactivateDialog = (user: any) => {
     const isInactive = user?.isActive === false || !!user?.deletedAt || String(user?.email || '').startsWith('deleted_')
     if (isInactive) {
       toast.error('This account is already deactivated')
       return
     }
 
-    const ok = window.confirm(`Deactivate HR account \"${user.name}\"? This user will lose access immediately.`)
-    if (!ok) return
+    setPendingDeactivate(user)
+    setDeactivateOpen(true)
+  }
+
+  const confirmDeactivate = async () => {
+    if (!pendingDeactivate) return
 
     try {
-      await api.delete(`/admin/hr-accounts/${user.id}`)
+      await api.delete(`/admin/hr-accounts/${pendingDeactivate.id}`)
       toast.success('Account deactivated.')
+      setDeactivateOpen(false)
+      setPendingDeactivate(null)
       fetchAccounts()
     } catch (err: any) {
       const details = err?.response?.data?.details
@@ -236,7 +281,7 @@ const HRAccountsPage = () => {
                       <Button variant="ghost" size="sm" onClick={() => { setSelected(a); setResetOpen(true) }}>
                         <KeyRound className="h-3.5 w-3.5" />
                       </Button>
-                      <Button variant="ghost" size="sm" onClick={() => handleToggle(a)}>
+                      <Button variant="ghost" size="sm" onClick={() => openDeactivateDialog(a)}>
                         {(a.isActive !== false && !a.deletedAt && !String(a.email || '').startsWith('deleted_'))
                           ? <UserX className="h-3.5 w-3.5 text-red-500" />
                           : <UserCheck className="h-3.5 w-3.5 text-emerald-500" />}
@@ -251,7 +296,7 @@ const HRAccountsPage = () => {
       </Card>
 
       {/* Create Modal */}
-      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+      <Dialog open={createOpen} onOpenChange={handleCreateOpenChange}>
         <DialogContent>
           <DialogHeader><DialogTitle>Create HR Account</DialogTitle></DialogHeader>
           <div className="space-y-3">
@@ -269,12 +314,12 @@ const HRAccountsPage = () => {
               </Select>
             </div>
           </div>
-          <DialogFooter><Button onClick={handleCreate} className="bg-[#1A2B4A]">Create</Button></DialogFooter>
+          <DialogFooter><Button onClick={handleCreate} disabled={creatingAccount} className="bg-[#1A2B4A]">{creatingAccount ? 'Creating...' : 'Create'}</Button></DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Edit Modal */}
-      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+      <Dialog open={editOpen} onOpenChange={handleEditOpenChange}>
         <DialogContent>
           <DialogHeader><DialogTitle>Edit HR Account</DialogTitle></DialogHeader>
           <div className="space-y-3">
@@ -291,18 +336,46 @@ const HRAccountsPage = () => {
               </Select>
             </div>
           </div>
-          <DialogFooter><Button onClick={handleEdit} className="bg-[#1A2B4A]">Save</Button></DialogFooter>
+          <DialogFooter><Button onClick={handleEdit} disabled={updatingAccount} className="bg-[#1A2B4A]">{updatingAccount ? 'Saving...' : 'Save'}</Button></DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Reset Password Modal */}
-      <Dialog open={resetOpen} onOpenChange={setResetOpen}>
+      <Dialog open={resetOpen} onOpenChange={handleResetOpenChange}>
         <DialogContent>
           <DialogHeader><DialogTitle>Reset Password — {selected?.name}</DialogTitle></DialogHeader>
           <div><Label>New Password</Label><Input type="password" value={resetPw} onChange={e => setResetPw(e.target.value)} /></div>
-          <DialogFooter><Button onClick={handleReset} className="bg-[#1A2B4A]">Reset</Button></DialogFooter>
+          <DialogFooter><Button onClick={handleReset} disabled={resettingPassword} className="bg-[#1A2B4A]">{resettingPassword ? 'Resetting...' : 'Reset'}</Button></DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog
+        open={deactivateOpen}
+        onOpenChange={(open) => {
+          setDeactivateOpen(open)
+          if (!open) setPendingDeactivate(null)
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Désactiver ce compte RH ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingDeactivate
+                ? `Le compte ${pendingDeactivate.name} perdra immédiatement l'accès à la plateforme.`
+                : "Ce compte perdra immédiatement l'accès à la plateforme."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setPendingDeactivate(null)}>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeactivate}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Désactiver
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DashboardLayout>
   )
 }

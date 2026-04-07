@@ -46,6 +46,8 @@ const KanbanBoard = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [filterCity, setFilterCity] = useState("Tous");
   const [filterContract, setFilterContract] = useState("Tous");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState<"recent" | "score" | "name">("recent");
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
   const [pendingSchedule, setPendingSchedule] =
     useState<PendingSchedule | null>(null);
@@ -194,27 +196,69 @@ const KanbanBoard = () => {
     setDrawerOpen(true);
   }, []);
 
+  const handleQuickStatusChange = useCallback(
+    async (candidate: any, nextStatus: "new" | "review" | "interview" | "accepted" | "rejected") => {
+      setApplications((prev) =>
+        prev.map((app) =>
+          app.id === candidate.id ? { ...app, status: nextStatus } : app,
+        ),
+      );
+      if (nextStatus === "interview") {
+        setSelectedCandidate(candidate);
+      }
+    },
+    [],
+  );
+
   const filtered = applications.filter((c) => {
     if (filterCity !== "Tous" && c.city !== filterCity) return false;
     if (filterContract !== "Tous" && c.contractType !== filterContract)
       return false;
+    const q = searchQuery.trim().toLowerCase();
+    if (q) {
+      const haystack = [
+        c.name,
+        c.phone,
+        c.email,
+        c.jobTitle,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      if (!haystack.includes(q)) return false;
+    }
     return true;
   });
 
-  const getCandidatesForColumn = (status: KanbanStatus) =>
-    filtered.filter((c) => c.status === status);
+  const getCandidatesForColumn = (status: KanbanStatus) => {
+    const byStatus = filtered.filter((c) => c.status === status);
+    if (sortBy === "score") {
+      return [...byStatus].sort((a, b) => (b.aiScore || 0) - (a.aiScore || 0));
+    }
+    if (sortBy === "name") {
+      return [...byStatus].sort((a, b) => String(a.name || "").localeCompare(String(b.name || ""), "fr"));
+    }
+    return [...byStatus].sort(
+      (a, b) => new Date(b.appliedDate || 0).getTime() - new Date(a.appliedDate || 0).getTime(),
+    );
+  };
 
   return (
     <div className="space-y-4">
       <KanbanFilters
         filterCity={filterCity}
         filterContract={filterContract}
+        searchQuery={searchQuery}
+        sortBy={sortBy}
+        totalVisible={filtered.length}
         onCityChange={setFilterCity}
         onContractChange={setFilterContract}
+        onSearchChange={setSearchQuery}
+        onSortChange={setSortBy}
       />
 
       <DragDropContext onDragEnd={handleDragEnd}>
-        <div className="flex gap-4 overflow-x-auto pb-4">
+        <div className="flex gap-4 overflow-x-auto pb-4 items-stretch">
           {KANBAN_COLUMNS.map((col) => (
             <KanbanColumn
               key={col.id}
@@ -239,6 +283,7 @@ const KanbanBoard = () => {
         candidate={selectedCandidate}
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
+        onQuickStatusChange={handleQuickStatusChange}
       />
     </div>
   );

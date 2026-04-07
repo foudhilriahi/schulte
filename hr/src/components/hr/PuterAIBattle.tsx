@@ -4,27 +4,6 @@ import { Badge } from '@/components/ui/badge';
 import { Bot, Zap, RefreshCw, CheckCircle, XCircle, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 
-// Puter.js global type declaration
-declare global {
-  interface Window {
-    puter?: {
-      auth: {
-        getUser: () => Promise<{ username: string } | null>;
-        signIn: () => Promise<void>;
-        signOut: () => Promise<void>;
-      };
-      ai: {
-        chat: (prompt: string, options: {
-          model: string;
-          stream: boolean;
-          temperature?: number;
-          max_tokens?: number;
-        }) => AsyncIterable<{ text?: string }>;
-      };
-    };
-  }
-}
-
 // Puter.js models for HR second opinion
 const PUTER_MODELS = [
   { id: 'gpt-4o-mini', name: 'GPT-4o Mini', provider: 'OpenAI', color: '#10b981' },
@@ -73,8 +52,9 @@ export default function PuterAIBattle({
 
   const checkPuterAuth = async () => {
     try {
-      if (typeof window !== 'undefined' && window.puter?.auth) {
-        const user = await window.puter.auth.getUser();
+      const puter = typeof window !== 'undefined' ? (window as any).puter : null;
+      if (puter?.auth) {
+        const user = await puter.auth.getUser();
         setIsAuthenticated(!!user);
       }
     } catch (error) {
@@ -84,10 +64,11 @@ export default function PuterAIBattle({
 
   const signInToPuter = async () => {
     try {
-      if (typeof window !== 'undefined' && window.puter?.auth) {
-        await window.puter.auth.signIn();
+      const puter = typeof window !== 'undefined' ? (window as any).puter : null;
+      if (puter?.auth) {
+        await puter.auth.signIn();
         await checkPuterAuth();
-        toast.success('✅ Signed in to Puter.js');
+        toast.success('Signed in to Puter.js');
       }
     } catch (error) {
       toast.error('Failed to sign in to Puter.js');
@@ -153,20 +134,25 @@ Return ONLY valid JSON — no markdown, no backticks, no explanation:
 
   const callPuterModel = async (model: any): Promise<any> => {
     const prompt = buildPrompt();
-    
-    if (typeof window !== 'undefined' && window.puter?.ai) {
-      const stream = await window.puter.ai.chat(prompt, { 
+
+    const puter = typeof window !== 'undefined' ? (window as any).puter : null;
+    if (puter?.ai) {
+      const stream = await puter.ai.chat(prompt, {
         model: model.id, 
         stream: true,
         temperature: 0.2,
         max_tokens: 2000
       });
-      
+
       let text = '';
       for await (const part of stream) {
-        text += part?.text || '';
+        if (typeof part === 'string') {
+          text += part;
+        } else {
+          text += part?.text || '';
+        }
       }
-      
+
       return parseResponse(text, `${model.name} (Puter.js)`);
     } else {
       throw new Error('Puter.js not available');
@@ -250,7 +236,7 @@ Return ONLY valid JSON — no markdown, no backticks, no explanation:
       setConsensus(consensusResult);
       onResults?.(successfulResults);
       
-      toast.success(`🎉 Puter.js Battle Complete! ${successfulResults.length}/${PUTER_MODELS.length} models succeeded`);
+      toast.success(`Puter.js battle complete: ${successfulResults.length}/${PUTER_MODELS.length} models succeeded`);
     } else {
       toast.error('All Puter.js models failed');
     }
@@ -289,12 +275,12 @@ Return ONLY valid JSON — no markdown, no backticks, no explanation:
         <div className="flex items-center gap-2">
           <Bot className="h-5 w-5 text-purple-600" />
           <h3 className="font-semibold text-sm">Puter.js AI Battle</h3>
-          <Badge variant="outline" className="text-xs">Second Opinion</Badge>
+          <Badge variant="outline" className="text-xs">Second opinion</Badge>
         </div>
         
         {!isAuthenticated ? (
           <Button size="sm" variant="outline" onClick={signInToPuter}>
-            🔑 Sign in (free)
+            Sign in (free)
           </Button>
         ) : (
           <Button 
@@ -371,7 +357,7 @@ Return ONLY valid JSON — no markdown, no backticks, no explanation:
         <div className="p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-200">
           <div className="flex items-center gap-2 mb-3">
             <Bot className="h-4 w-4 text-purple-600" />
-            <span className="font-semibold text-sm">Puter.js Consensus</span>
+            <span className="font-semibold text-sm">Puter.js consensus</span>
           </div>
           
           <div className="grid grid-cols-3 gap-4 mb-3">
@@ -397,7 +383,7 @@ Return ONLY valid JSON — no markdown, no backticks, no explanation:
           
           {consensus.strengths?.length > 0 && (
             <div className="mb-2">
-              <div className="text-xs font-semibold text-green-700 mb-1">✅ Strengths</div>
+              <div className="text-xs font-semibold text-green-700 mb-1">Strengths</div>
               <div className="text-xs text-green-600 space-y-0.5">
                 {consensus.strengths.map((strength: string, i: number) => (
                   <div key={i}>• {strength}</div>
@@ -408,7 +394,7 @@ Return ONLY valid JSON — no markdown, no backticks, no explanation:
           
           {consensus.gaps?.length > 0 && (
             <div>
-              <div className="text-xs font-semibold text-amber-700 mb-1">⚠️ Gaps</div>
+              <div className="text-xs font-semibold text-amber-700 mb-1">Gaps</div>
               <div className="text-xs text-amber-600 space-y-0.5">
                 {consensus.gaps.map((gap: string, i: number) => (
                   <div key={i}>• {gap}</div>

@@ -71,6 +71,12 @@ export function saveLatestDraft<T = any>(userId: string | null | undefined, draf
   localStorage.setItem(getUserLatestDraftKey(userId), JSON.stringify(draft))
 }
 
+export function clearLatestDraft(userId?: string | null): void {
+  if (typeof window === 'undefined') return
+  localStorage.removeItem(getUserLatestDraftKey(userId))
+  localStorage.removeItem(getLegacyLatestDraftKey())
+}
+
 export function loadJobDraft<T = any>(jobId: string, userId?: string | null): T | null {
   if (typeof window === 'undefined') return null
 

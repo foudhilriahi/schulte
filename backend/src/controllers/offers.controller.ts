@@ -185,6 +185,20 @@ export class OffersController {
         salaryRange,
         showSalary
       } = req.body;
+
+      if (req.user?.role === 'HR' && !templateId) {
+        res.status(400).json({ error: 'HR must create offers from an active template.' });
+        return;
+      }
+
+      if (templateId) {
+        const prisma = (await import('../config/prisma')).default;
+        const template = await prisma.offerTemplate.findUnique({ where: { id: templateId as string } });
+        if (!template || !template.isActive || !!template.deletedAt) {
+          res.status(400).json({ error: 'Selected template is invalid or inactive.' });
+          return;
+        }
+      }
       
       const offer = await OfferRepository.create({
         title,

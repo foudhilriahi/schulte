@@ -1,6 +1,6 @@
-"use client";
+'use client'
 
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { Bell, Trash2, CheckCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNotificationStore } from "@/store/notifications";
@@ -36,6 +36,23 @@ export function NotificationsScreen() {
   const markOneRead = useNotificationStore((s) => s.markOneRead);
   const deleteNotification = useNotificationStore((s) => s.deleteNotification);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+
+  const groupedNotifications = useMemo(() => {
+    return notifications.reduce<Record<string, typeof notifications>>((groups, notification) => {
+      const dayKey = new Date(notification.createdAt).toLocaleDateString("fr-FR", {
+        weekday: "long",
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+      });
+
+      if (!groups[dayKey]) {
+        groups[dayKey] = [];
+      }
+      groups[dayKey].push(notification);
+      return groups;
+    }, {});
+  }, [notifications]);
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -109,61 +126,77 @@ export function NotificationsScreen() {
 
         {/* Notification list */}
         {!isLoading && notifications.length > 0 && (
-          <div className="flex flex-col gap-2">
-            {notifications.map((notification) => (
-              <div
-                key={notification.id}
-                onClick={() => markOneRead(notification.id)}
-                className={[
-                  "relative flex items-start gap-3 p-4 rounded-xl bg-card border cursor-pointer",
-                  "transition-colors hover:bg-muted/50 active:bg-muted",
-                  !notification.read
-                    ? "border-l-[3px] border-l-blue-500 border-t-border border-r-border border-b-border"
-                    : "border-border",
-                ].join(" ")}
-              >
-                {/* Unread dot */}
-                <div className="mt-1 shrink-0 flex items-start pt-0.5">
-                  {!notification.read ? (
-                    <span className="h-2 w-2 rounded-full bg-blue-500 mt-0.5" />
-                  ) : (
-                    <span className="h-2 w-2" /> /* spacer to keep alignment */
-                  )}
+          <div className="space-y-5">
+            {Object.entries(groupedNotifications).map(([dayLabel, group]) => (
+              <section key={dayLabel} className="space-y-2">
+                <div className="flex items-center justify-between gap-3">
+                  <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    {dayLabel}
+                  </h2>
+                  <span className="text-[10px] text-muted-foreground">
+                    {group.length} item{group.length > 1 ? 's' : ''}
+                  </span>
                 </div>
+                <div className="flex flex-col gap-2">
+                  {group.map((notification) => (
+                    <div
+                      key={notification.id}
+                      onClick={() => markOneRead(notification.id)}
+                      className={[
+                        "relative flex items-start gap-3 p-4 rounded-xl bg-card border cursor-pointer",
+                        "transition-colors hover:bg-muted/50 active:bg-muted",
+                        !notification.read
+                          ? "border-l-[3px] border-l-blue-500 border-t-border border-r-border border-b-border"
+                          : "border-border",
+                      ].join(" ")}
+                    >
+                      <div className="mt-1 shrink-0 flex items-start pt-0.5">
+                        <span className={notification.read ? "h-2 w-2" : "h-2 w-2 rounded-full bg-blue-500 mt-0.5"} />
+                      </div>
 
-                {/* Content */}
-                <div className="flex-1 min-w-0">
-                  <p
-                    className={[
-                      "text-sm leading-snug truncate",
-                      !notification.read
-                        ? "font-bold text-foreground"
-                        : "font-medium text-muted-foreground",
-                    ].join(" ")}
-                  >
-                    {notification.title}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1 line-clamp-2 leading-relaxed">
-                    {notification.message}
-                  </p>
-                  <p className="text-[10px] text-muted-foreground/70 mt-1.5">
-                    {formatRelative(notification.createdAt)}
-                  </p>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-2">
+                          <p
+                            className={[
+                              "text-sm leading-snug line-clamp-1",
+                              !notification.read
+                                ? "font-semibold text-foreground"
+                                : "font-medium text-muted-foreground",
+                            ].join(" ")}
+                          >
+                            {notification.title}
+                          </p>
+                          <span className="text-[10px] text-muted-foreground shrink-0">
+                            {formatRelative(notification.createdAt)}
+                          </span>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1 line-clamp-2 leading-relaxed">
+                          {notification.message}
+                        </p>
+                        <div className="mt-2 flex items-center gap-2">
+                          {!notification.read && (
+                            <span className="text-[10px] font-medium text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full">
+                              Non lue
+                            </span>
+                          )}
+                          <button
+                            type="button"
+                            aria-label="Supprimer la notification"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              deleteNotification(notification.id);
+                            }}
+                            className="inline-flex items-center gap-1 text-[10px] text-muted-foreground hover:text-red-600"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                            Supprimer
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-
-                {/* Delete button */}
-                <button
-                  type="button"
-                  aria-label="Supprimer la notification"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    deleteNotification(notification.id);
-                  }}
-                  className="shrink-0 p-1.5 rounded-lg text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              </div>
+              </section>
             ))}
           </div>
         )}

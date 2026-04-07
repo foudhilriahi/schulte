@@ -69,11 +69,16 @@ const formatInterviewDate = (dateStr: string, timeStr: string): string => {
 const InterviewsPage = () => {
   const [interviews, setInterviews] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedInterview, setSelectedInterview] = useState<any | null>(null);
   const [outcomeModalOpen, setOutcomeModalOpen] = useState(false);
+  const [scheduledPage, setScheduledPage] = useState(1);
+  const [concludedPage, setConcludedPage] = useState(1);
+  const pageSize = 12;
 
   const fetchInterviews = useCallback(() => {
     setLoading(true);
+    setError(null);
     api
       .get("/interviews")
       .then((res) => {
@@ -88,11 +93,15 @@ const InterviewsPage = () => {
               : '',
             notes: i.notesForCandidate || '',
             prepNotes: Array.isArray(i.notesForCandidate) ? i.notesForCandidate : [],
+            scheduledDate: dt,
           };
         });
         setInterviews(normalized);
+        setError(null);
       })
-      .catch(() => {
+      .catch((err) => {
+        console.error('Failed to load interviews:', err);
+        setError('Impossible de charger les entretiens.');
         setInterviews([]);
       })
       .finally(() => setLoading(false));
@@ -113,6 +122,25 @@ const InterviewsPage = () => {
     fetchInterviews();
   };
 
+  /* Group by status for a quick summary strip */
+  const now = new Date();
+  const scheduled = interviews.filter((i) => i.status === "scheduled" && i.scheduledDate && i.scheduledDate >= now);
+  const concluded = interviews.filter((i) => i.status !== "scheduled" || (i.scheduledDate && i.scheduledDate < now));
+
+  const scheduledPages = Math.max(1, Math.ceil(scheduled.length / pageSize));
+  const concludedPages = Math.max(1, Math.ceil(concluded.length / pageSize));
+
+  useEffect(() => {
+    if (scheduledPage > scheduledPages) setScheduledPage(scheduledPages);
+  }, [scheduledPage, scheduledPages]);
+
+  useEffect(() => {
+    if (concludedPage > concludedPages) setConcludedPage(concludedPages);
+  }, [concludedPage, concludedPages]);
+
+  const pagedScheduled = scheduled.slice((scheduledPage - 1) * pageSize, scheduledPage * pageSize);
+  const pagedConcluded = concluded.slice((concludedPage - 1) * pageSize, concludedPage * pageSize);
+
   if (loading) {
     return (
       <DashboardLayout title="Entretiens">
@@ -124,10 +152,6 @@ const InterviewsPage = () => {
     );
   }
 
-  /* Group by status for a quick summary strip */
-  const scheduled = interviews.filter((i) => i.status === "scheduled");
-  const concluded = interviews.filter((i) => i.status !== "scheduled");
-
   return (
     <DashboardLayout title="Entretiens">
       {/* Summary strip */}
@@ -135,7 +159,7 @@ const InterviewsPage = () => {
         {[
           {
             label: "Planifiés",
-            count: interviews.filter((i) => i.status === "scheduled").length,
+            count: scheduled.length,
             color: "bg-blue-50 text-blue-700 border-blue-200",
           },
           {
@@ -164,7 +188,13 @@ const InterviewsPage = () => {
         ))}
       </div>
 
-      {interviews.length === 0 && (
+      {error && (
+        <div className="mb-4 p-3 bg-red-50 text-red-700 text-sm rounded-lg border border-red-200">
+          {error}
+        </div>
+      )}
+
+      {interviews.length === 0 && !error && (
         <p className="text-muted-foreground text-sm">
           Aucun entretien planifié pour le moment.
         </p>
@@ -177,7 +207,7 @@ const InterviewsPage = () => {
             À venir
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-            {scheduled.map((interview) => (
+            {pagedScheduled.map((interview) => (
               <InterviewCard
                 key={interview.id}
                 interview={interview}
@@ -185,6 +215,29 @@ const InterviewsPage = () => {
               />
             ))}
           </div>
+          {scheduled.length > pageSize && (
+            <div className="mt-4 flex items-center justify-end gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={scheduledPage <= 1}
+                onClick={() => setScheduledPage((p) => Math.max(1, p - 1))}
+              >
+                Précédent
+              </Button>
+              <span className="text-xs text-muted-foreground">
+                Page {scheduledPage}/{scheduledPages}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={scheduledPage >= scheduledPages}
+                onClick={() => setScheduledPage((p) => Math.min(scheduledPages, p + 1))}
+              >
+                Suivant
+              </Button>
+            </div>
+          )}
         </section>
       )}
 
@@ -195,7 +248,7 @@ const InterviewsPage = () => {
             Terminés
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-            {concluded.map((interview) => (
+            {pagedConcluded.map((interview) => (
               <InterviewCard
                 key={interview.id}
                 interview={interview}
@@ -203,6 +256,29 @@ const InterviewsPage = () => {
               />
             ))}
           </div>
+          {concluded.length > pageSize && (
+            <div className="mt-4 flex items-center justify-end gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={concludedPage <= 1}
+                onClick={() => setConcludedPage((p) => Math.max(1, p - 1))}
+              >
+                Précédent
+              </Button>
+              <span className="text-xs text-muted-foreground">
+                Page {concludedPage}/{concludedPages}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={concludedPage >= concludedPages}
+                onClick={() => setConcludedPage((p) => Math.min(concludedPages, p + 1))}
+              >
+                Suivant
+              </Button>
+            </div>
+          )}
         </section>
       )}
 

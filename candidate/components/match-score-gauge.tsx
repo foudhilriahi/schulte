@@ -1,6 +1,5 @@
 'use client'
 
-import { motion } from 'framer-motion'
 import { useEffect, useState } from 'react'
 import { cn } from '@/lib/utils'
 
@@ -48,8 +47,7 @@ export function MatchScoreGauge({ score, size = 48, className }: MatchScoreGauge
             stroke="#f1f5f9" // slate-100
             strokeWidth={strokeWidth}
           />
-          {/* Animated progress circle */}
-          <motion.circle
+          <circle
             cx={size / 2}
             cy={size / 2}
             r={radius}
@@ -58,9 +56,10 @@ export function MatchScoreGauge({ score, size = 48, className }: MatchScoreGauge
             strokeWidth={strokeWidth}
             strokeDasharray={circumference}
             strokeLinecap="round"
-            initial={{ strokeDashoffset: circumference }}
-            animate={{ strokeDashoffset }}
-            transition={{ duration: 1.5, ease: "easeOut", delay: 0.1 }}
+            style={{
+              strokeDashoffset,
+              transition: mounted ? 'stroke-dashoffset 900ms ease-out' : 'none',
+            }}
           />
         </svg>
         <div className="absolute inset-0 flex items-center justify-center">

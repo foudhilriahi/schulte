@@ -9,6 +9,14 @@ import logger from "../utils/logger";
 import type { ApplicationStatus } from "@prisma/client";
 
 export class ApplicationsController {
+  private static normalizeStatus(status: unknown): ApplicationStatus | null {
+    if (status === "review") return "reviewing";
+    if (status === "new" || status === "reviewing" || status === "interview" || status === "accepted" || status === "rejected") {
+      return status;
+    }
+    return null;
+  }
+
   // GET /api/applications/mine (candidate)
   static async getMine(req: Request, res: Response): Promise<void> {
     try {
@@ -160,15 +168,24 @@ export class ApplicationsController {
     try {
       const id = req.params.id as string;
       const { status, hrNotes, aiScore, aiAnalysis } = req.body;
+      const normalizedStatus = ApplicationsController.normalizeStatus(status);
+
+      if (!normalizedStatus) {
+        res.status(400).json({
+          error: "Invalid application status",
+          allowed: ["new", "reviewing", "interview", "accepted", "rejected"],
+        });
+        return;
+      }
 
       const extra: Record<string, any> = {};
       if (hrNotes !== undefined) extra.hrNotes = hrNotes;
       if (aiScore !== undefined) extra.aiScore = aiScore;
       if (aiAnalysis !== undefined) extra.aiAnalysis = aiAnalysis;
 
-      const app = await ApplicationRepository.updateStatus(id, status, extra);
+      const app = await ApplicationRepository.updateStatus(id, normalizedStatus, extra);
 
-      logger.info(`Application ${id} status updated to: ${status}`);
+      logger.info(`Application ${id} status updated to: ${normalizedStatus}`);
 
       // Fetch full application with candidate + offer for notification payload
       const fullApp = await ApplicationRepository.findById(id);

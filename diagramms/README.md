@@ -26,12 +26,14 @@ Ils peuvent être intégrés directement dans le rapport PFE via tout éditeur M
 
 | Fichier | Description |
 |---|---|
-| [03_sequence_auth.md](./03_sequence_auth.md) | Authentification des 3 rôles (Admin email, RH email, Candidat téléphone) + rafraîchissement silencieux JWT |
+| [03_sequence_auth.md](./03_sequence_auth.md) | Authentification des 3 rôles (email + mot de passe), refresh token httpOnly et politique de reset mot de passe |
 | [04_sequence_candidature.md](./04_sequence_candidature.md) | Dépôt de candidature actuel : sélection CV bibliothèque, CV par défaut, endpoint `/applications/from-cv`, snapshot immutable et analyse async |
 | [05_sequence_ia.md](./05_sequence_ia.md) | Pipeline IA dual provider : Puter.js + backend Gemini avec prompt partagé, merge conservateur et persistance |
 | [06_sequence_temps_reel.md](./06_sequence_temps_reel.md) | Flux temps réel Socket.io : status, analyse terminée, entretien synchronisé côté candidat et room site RH |
 | [07_sequence_entretien.md](./07_sequence_entretien.md) | Planification d'entretien + rappel J-1 cron + décision finale (pass/fail/no_show) |
 | [08_sequence_admin.md](./08_sequence_admin.md) | Administration — CRUD comptes RH + gestion templates + propagation Socket.io `template:updated` |
+| [15_sequence_reset_password_hr.md](./15_sequence_reset_password_hr.md) | Reset mot de passe RH géré par Admin : modal Admin -> PATCH compte RH -> révocation des sessions |
+| [16_activity_kanban_status_update.md](./16_activity_kanban_status_update.md) | Activité Kanban RH : drag-and-drop + changement via drawer avec mapping `review` -> `reviewing` |
 
 ---
 

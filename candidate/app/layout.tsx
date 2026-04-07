@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from "next";
-import { Analytics } from "@vercel/analytics/next";
 import { BottomNav } from "@/components/bottom-nav";
 import { ToastProvider } from "@/components/toast-provider";
 import { Providers } from "@/components/providers";
@@ -10,6 +9,11 @@ export const metadata: Metadata = {
   description:
     "Find your next career opportunity at Schulte Tunisia automotive factory",
   manifest: "/manifest.json",
+  icons: {
+    icon: "/icon.svg",
+    shortcut: "/icon.svg",
+    apple: "/apple-touch-icon.svg",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
@@ -20,8 +24,9 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
+  maximumScale: 5,
+  userScalable: true,
+  viewportFit: "cover",
   themeColor: "#2563eb",
 };
 
@@ -42,7 +47,6 @@ export default function RootLayout({
             <BottomNav />
           </div>
           <ToastProvider />
-          <Analytics />
         </Providers>
       </body>
     </html>

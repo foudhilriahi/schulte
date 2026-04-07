@@ -54,9 +54,6 @@ const NewOfferPage = () => {
         showSalary: true,
         deadline: null,
       })
-    } else if (routeState?.selectedTemplate === null) {
-      // Create from scratch
-      setSelectedTemplate(null)
     } else {
       // No route state, show template selector
       setShowTemplateSelector(true)
@@ -96,23 +93,6 @@ const NewOfferPage = () => {
     setShowTemplateSelector(false)
   }
 
-  const handleCreateFromScratch = () => {
-    setSelectedTemplate(null)
-    setFormData({
-      title: '',
-      description: '',
-      contractType: '',
-      department: '',
-      requiredSkills: [],
-      experienceYears: 0,
-      seats: 1,
-      salaryRange: '',
-      showSalary: true,
-      deadline: null,
-    })
-    setShowTemplateSelector(false)
-  }
-
   const addSkill = () => {
     if (newSkill.trim() && !formData.requiredSkills.includes(newSkill.trim())) {
       setFormData(prev => ({
@@ -133,6 +113,12 @@ const NewOfferPage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
+    if (!selectedTemplate) {
+      toast.error('Veuillez sélectionner un modèle avant de créer une offre')
+      setShowTemplateSelector(true)
+      return
+    }
+
     if (!formData.title || !formData.description || !formData.contractType || !formData.deadline) {
       toast.error('Veuillez remplir tous les champs obligatoires')
       return
@@ -142,7 +128,7 @@ const NewOfferPage = () => {
     try {
       const payload = {
         ...formData,
-        templateId: selectedTemplate?.id || null,
+        templateId: selectedTemplate.id,
         site: user?.site || 'Bouarada',
         deadline: formData.deadline?.toISOString(),
       }
@@ -164,7 +150,6 @@ const NewOfferPage = () => {
           open={showTemplateSelector}
           onClose={() => navigate('/offers')}
           onSelectTemplate={handleTemplateSelect}
-          onCreateFromScratch={handleCreateFromScratch}
         />
       </DashboardLayout>
     )
@@ -181,7 +166,7 @@ const NewOfferPage = () => {
             </Button>
             <div>
               <h1 className="text-2xl font-bold text-[#1A2B4A]">
-                {selectedTemplate ? 'Nouvelle offre (modèle)' : 'Nouvelle offre (personnalisée)'}
+                Nouvelle offre (depuis modèle)
               </h1>
               {selectedTemplate && (
                 <div className="flex items-center gap-2 mt-1">

@@ -24,19 +24,21 @@ stateDiagram-v2
     Nouvelle --> IA : background analysis
     IA --> Nouvelle : resultat persiste
 
-    Nouvelle --> EnExamen : RH deplace la carte
+    Nouvelle --> EnExamen : RH deplace la carte ou applique depuis drawer
     Nouvelle --> Refusee : RH rejette directement
 
     state EnExamen {
         [*] --> EnCours
         note right of EnCours
+            Entree API normalisee: review -> reviewing
+            Statut invalide rejete en 400
             Socket.io status:changed vers PWA candidat
             Notification creee en base
             Email envoye si email disponible
         end note
     }
 
-    EnExamen --> EntretienPlanifie : RH deplace et remplit ScheduleModal
+    EnExamen --> EntretienPlanifie : RH deplace ou selectionne statut puis planifie
     EnExamen --> Refusee : RH rejette
 
     state EntretienPlanifie {

@@ -1,20 +1,21 @@
 # Diagramme de Sequence — Authentification des 3 Roles
-# Admin et RH utilisent email + mot de passe. Candidat utilise telephone + email optionnel.
+# Tous les roles se connectent par email + mot de passe.
 
 ```mermaid
 sequenceDiagram
     actor Admin as Admin
+    actor RH as RH
     actor Candidat as Candidat PWA
     participant Frontend as Next.js Frontend
     participant Backend as Express API
     participant DB as PostgreSQL
     participant Cookie as Cookie httpOnly
 
-    Note over Admin, Cookie: Connexion Admin ou RH par email + mot de passe
+    Note over Admin, RH: Connexion Admin et RH
 
     Admin->>Frontend: Saisit email + mot de passe
     Frontend->>Backend: POST /api/auth/login avec email et password
-    Backend->>Backend: Rate limiter 5 tentatives par 15 min
+    Backend->>Backend: Login limiter (fenetre de protection)
     alt Trop de tentatives
         Backend-->>Frontend: 429 Trop de tentatives
     else OK
@@ -27,37 +28,62 @@ sequenceDiagram
             Backend->>DB: Sauvegarde SHA-256 du refreshToken
             Backend->>Cookie: setRefreshCookie httpOnly 30 jours
             Backend-->>Frontend: 200 avec accessToken et user
-            Frontend->>Frontend: Stocke dans authStore Zustand (sessionStorage par onglet pour HR/Admin)
+            Frontend->>Frontend: Stocke token et profil (store front)
             Frontend-->>Admin: Redirection dashboard
         end
     end
 
-    Note over Candidat, Cookie: Inscription candidat avec telephone tunisien
+    RH->>Frontend: Saisit email + mot de passe
+    Frontend->>Backend: POST /api/auth/login
+    Backend->>DB: Verifie credentials + compte actif
+    alt Compte RH inactif
+        Backend-->>Frontend: 403 Account inactive
+        Frontend-->>RH: Message contacter administrateur
+    else Connexion RH valide
+        Backend-->>Frontend: 200 accessToken + refresh cookie
+        Frontend-->>RH: Redirection dashboard RH
+    end
 
-    Candidat->>Frontend: Saisit nom + telephone + mot de passe
-    Frontend->>Frontend: Validation Zod au keystroke regex telephone tunisien
-    alt Numero invalide
-        Frontend-->>Candidat: Numero tunisien requis commence par 2 4 5 7 ou 9
+    Note over Candidat, Cookie: Inscription candidat
+
+    Candidat->>Frontend: Saisit nom + email + telephone + mot de passe
+    Frontend->>Frontend: Validation formulaire (email, telephone, password)
+    alt Donnees invalides
+        Frontend-->>Candidat: Erreurs de validation
     else Numero valide
-        Frontend->>Backend: POST /api/auth/register avec name phone password
-        Backend->>DB: Cherche par telephone
-        alt Numero deja enregistre
-            Backend-->>Frontend: 409 Ce numero est deja enregistre
+        Frontend->>Backend: POST /api/auth/register
+        Backend->>DB: Verifie unicite email et telephone
+        alt Email/telephone deja utilise
+            Backend-->>Frontend: 409 Conflit compte existant
         else Nouveau candidat
-            Backend->>Backend: bcrypt.hash password cost 12
-            Backend->>DB: Cree utilisateur role candidate
+            Backend->>Backend: hash password
+            Backend->>DB: Cree utilisateur role CANDIDATE
             Backend->>Cookie: setRefreshCookie httpOnly 30 jours
             Backend-->>Frontend: 201 avec accessToken et user
-            Frontend-->>Candidat: Animation vers page accueil
+            Frontend-->>Candidat: Redirection vers espace candidat
         end
     end
 
-    Note over Frontend, Cookie: Strategie session isolee HR/Admin
+    Note over Frontend, Cookie: Rotation du refresh token
 
     Frontend->>Backend: Requete avec token expire
     Backend-->>Frontend: 401 Unauthorized
-    Frontend->>Frontend: clear auth session de cet onglet
-    Frontend-->>Admin: Redirection login (pas de collision inter-comptes)
+    Frontend->>Backend: POST /api/auth/refresh (cookie httpOnly)
+    alt Refresh valide
+        Backend->>DB: Verifie hash token + expiration
+        Backend->>DB: Rotation (delete ancien + create nouveau)
+        Backend-->>Frontend: 200 nouveau accessToken
+        Frontend->>Frontend: Rejoue la requete initiale
+    else Refresh invalide/expire
+        Backend-->>Frontend: 401 No refresh token / expired
+        Frontend->>Frontend: clear session locale
+        Frontend-->>Admin: Redirection login
+    end
 
-    Note over Frontend: Endpoint /api/auth/refresh reste disponible pour les autres clients si necessaire
+    Note over RH, Admin: Politique reset mot de passe RH
+    RH-->>RH: Pas de changement mot de passe en self-service
+    RH->>Admin: Demande reset mot de passe
+    Admin->>Backend: PATCH /api/admin/hr-accounts/:id avec nouveau password
+    Backend->>DB: Update passwordHash + revoke refreshTokens
+    Backend-->>Admin: 200 Password reset
 ```

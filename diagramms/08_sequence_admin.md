@@ -3,7 +3,7 @@
 ```mermaid
 sequenceDiagram
     actor Admin as Admin Dashboard
-    participant AdminUI as Next.js Admin
+    participant AdminUI as React Vite Admin
     participant API as Express API
     participant DB as PostgreSQL
     participant Socket as Socket.io
@@ -38,6 +38,17 @@ sequenceDiagram
     API-->>AdminUI: 200 OK
     AdminUI-->>Admin: Badge Inactif sur la ligne
     Note over HR: Refresh tokens du RH revokes, prochaine tentative protegee renvoie 401/403
+
+    Admin->>AdminUI: Clique Reset Password sur un compte RH
+    AdminUI-->>Admin: Modale Reset Password
+    Admin->>AdminUI: Saisit nouveau mot de passe
+    AdminUI->>API: PATCH /api/admin/hr-accounts/:id { password }
+    API->>API: validate password policy
+    API->>DB: Update passwordHash + revoke refreshTokens user
+    DB-->>API: OK
+    API-->>AdminUI: 200 Password reset
+    AdminUI-->>Admin: Toast Password reset
+    Note over HR: RH doit se reconnecter avec le nouveau mot de passe
 
     Note over Admin, HR: Gestion des Templates
 

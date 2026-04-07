@@ -58,7 +58,7 @@ const OutcomeModal = ({
             disabled={loading}
             onClick={() => handleOutcome('pass')}
           >
-            ✅ Retenu
+            Retenu
           </Button>
 
           <Button
@@ -66,7 +66,7 @@ const OutcomeModal = ({
             disabled={loading}
             onClick={() => handleOutcome('fail')}
           >
-            ❌ Refusé
+            Refusé
           </Button>
 
           <Button
@@ -74,7 +74,7 @@ const OutcomeModal = ({
             disabled={loading}
             onClick={() => handleOutcome('no_show')}
           >
-            🚫 Absent
+            Absent
           </Button>
         </div>
 

@@ -25,43 +25,42 @@ export default function SocketListener() {
     // Application events
     socketRef.current.on('application:new', (data: any) => {
       queryClient.invalidateQueries({ queryKey: ['applications'] });
-      toast.info(`📋 Nouvelle candidature : ${data.candidateName || 'Candidat'}`);
+      toast.info(`Nouvelle candidature : ${data.candidateName || 'Candidat'}`);
     });
 
     socketRef.current.on('application:analysed', (data: any) => {
       queryClient.invalidateQueries({ queryKey: ['applications'] });
       queryClient.invalidateQueries({ queryKey: ['application', data.applicationId] });
       
-      const scoreEmoji = data.score >= 70 ? '🎉' : data.score >= 50 ? '👍' : '📊';
-      toast.success(`${scoreEmoji} Analyse IA terminée : ${data.score}/100 (${data.aiProvider})`);
+      toast.success(`Analyse IA terminée : ${data.score}/100 (${data.aiProvider})`);
     });
 
     socketRef.current.on('application:manual_analysis', (data: any) => {
       queryClient.invalidateQueries({ queryKey: ['applications'] });
       queryClient.invalidateQueries({ queryKey: ['application', data.applicationId] });
       
-      toast.info(`🔄 Analyse IA mise à jour : ${data.score}/100`);
+      toast.info(`Analyse IA mise à jour : ${data.score}/100`);
     });
 
     socketRef.current.on('application:analysis_failed', (data: any) => {
-      toast.error(`❌ Échec de l'analyse IA : ${data.error}`);
+      toast.error(`Échec de l'analyse IA : ${data.error}`);
     });
 
     // Interview events
     socketRef.current.on('interview:scheduled', (data: any) => {
       queryClient.invalidateQueries({ queryKey: ['applications'] });
       queryClient.invalidateQueries({ queryKey: ['interviews'] });
-      toast.success(`📅 Entretien planifié pour ${data.candidateName}`);
+      toast.success(`Entretien planifié pour ${data.candidateName}`);
     });
 
     // Offer events
     socketRef.current.on('offer:closed', (data: any) => {
       queryClient.invalidateQueries({ queryKey: ['offers'] });
-      toast.warning(`⏰ Offre fermée : ${data.title}`);
+      toast.warning(`Offre fermée : ${data.title}`);
     });
 
     socketRef.current.on('offer:expiring', (data: any) => {
-      toast.warning(`⚠️ Offre expire bientôt : ${data.title} (${data.hoursRemaining}h restantes)`);
+      toast.warning(`Offre expire bientôt : ${data.title} (${data.hoursRemaining}h restantes)`);
     });
 
     // Cleanup

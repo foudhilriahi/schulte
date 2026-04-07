@@ -36,13 +36,12 @@ const DashboardPage = () => {
     totalOffers: 0,
     interviewsThisWeek: 0,
     applicationsMonth: 0,
-    applicationsWithAI: 0,
-    averageAIScore: null as number | null,
     site: '',
     applicationsByStatus: [] as any[],
   });
   const [recentApps, setRecentApps] = useState<any[]>([]);
   const [interviews, setInterviews] = useState<any[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     // Use the new HR-specific overview endpoint
@@ -56,14 +55,16 @@ const DashboardPage = () => {
           totalOffers: data.totalOffers || 0,
           interviewsThisWeek: data.interviewsWeek || 0,
           applicationsMonth: data.applicationsMonth || 0,
-          applicationsWithAI: data.applicationsWithAI || 0,
-          averageAIScore: data.averageAIScore,
           site: data.site || '',
           applicationsByStatus: data.applicationsByStatus || [],
         });
         setRecentApps(data.recentApplications || []);
+        setError(null);
       })
-      .catch(() => {});
+      .catch((err) => {
+        console.error('Failed to load HR overview:', err);
+        setError('Impossible de charger le dashboard.');
+      });
 
     // Interviews
     api
@@ -74,7 +75,9 @@ const DashboardPage = () => {
           list.filter((i: any) => !i.outcome).slice(0, 5),
         );
       })
-      .catch(() => {});
+      .catch((err) => {
+        console.error('Failed to load interviews:', err);
+      });
   }, []);
 
   const chartData = [
@@ -113,7 +116,7 @@ const DashboardPage = () => {
           Site: <span className="text-blue-600">{stats.site}</span>
         </h2>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <StatCard
           label="Candidatures totales"
           value={stats.totalApplications}
@@ -136,12 +139,6 @@ const DashboardPage = () => {
           value={stats.interviewsThisWeek}
           icon={CalendarDays}
           iconColor="text-primary"
-        />
-        <StatCard
-          label="Score IA moyen"
-          value={stats.averageAIScore !== null ? `${stats.averageAIScore}%` : 'N/A'}
-          icon={UserCheck}
-          iconColor="text-success"
         />
       </div>
 
@@ -176,11 +173,6 @@ const DashboardPage = () => {
                       <p className="text-xs text-muted-foreground">
                         {a.offerTitle || ""} • {a.contractType || ""}
                       </p>
-                      {a.aiScore && (
-                        <p className="text-xs text-green-600 font-medium mt-0.5">
-                          IA: {a.aiScore}%
-                        </p>
-                      )}
                     </div>
                     <Badge className={`text-xs ${badge.className}`}>
                       {badge.label}
@@ -278,12 +270,7 @@ const DashboardPage = () => {
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
-                <div className="mt-4 pt-4 border-t border-border">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Analysées par IA:</span>
-                    <span className="font-medium">{stats.applicationsWithAI} / {stats.totalApplications}</span>
-                  </div>
-                </div>
+
               </>
             )}
           </CardContent>

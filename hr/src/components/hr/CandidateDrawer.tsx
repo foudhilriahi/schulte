@@ -7,6 +7,7 @@ import { api } from "@/lib/axios";
 import { authSession } from "@/lib/authSession";
 import { toast } from "sonner";
 import ScheduleInterviewModal from "./ScheduleInterviewModal";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   runDualAnalysis,
   persistDualAnalysis,
@@ -20,24 +21,37 @@ interface CandidateDrawerProps {
   candidate: any;
   open: boolean;
   onClose: () => void;
+  onQuickStatusChange?: (candidate: any, status: "new" | "review" | "interview" | "accepted" | "rejected") => void;
 }
+
+const statusToBackend: Record<string, string> = {
+  new: "new",
+  review: "reviewing",
+  interview: "interview",
+  accepted: "accepted",
+  rejected: "rejected",
+};
 
 const CandidateDrawer = ({
   candidate,
   open,
   onClose,
+  onQuickStatusChange,
 }: CandidateDrawerProps) => {
   const [notes, setNotes] = useState("");
   const [rating, setRating] = useState(0);
   const [analysis, setAnalysis] = useState<DualAnalysisResult | null>(null);
   const [analysing, setAnalysing] = useState(false);
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
+  const [selectedStatus, setSelectedStatus] = useState<string>("review");
+  const [statusSaving, setStatusSaving] = useState(false);
 
   useEffect(() => {
     if (!open || !candidate) return;
     setNotes(candidate.notes || "");
     setRating(candidate.starRating || 0);
     setAnalysis(normalizeStoredDualAnalysis(candidate.aiAnalysis));
+    setSelectedStatus(candidate.status || "review");
   }, [candidate?.id, open]);
 
   if (!open || !candidate) return null;
@@ -58,6 +72,23 @@ const CandidateDrawer = ({
       toast.success("Rating saved.");
     } catch {
       toast.error("Error saving rating");
+    }
+  };
+
+  const saveStatus = async () => {
+    if (!selectedStatus || selectedStatus === candidate.status) return;
+
+    setStatusSaving(true);
+    try {
+      await api.patch(`/applications/${candidate.id}/status`, {
+        status: statusToBackend[selectedStatus] ?? selectedStatus,
+      });
+      toast.success("Statut mis à jour.");
+      onQuickStatusChange?.(candidate, selectedStatus as any);
+    } catch {
+      toast.error("Erreur lors de la mise à jour du statut");
+    } finally {
+      setStatusSaving(false);
     }
   };
 
@@ -178,8 +209,32 @@ const CandidateDrawer = ({
                   className="w-full gap-2 mt-2"
                   onClick={() => setScheduleModalOpen(true)}
                 >
-                  📅 Planifier un entretien
+                  Planifier un entretien
                 </Button>
+
+                <div className="space-y-2 rounded-xl border bg-slate-50 p-3">
+                  <p className="text-xs font-semibold text-[#1A2B4A]">Changer le statut</p>
+                  <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                    <SelectTrigger className="h-10 bg-white">
+                      <SelectValue placeholder="Sélectionnez un statut" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="review">En examen</SelectItem>
+                      <SelectItem value="interview">Entretien</SelectItem>
+                      <SelectItem value="accepted">Acceptée</SelectItem>
+                      <SelectItem value="rejected">Rejetée</SelectItem>
+                      <SelectItem value="new">Nouvelle</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    variant="outline"
+                    className="w-full bg-white"
+                    onClick={saveStatus}
+                    disabled={statusSaving || selectedStatus === candidate.status}
+                  >
+                    {statusSaving ? "Mise à jour..." : "Appliquer le statut"}
+                  </Button>
+                </div>
 
                 <div>
                   <p className="text-xs text-muted-foreground mb-1">

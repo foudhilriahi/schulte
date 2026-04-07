@@ -3,7 +3,7 @@
 import type { JobOffer } from '@/lib/types'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
-import { Calendar, CheckCircle2, Users, Briefcase, TrendingUp } from 'lucide-react'
+import { Calendar, CheckCircle2, Users, Briefcase, TrendingUp, Banknote } from 'lucide-react'
 
 interface JobCardProps {
   job: JobOffer
@@ -125,8 +125,9 @@ export function JobCard({ job, hasApplied = false, onClick }: JobCardProps) {
             {/* Salary Range (if shown) */}
             {job.showSalary && job.salaryRange && (
               <div className="mt-2 pt-2 border-t border-border">
-                <span className="text-xs font-medium text-green-700">
-                  💰 {job.salaryRange}
+                <span className="inline-flex items-center gap-1.5 text-xs font-medium text-green-700">
+                  <Banknote className="h-3.5 w-3.5" />
+                  {job.salaryRange}
                 </span>
               </div>
             )}

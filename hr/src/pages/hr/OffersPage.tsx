@@ -10,8 +10,8 @@ import { useNavigate } from 'react-router-dom'
 import TemplateSelector from '@/components/hr/TemplateSelector'
 
 const statusMap: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' }> = {
-  open: { label: 'Active', variant: 'default' },
-  active: { label: 'Active', variant: 'default' },
+  open: { label: 'Actif', variant: 'default' },
+  active: { label: 'Actif', variant: 'default' },
   paused: { label: 'En pause', variant: 'secondary' },
   closed: { label: 'Fermée', variant: 'destructive' },
 }
@@ -63,7 +63,7 @@ const OffersPage = () => {
         {offers.map((offer: any) => {
           const s = statusMap[offer.status] || statusMap.closed
           const stats = offer.stats || {}
-          const hasStats = stats.totalApplications > 0
+          const hasStats = (stats?.totalApplications ?? 0) > 0
           
           return (
             <Card key={offer.id} className="rounded-2xl shadow-sm">

@@ -93,9 +93,10 @@ const LoginPage = () => {
           </button>
         </form>
 
-        <p className="text-[11px] text-slate-400 text-center mt-6">
-          Accès réservé. Compte géré par l'administrateur.
-        </p>
+        <div className="text-center mt-6 space-y-1">
+          <p className="text-[11px] text-slate-400">Accès réservé. Compte géré par l'administrateur.</p>
+          <p className="text-[11px] text-slate-500">Mot de passe oublié ? Contactez l'administrateur.</p>
+        </div>
       </div>
     </div>
   )

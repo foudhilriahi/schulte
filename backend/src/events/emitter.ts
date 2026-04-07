@@ -19,6 +19,7 @@ export interface InterviewScheduledPayload {
   candidateName: string;
   candidateEmail: string;
   offerTitle: string;
+  offerSite?: string;
   scheduledAt: Date;
   location: string;
   notes?: string;

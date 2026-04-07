@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { FileText, Plus, Sparkles } from 'lucide-react'
+import { FileText, Sparkles } from 'lucide-react'
 import { api } from '@/lib/axios'
 import { toast } from 'sonner'
 import { socketService } from '@/lib/socket'
@@ -23,10 +23,9 @@ interface TemplateSelectorProps {
   open: boolean
   onClose: () => void
   onSelectTemplate: (template: Template) => void
-  onCreateFromScratch: () => void
 }
 
-const TemplateSelector = ({ open, onClose, onSelectTemplate, onCreateFromScratch }: TemplateSelectorProps) => {
+const TemplateSelector = ({ open, onClose, onSelectTemplate }: TemplateSelectorProps) => {
   const [templates, setTemplates] = useState<Template[]>([])
   const [loading, setLoading] = useState(false)
 
@@ -67,11 +66,6 @@ const TemplateSelector = ({ open, onClose, onSelectTemplate, onCreateFromScratch
     onClose()
   }
 
-  const handleCreateFromScratch = () => {
-    onCreateFromScratch()
-    onClose()
-  }
-
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
@@ -81,25 +75,11 @@ const TemplateSelector = ({ open, onClose, onSelectTemplate, onCreateFromScratch
             Créer une nouvelle offre
           </DialogTitle>
           <p className="text-sm text-muted-foreground">
-            Choisissez un modèle pré-défini pour gagner du temps ou créez une offre depuis zéro.
+            Choisissez un modèle pré-défini. La création d'offre côté RH se fait uniquement à partir d'un modèle.
           </p>
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* Create from Scratch Option */}
-          <Card className="border-2 border-dashed border-slate-300 hover:border-[#1A2B4A] transition-colors cursor-pointer"
-                onClick={handleCreateFromScratch}>
-            <CardHeader className="text-center py-8">
-              <div className="mx-auto w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mb-4">
-                <Plus className="h-6 w-6 text-slate-600" />
-              </div>
-              <CardTitle className="text-lg">Créer depuis zéro</CardTitle>
-              <CardDescription>
-                Créez une offre personnalisée avec tous les champs vides
-              </CardDescription>
-            </CardHeader>
-          </Card>
-
           {/* Template Options */}
           <div>
             <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">

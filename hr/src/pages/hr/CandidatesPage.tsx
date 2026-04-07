@@ -1,12 +1,14 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import DashboardLayout from '@/components/hr/DashboardLayout'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Star } from 'lucide-react'
 import CandidateDrawer from '@/components/hr/CandidateDrawer'
 import { api } from '@/lib/axios'
 import { getApplicationAnalysisText } from '@/lib/applicationText'
 import { toast } from 'sonner'
+import { useVirtualizer } from '@tanstack/react-virtual'
 
 const statusLabels: Record<string, string> = {
   new: 'Nouvelle',
@@ -16,12 +18,17 @@ const statusLabels: Record<string, string> = {
   rejected: 'Rejetée',
 }
 
+const tableColumns = 'minmax(180px,1.2fr) minmax(220px,1.1fr) 120px 120px 110px 120px 120px'
+
 const CandidatesPage = () => {
   const [applications, setApplications] = useState<any[]>([])
   const [selected, setSelected] = useState<any | null>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const parentRef = useRef<HTMLDivElement | null>(null)
 
-  useEffect(() => {
+  const fetchCandidates = useCallback(() => {
+    setLoading(true)
     api.get('/applications/by-site').then(res => {
       setApplications(res.data.map((a: any) => ({
         ...a,
@@ -45,61 +52,122 @@ const CandidatesPage = () => {
         description: a.offer?.description || '',
         status: a.status,
       })))
+      setError(null)
     }).catch(() => {
+      setError('Impossible de charger les candidats.')
       toast.error('Failed to load candidates')
     }).finally(() => setLoading(false))
   }, [])
 
+  useEffect(() => {
+    fetchCandidates()
+  }, [fetchCandidates])
+
+  const rowVirtualizer = useVirtualizer({
+    count: applications.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 74,
+    overscan: 10,
+  })
+
   return (
     <DashboardLayout title="Candidats">
+      {error && (
+        <div className="mb-4 flex items-center justify-between gap-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          <span>{error}</span>
+          <Button variant="outline" size="sm" onClick={fetchCandidates}>Réessayer</Button>
+        </div>
+      )}
+
       <Card className="rounded-2xl shadow-sm">
-        <CardHeader><CardTitle className="text-base">Tous les candidats</CardTitle></CardHeader>
+        <CardHeader>
+          <div className="flex items-center justify-between gap-3">
+            <CardTitle className="text-base">Tous les candidats</CardTitle>
+            <p className="text-xs text-muted-foreground">
+              {applications.length} candidat{applications.length > 1 ? 's' : ''}
+            </p>
+          </div>
+        </CardHeader>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border">
-                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">Nom</th>
-                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">Poste</th>
-                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">Site</th>
-                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">Contrat</th>
-                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">Score IA</th>
-                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">Notation</th>
-                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">Statut</th>
-                </tr>
-              </thead>
-              <tbody>
-                {loading && <tr><td colSpan={7} className="px-4 py-6 text-center text-muted-foreground">Chargement...</td></tr>}
-                {!loading && applications.length === 0 && <tr><td colSpan={7} className="px-4 py-6 text-center text-muted-foreground">Aucun candidat.</td></tr>}
-                {applications.map((c, i) => (
-                  <tr
-                    key={c.id}
-                    onClick={() => setSelected(c)}
-                    className={`cursor-pointer border-b border-border hover:bg-muted/50 transition-colors ${i % 2 === 0 ? 'bg-card' : 'bg-muted/20'}`}
-                  >
-                    <td className="px-4 py-3 font-medium">{c.name}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{c.jobTitle}</td>
-                    <td className="px-4 py-3"><Badge variant="outline" className="text-xs capitalize">{c.city}</Badge></td>
-                    <td className="px-4 py-3"><Badge variant="outline" className="text-xs">{c.contractType}</Badge></td>
-                    <td className="px-4 py-3">
-                      <span className={`inline-flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold ${
-                        c.aiScore >= 80 ? 'bg-emerald-100 text-emerald-800' :
-                        c.aiScore >= 60 ? 'bg-amber-100 text-amber-800' :
-                        'bg-red-100 text-red-800'
-                      }`}>{c.aiScore}</span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex gap-0.5">
-                        {[1,2,3,4,5].map(s => (
-                          <Star key={s} className={`h-3.5 w-3.5 ${s <= c.starRating ? 'fill-amber-400 text-amber-400' : 'text-border'}`} />
-                        ))}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3"><Badge variant="secondary" className="text-xs">{statusLabels[c.status] || c.status}</Badge></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <div className="min-w-[1080px]">
+              <div
+                className="grid gap-3 border-b border-border px-4 py-3 text-xs font-medium text-muted-foreground"
+                style={{ gridTemplateColumns: tableColumns }}
+              >
+                <span>Nom</span>
+                <span>Poste</span>
+                <span>Site</span>
+                <span>Contrat</span>
+                <span>Score IA</span>
+                <span>Notation</span>
+                <span>Statut</span>
+              </div>
+
+              {loading && (
+                <p className="px-4 py-6 text-center text-muted-foreground">Chargement...</p>
+              )}
+
+              {!loading && applications.length === 0 && (
+                <p className="px-4 py-6 text-center text-muted-foreground">Aucun candidat.</p>
+              )}
+
+              {!loading && applications.length > 0 && (
+                <div ref={parentRef} className="h-[calc(100vh-310px)] overflow-auto">
+                  <div style={{ height: `${rowVirtualizer.getTotalSize()}px`, position: 'relative' }}>
+                    {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+                      const c = applications[virtualRow.index]
+
+                      return (
+                        <button
+                          key={c.id}
+                          type="button"
+                          onClick={() => setSelected(c)}
+                          className={`absolute left-0 w-full border-b border-border px-4 py-3 text-left transition-colors hover:bg-muted/50 ${
+                            virtualRow.index % 2 === 0 ? 'bg-card' : 'bg-muted/20'
+                          }`}
+                          style={{
+                            transform: `translateY(${virtualRow.start}px)`,
+                            height: `${virtualRow.size}px`,
+                          }}
+                        >
+                          <div
+                            className="grid items-center gap-3"
+                            style={{ gridTemplateColumns: tableColumns }}
+                          >
+                            <div className="min-w-0">
+                              <p className="truncate font-medium">{c.name}</p>
+                            </div>
+                            <p className="truncate text-muted-foreground">{c.jobTitle}</p>
+                            <div>
+                              <Badge variant="outline" className="text-xs capitalize">{c.city}</Badge>
+                            </div>
+                            <div>
+                              <Badge variant="outline" className="text-xs">{c.contractType}</Badge>
+                            </div>
+                            <div>
+                              <span className={`inline-flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold ${
+                                c.aiScore >= 80 ? 'bg-emerald-100 text-emerald-800' :
+                                c.aiScore >= 60 ? 'bg-amber-100 text-amber-800' :
+                                'bg-red-100 text-red-800'
+                              }`}>{c.aiScore}</span>
+                            </div>
+                            <div className="flex gap-0.5">
+                              {[1,2,3,4,5].map(s => (
+                                <Star key={s} className={`h-3.5 w-3.5 ${s <= c.starRating ? 'fill-amber-400 text-amber-400' : 'text-border'}`} />
+                              ))}
+                            </div>
+                            <div>
+                              <Badge variant="secondary" className="text-xs">{statusLabels[c.status] || c.status}</Badge>
+                            </div>
+                          </div>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>

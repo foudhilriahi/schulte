@@ -3,12 +3,20 @@ import { api } from '@/lib/axios';
 import { Application } from '@/lib/types';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/store/auth';
+import { candidateQueryKeys } from '@/lib/queryKeys';
+
+const makeIdempotencyKey = () => {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+};
 
 export function useMyApplications() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
   return useQuery<Application[]>({
-    queryKey: ['applications', 'mine'],
+    queryKey: candidateQueryKeys.applicationsMine,
     enabled: isAuthenticated,
     queryFn: async () => {
       const res = await api.get('/applications/mine');
@@ -30,13 +38,16 @@ export function useSubmitPDFApplication() {
       }
 
       const res = await api.post('/applications', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          'X-Idempotency-Key': makeIdempotencyKey(),
+        },
       });
       return res.data;
     },
     onSuccess: () => {
       toast.success('Candidature envoyée avec succès !');
-      queryClient.invalidateQueries({ queryKey: ['applications', 'mine'] });
+      queryClient.invalidateQueries({ queryKey: candidateQueryKeys.applicationsMine });
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.error || 'Erreur lors de l\'envoi de la candidature');
@@ -49,12 +60,16 @@ export function useSubmitFormApplication() {
 
   return useMutation({
     mutationFn: async (data: { offerId: string; formData: any }) => {
-      const res = await api.post('/applications/form', data);
+      const res = await api.post('/applications/form', data, {
+        headers: {
+          'X-Idempotency-Key': makeIdempotencyKey(),
+        },
+      });
       return res.data;
     },
     onSuccess: () => {
       toast.success('Candidature envoyée avec succès !');
-      queryClient.invalidateQueries({ queryKey: ['applications', 'mine'] });
+      queryClient.invalidateQueries({ queryKey: candidateQueryKeys.applicationsMine });
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.error || 'Erreur lors de l\'envoi de la candidature');
@@ -67,12 +82,16 @@ export function useSubmitSavedCVApplication() {
 
   return useMutation({
     mutationFn: async (data: { offerId: string; cvId: string; coverNote?: string }) => {
-      const res = await api.post('/applications/from-cv', data);
+      const res = await api.post('/applications/from-cv', data, {
+        headers: {
+          'X-Idempotency-Key': makeIdempotencyKey(),
+        },
+      });
       return res.data;
     },
     onSuccess: () => {
       toast.success('Candidature envoyee avec succes !');
-      queryClient.invalidateQueries({ queryKey: ['applications', 'mine'] });
+      queryClient.invalidateQueries({ queryKey: candidateQueryKeys.applicationsMine });
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.error || 'Erreur lors de l\'envoi de la candidature');

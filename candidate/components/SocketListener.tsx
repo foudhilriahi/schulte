@@ -5,11 +5,12 @@ import { toast } from 'sonner'
 import { useSocket, useSocketEvent } from '@/hooks/useSocket'
 import { useNotificationStore } from '@/store/notifications'
 import { useAuthStore } from '@/store/auth'
+import { candidateQueryKeys } from '@/lib/queryKeys'
 
 const STATUS_TOASTS: Record<string, string> = {
   reviewing: "Votre candidature est en cours d'examen",
-  interview: "📅 Entretien planifié pour votre candidature !",
-  accepted: "🎉 Félicitations ! Votre candidature a été acceptée.",
+  interview: "Entretien planifié pour votre candidature",
+  accepted: "Votre candidature a été acceptée",
   rejected: "Votre candidature n'a pas été retenue pour ce poste.",
 }
 
@@ -29,8 +30,8 @@ export default function SocketListener() {
 
   // status:changed
   useSocketEvent('status:changed', useCallback((data: { applicationId: string; status: string }) => {
-    queryClient.invalidateQueries({ queryKey: ['applications'] })
-    queryClient.invalidateQueries({ queryKey: ['application', data.applicationId] })
+    queryClient.invalidateQueries({ queryKey: candidateQueryKeys.applicationsMine })
+    queryClient.invalidateQueries({ queryKey: candidateQueryKeys.application(data.applicationId) })
     const msg = STATUS_TOASTS[data.status]
     if (msg) toast.info(msg)
     fetchNotifications()
@@ -38,45 +39,44 @@ export default function SocketListener() {
 
   // interview:scheduled
   useSocketEvent('interview:scheduled', useCallback((_data: any) => {
-    queryClient.invalidateQueries({ queryKey: ['applications'] })
-    queryClient.invalidateQueries({ queryKey: ['interviews'] })
-    toast.success("📅 Un entretien a été planifié pour vous !")
+    queryClient.invalidateQueries({ queryKey: candidateQueryKeys.applicationsMine })
+    toast.success("Un entretien a été planifié pour vous")
     fetchNotifications()
   }, [queryClient, fetchNotifications]))
 
   // offer:new
   useSocketEvent('offer:new', useCallback((_data: any) => {
-    queryClient.invalidateQueries({ queryKey: ['offers'] })
-    toast.info("🆕 Nouvelle offre d'emploi disponible !")
+    queryClient.invalidateQueries({ queryKey: candidateQueryKeys.offers })
+    toast.info("Nouvelle offre d'emploi disponible")
   }, [queryClient]))
 
   // offer:closed
   useSocketEvent('offer:closed', useCallback((_data: any) => {
-    queryClient.invalidateQueries({ queryKey: ['offers'] })
+    queryClient.invalidateQueries({ queryKey: candidateQueryKeys.offers })
     // No toast for closed offers to avoid spam
   }, [queryClient]))
 
   // interview:reminder
   useSocketEvent('interview:reminder', useCallback((_data: any) => {
-    toast.warning("⏰ Rappel : vous avez un entretien demain !")
+    toast.warning("Rappel : vous avez un entretien demain")
     fetchNotifications()
   }, [fetchNotifications]))
 
   // ai:analysis_complete - New AI analysis results
   useSocketEvent('ai:analysis_complete', useCallback((data: any) => {
-    queryClient.invalidateQueries({ queryKey: ['applications'] })
-    queryClient.invalidateQueries({ queryKey: ['application', data.applicationId] })
+    queryClient.invalidateQueries({ queryKey: candidateQueryKeys.applicationsMine })
+    queryClient.invalidateQueries({ queryKey: candidateQueryKeys.application(data.applicationId) })
 
-    toast.success(`✨ Analyse IA terminée pour ${data.jobTitle}`)
+    toast.success(`Analyse IA terminée pour ${data.jobTitle}`)
     fetchNotifications()
   }, [queryClient, fetchNotifications]))
 
   // ai:analysis_updated - Updated AI analysis results
   useSocketEvent('ai:analysis_updated', useCallback((data: any) => {
-    queryClient.invalidateQueries({ queryKey: ['applications'] })
-    queryClient.invalidateQueries({ queryKey: ['application', data.applicationId] })
+    queryClient.invalidateQueries({ queryKey: candidateQueryKeys.applicationsMine })
+    queryClient.invalidateQueries({ queryKey: candidateQueryKeys.application(data.applicationId) })
     
-    toast.info(`🔄 Analyse IA mise à jour pour ${data.jobTitle}`)
+    toast.info(`Analyse IA mise à jour pour ${data.jobTitle}`)
     fetchNotifications()
   }, [queryClient, fetchNotifications]))
 

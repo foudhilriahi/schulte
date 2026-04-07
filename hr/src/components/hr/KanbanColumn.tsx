@@ -20,8 +20,8 @@ const columnColors: Record<KanbanStatus, string> = {
 
 const KanbanColumn = ({ id, label, candidates, onCardClick }: KanbanColumnProps) => {
   return (
-    <div className="flex w-72 shrink-0 flex-col rounded-2xl border bg-card/50 p-3">
-      <div className="flex items-center justify-between mb-3 px-1">
+    <div className="flex w-72 shrink-0 flex-col rounded-2xl border bg-card/50 p-3 h-[calc(100vh-220px)] min-h-[540px]">
+      <div className="flex items-center justify-between mb-3 px-1 sticky top-0 bg-card/50 backdrop-blur-sm z-10">
         <h3 className="text-sm font-semibold text-foreground">{label}</h3>
         <Badge className={`text-xs ${columnColors[id]}`}>
           {candidates.length}
@@ -33,7 +33,7 @@ const KanbanColumn = ({ id, label, candidates, onCardClick }: KanbanColumnProps)
           <div
             ref={provided.innerRef}
             {...provided.droppableProps}
-            className={`flex-1 space-y-2.5 min-h-[120px] rounded-xl p-1.5 transition-colors ${
+            className={`flex-1 space-y-2.5 min-h-[120px] rounded-xl p-1.5 transition-colors overflow-y-auto pr-2 ${
               snapshot.isDraggingOver ? "bg-accent/10" : ""
             }`}
           >

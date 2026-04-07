@@ -3,6 +3,7 @@ import DashboardLayout from '@/components/hr/DashboardLayout'
 import StatCard from '@/components/hr/StatCard'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Users, Briefcase, ClipboardList, CalendarDays, TrendingUp, UserCheck } from 'lucide-react'
 import { api } from '@/lib/axios'
 import { socketService } from '@/lib/socket'
@@ -30,6 +31,8 @@ const statusBadge: Record<string, { label: string; className: string }> = {
 const AdminOverviewPage = () => {
   const [stats, setStats] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
 
   useEffect(() => {
     const fallback = { 
@@ -52,8 +55,12 @@ const AdminOverviewPage = () => {
         if (showLoading) setLoading(true)
         const res = await api.get('/admin/overview')
         setStats(res.data)
+        setError(null)
+        setLastUpdated(new Date())
       } catch {
+        setError('Impossible de charger les données en direct. Affichage des dernières valeurs de secours.')
         setStats(fallback)
+        setLastUpdated(new Date())
       } finally {
         if (showLoading) setLoading(false)
       }
@@ -99,8 +106,42 @@ const AdminOverviewPage = () => {
     color: s.site === 'Bouarada' ? '#3b82f6' : '#14b8a6'
   }));
 
+  const retryFetch = async () => {
+    setLoading(true)
+    try {
+      const res = await api.get('/admin/overview')
+      setStats(res.data)
+      setError(null)
+      setLastUpdated(new Date())
+    } catch {
+      setError('Échec du rechargement. Vérifiez la connexion et réessayez.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <DashboardLayout title="Admin Overview">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <p className="text-xs text-muted-foreground">
+          {lastUpdated
+            ? `Dernière mise à jour: ${lastUpdated.toLocaleTimeString('fr-TN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`
+            : 'Dernière mise à jour: —'}
+        </p>
+        <Button variant="outline" size="sm" onClick={retryFetch}>
+          Recharger
+        </Button>
+      </div>
+
+      {error && (
+        <div className="mb-4 flex items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+          <span>{error}</span>
+          <Button variant="outline" size="sm" onClick={retryFetch}>
+            Réessayer
+          </Button>
+        </div>
+      )}
+
       {/* Top KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 mb-6">
         <StatCard label="Total Candidates" value={stats?.totalCandidates ?? 0} icon={Users} iconColor="text-blue-500" />
@@ -111,36 +152,8 @@ const AdminOverviewPage = () => {
         <StatCard label="Interviews (Week)" value={stats?.interviewsWeek ?? 0} icon={CalendarDays} iconColor="text-emerald-500" />
       </div>
 
-      {/* AI Stats */}
+      {/* Sites Activity */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-        <Card className="rounded-2xl shadow-sm">
-          <CardHeader>
-            <CardTitle className="text-base">AI Analysis Statistics</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Applications Analyzed:</span>
-                <span className="text-lg font-semibold">{stats?.applicationsWithAI ?? 0} / {stats?.totalApplications ?? 0}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Average AI Score:</span>
-                <span className="text-lg font-semibold text-green-600">
-                  {stats?.averageAIScore !== null ? `${stats.averageAIScore}%` : 'N/A'}
-                </span>
-              </div>
-              <div className="pt-2 border-t">
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div 
-                    className="bg-green-500 h-2 rounded-full transition-all" 
-                    style={{ width: `${stats?.averageAIScore || 0}%` }}
-                  />
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
         <Card className="rounded-2xl shadow-sm">
           <CardHeader>
             <CardTitle className="text-base">Offers by Site</CardTitle>
@@ -226,11 +239,6 @@ const AdminOverviewPage = () => {
                     <p className="text-xs text-muted-foreground">
                       {a.offerTitle || ''} • {a.offerSite} • {a.contractType}
                     </p>
-                    {a.aiScore && (
-                      <p className="text-xs text-green-600 font-medium mt-0.5">
-                        AI Score: {a.aiScore}%
-                      </p>
-                    )}
                   </div>
                   <Badge className={`text-xs ${badge.className}`}>
                     {badge.label}

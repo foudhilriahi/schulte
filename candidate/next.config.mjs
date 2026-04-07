@@ -2,6 +2,9 @@ import createPWA from '@ducanh2912/next-pwa'
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  experimental: {
+    optimizePackageImports: ['lucide-react', 'date-fns', '@radix-ui/react-dialog', '@radix-ui/react-select'],
+  },
   typescript: {
     ignoreBuildErrors: true,
   },
