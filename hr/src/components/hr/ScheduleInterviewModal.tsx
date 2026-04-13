@@ -90,7 +90,7 @@ const ScheduleInterviewModal = ({
     <Dialog open={open} onOpenChange={open => { if (!open) handleClose() }}>
       <DialogContent className="sm:max-w-[480px]">
         <DialogHeader>
-          <DialogTitle className="text-[#1A2B4A]">
+          <DialogTitle className="text-foreground">
             Planifier un entretien — {candidateName}
           </DialogTitle>
         </DialogHeader>
@@ -99,7 +99,7 @@ const ScheduleInterviewModal = ({
           {/* Date */}
           <div className="space-y-1.5">
             <Label htmlFor="interview-date">
-              Date <span className="text-red-500">*</span>
+              Date <span className="text-err">*</span>
             </Label>
             <Input
               id="interview-date"
@@ -113,7 +113,7 @@ const ScheduleInterviewModal = ({
           {/* Time */}
           <div className="space-y-1.5">
             <Label htmlFor="interview-time">
-              Heure <span className="text-red-500">*</span>
+              Heure <span className="text-err">*</span>
             </Label>
             <Input
               id="interview-time"
@@ -126,7 +126,7 @@ const ScheduleInterviewModal = ({
           {/* Location */}
           <div className="space-y-1.5">
             <Label htmlFor="interview-location">
-              Lieu <span className="text-red-500">*</span>
+              Lieu <span className="text-err">*</span>
             </Label>
             <Input
               id="interview-location"
@@ -145,9 +145,9 @@ const ScheduleInterviewModal = ({
                 <SelectValue placeholder="Sélectionnez un type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="on-site">🏢 Présentiel</SelectItem>
-                <SelectItem value="video">🎥 Vidéo</SelectItem>
-                <SelectItem value="phone">📞 Téléphonique</SelectItem>
+                <SelectItem value="on-site">Présentiel</SelectItem>
+                <SelectItem value="video">Vidéo</SelectItem>
+                <SelectItem value="phone">Téléphonique</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -174,7 +174,7 @@ const ScheduleInterviewModal = ({
           <Button
             onClick={handleSubmit}
             disabled={loading}
-            className="bg-[#1A2B4A] hover:bg-[#243a5e] text-white"
+            className="bg-primary text-primary-foreground hover:bg-acch"
           >
             {loading ? 'Planification...' : 'Planifier'}
           </Button>

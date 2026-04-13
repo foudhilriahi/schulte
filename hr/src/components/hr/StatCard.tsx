@@ -10,14 +10,14 @@ interface StatCardProps {
 
 const StatCard = ({ label, value, icon: Icon, iconColor = "text-primary" }: StatCardProps) => {
   return (
-    <Card className="rounded-2xl shadow-sm">
-      <CardContent className="flex items-center gap-4 p-5">
-        <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-secondary ${iconColor}`}>
-          <Icon className="h-5 w-5" />
+    <Card>
+      <CardContent className="p-5">
+        <div className="mb-3 flex items-center gap-2">
+          <Icon className={`h-4 w-4 ${iconColor}`} />
+          <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">{label}</p>
         </div>
         <div>
-          <p className="text-2xl font-bold text-card-foreground">{value}</p>
-          <p className="text-sm text-muted-foreground">{label}</p>
+          <p className="font-mono text-[28px] leading-none text-card-foreground">{value}</p>
         </div>
       </CardContent>
     </Card>

@@ -52,7 +52,7 @@ const OffersPage = () => {
     <DashboardLayout title="Offres">
       <div className="flex items-center justify-between mb-4">
         <p className="text-sm text-muted-foreground">{offers.length} offre(s)</p>
-        <Button onClick={() => setShowTemplateSelector(true)} className="gap-2 bg-[#1A2B4A] hover:bg-[#243a5e]">
+        <Button onClick={() => setShowTemplateSelector(true)} className="gap-2 bg-primary hover:bg-acch">
           <Plus className="h-4 w-4" /> Nouvelle Offre
         </Button>
       </div>
@@ -66,7 +66,7 @@ const OffersPage = () => {
           const hasStats = (stats?.totalApplications ?? 0) > 0
           
           return (
-            <Card key={offer.id} className="rounded-2xl shadow-sm">
+            <Card key={offer.id} className="rounded-md shadow-[0_1px_3px_rgba(0,0,0,0.45)]">
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-base">{offer.title}</CardTitle>
@@ -92,26 +92,26 @@ const OffersPage = () => {
                     <>
                       <div className="flex items-center justify-between text-xs">
                         <span className="text-muted-foreground">AI Analyzed:</span>
-                        <span className="font-medium text-green-600">
+                        <span className="font-medium text-ok">
                           {stats.applicationsWithAI || 0} ({stats.averageAIScore ? `${stats.averageAIScore}%` : 'N/A'})
                         </span>
                       </div>
                       
                       <div className="grid grid-cols-2 gap-2 text-xs pt-1">
                         <div className="flex justify-between">
-                          <span className="text-amber-600">Reviewing:</span>
+                          <span className="text-warn">Reviewing:</span>
                           <span className="font-medium">{stats.statusBreakdown?.reviewing || 0}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-blue-600">Interview:</span>
+                          <span className="text-bou">Interview:</span>
                           <span className="font-medium">{stats.statusBreakdown?.interview || 0}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-green-600">Accepted:</span>
+                          <span className="text-ok">Accepted:</span>
                           <span className="font-medium">{stats.statusBreakdown?.accepted || 0}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-red-600">Rejected:</span>
+                          <span className="text-err">Rejected:</span>
                           <span className="font-medium">{stats.statusBreakdown?.rejected || 0}</span>
                         </div>
                       </div>
@@ -136,7 +136,7 @@ const OffersPage = () => {
                     </Button>
                   )}
                   {offer.status !== 'closed' && (
-                    <Button variant="outline" size="sm" className="text-xs gap-1 text-red-500 border-red-200 hover:bg-red-50" onClick={() => handleStatusChange(offer.id, 'closed')}>
+                    <Button variant="outline" size="sm" className="text-xs gap-1 border-err/40 text-err hover:bg-err/12" onClick={() => handleStatusChange(offer.id, 'closed')}>
                       <XIcon className="h-3 w-3" /> Fermer
                     </Button>
                   )}

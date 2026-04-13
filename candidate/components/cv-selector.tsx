@@ -88,7 +88,7 @@ export function CVSelector({ open, onClose, onSelectCV, onUploadNew, allowCreate
       <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <FileText className="h-5 w-5 text-blue-600" />
+            <FileText className="h-5 w-5 text-bou" />
             Choose Your CV
           </DialogTitle>
           <p className="text-sm text-muted-foreground">
@@ -109,15 +109,15 @@ export function CVSelector({ open, onClose, onSelectCV, onUploadNew, allowCreate
                 {cvs.map((cv) => (
                   <Card 
                     key={cv.id}
-                    className="cursor-pointer hover:shadow-md transition-shadow border-slate-200 hover:border-blue-300"
+                    className="cursor-pointer border-border transition-[border-color,box-shadow] hover:border-acch hover:shadow-[0_4px_16px_rgba(0,0,0,0.32)]"
                     onClick={() => handleSelectCV(cv)}
                   >
                     <CardContent className="p-4">
                       <div className="flex items-center gap-3">
                         <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
                           cv.type === 'uploaded' 
-                            ? 'bg-green-50 text-green-600' 
-                            : 'bg-purple-50 text-purple-600'
+                            ? 'bg-ok/14 text-ok' 
+                            : 'bg-bou/14 text-bou'
                         }`}>
                           <FileText className="h-5 w-5" />
                         </div>
@@ -125,7 +125,7 @@ export function CVSelector({ open, onClose, onSelectCV, onUploadNew, allowCreate
                           <div className="flex items-center gap-2 mb-1">
                             <h4 className="font-medium text-foreground truncate">{cv.name}</h4>
                             {cv.isDefault && (
-                              <Star className="h-3 w-3 text-yellow-500 fill-current flex-shrink-0" />
+                              <Star className="h-3 w-3 fill-current text-warn flex-shrink-0" />
                             )}
                           </div>
                           <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -153,7 +153,7 @@ export function CVSelector({ open, onClose, onSelectCV, onUploadNew, allowCreate
             </div>
           ) : (
             <div className="text-center py-8">
-              <div className="w-16 h-16 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center mx-auto mb-4">
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-s3 text-muted-foreground">
                 <FileText className="h-8 w-8" />
               </div>
               <h3 className="font-semibold text-foreground mb-2">No CVs Available</h3>
@@ -169,12 +169,12 @@ export function CVSelector({ open, onClose, onSelectCV, onUploadNew, allowCreate
               <h3 className="text-sm font-semibold text-foreground">Create New</h3>
               
               <Card 
-                className="border-2 border-dashed border-blue-300 hover:border-blue-400 transition-colors cursor-pointer"
+                className="cursor-pointer border-2 border-dashed border-bou/35 transition-colors hover:border-bou/55"
                 onClick={handleCreateNew}
               >
                 <CardContent className="p-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-bou/14 text-bou">
                       <Plus className="h-5 w-5" />
                     </div>
                     <div className="flex-1">
@@ -186,12 +186,12 @@ export function CVSelector({ open, onClose, onSelectCV, onUploadNew, allowCreate
               </Card>
 
               <Card 
-                className="border-2 border-dashed border-slate-300 hover:border-slate-400 transition-colors cursor-pointer"
+                className="cursor-pointer border-2 border-dashed border-border transition-colors hover:border-acch"
                 onClick={handleUploadNew}
               >
                 <CardContent className="p-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-slate-50 text-slate-600 rounded-full flex items-center justify-center">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-s3 text-muted-foreground">
                       <Upload className="h-5 w-5" />
                     </div>
                     <div className="flex-1">

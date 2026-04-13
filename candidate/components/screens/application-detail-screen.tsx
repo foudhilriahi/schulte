@@ -14,8 +14,8 @@ interface ApplicationDetailScreenProps {
 export function ApplicationDetailScreen({ application, onBack }: ApplicationDetailScreenProps) {
   const city = application.offer?.site || 'Zaghouan'
   const cityColor = city === 'Bouarada'
-    ? 'bg-blue-600 text-white'
-    : 'bg-teal-600 text-white'
+    ? 'bg-bou/10 border-bou/25 text-bou'
+    : 'bg-zag/10 border-zag/25 text-zag'
 
   // Parse AI analysis if available
   let aiAnalysis = null
@@ -66,7 +66,7 @@ export function ApplicationDetailScreen({ application, onBack }: ApplicationDeta
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
-                <Lightbulb className="h-4 w-4 text-amber-600" />
+                <Lightbulb className="h-4 w-4 text-primary" />
                 Tips for Improvement
               </CardTitle>
             </CardHeader>
@@ -74,7 +74,7 @@ export function ApplicationDetailScreen({ application, onBack }: ApplicationDeta
               <div className="space-y-3">
                 {aiAnalysis.tipsForCandidate.slice(0, 2).map((tip: string, index: number) => (
                   <div key={index} className="flex gap-3">
-                    <div className="w-6 h-6 rounded-full bg-amber-100 text-amber-800 flex items-center justify-center text-xs font-medium flex-shrink-0 mt-0.5">
+                    <div className="w-6 h-6 rounded-full bg-primary/15 border border-primary/30 text-primary flex items-center justify-center text-xs font-medium flex-shrink-0 mt-0.5">
                       {index + 1}
                     </div>
                     <p className="text-sm text-foreground">{tip}</p>

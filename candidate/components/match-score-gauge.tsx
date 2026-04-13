@@ -24,9 +24,9 @@ export function MatchScoreGauge({ score, size = 48, className }: MatchScoreGauge
     : circumference
 
   const getColor = (value: number) => {
-    if (value >= 70) return '#10b981' // emerald-500
-    if (value >= 40) return '#f59e0b' // amber-500
-    return '#ef4444' // red-500
+    if (value >= 70) return 'var(--ok)'
+    if (value >= 40) return 'var(--warn)'
+    return 'var(--err)'
   }
 
   return (
@@ -44,7 +44,7 @@ export function MatchScoreGauge({ score, size = 48, className }: MatchScoreGauge
             cy={size / 2}
             r={radius}
             fill="none"
-            stroke="#f1f5f9" // slate-100
+            stroke="var(--s3)"
             strokeWidth={strokeWidth}
           />
           <circle

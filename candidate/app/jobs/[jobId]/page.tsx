@@ -25,7 +25,7 @@ interface JobDetailsPageProps {
 
 function LoadingSkeleton() {
   return (
-    <div className="flex flex-col min-h-screen pb-20 bg-slate-50">
+    <div className="flex flex-col min-h-screen pb-20 bg-background">
       <header className="sticky top-0 bg-background/95 backdrop-blur-sm border-b border-border z-40 safe-area-pt">
         <div className="px-4 py-3">
           <Skeleton className="h-10 w-20" />
@@ -80,7 +80,7 @@ export default function JobDetailsPage({ params }: JobDetailsPageProps) {
   if (job.status !== 'open') {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen pb-20 px-4">
-        <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mb-4">
+        <div className="w-16 h-16 bg-destructive/15 text-destructive rounded-full border border-destructive/30 flex items-center justify-center mb-4">
           <Clock className="h-8 w-8" />
         </div>
         <h1 className="text-lg font-semibold text-foreground">Job Closed</h1>
@@ -100,13 +100,13 @@ export default function JobDetailsPage({ params }: JobDetailsPageProps) {
   const hasApplied = myApps.some(app => app.offerId === jobId)
   
   const siteColor = job.site === 'Bouarada' 
-    ? 'bg-blue-600 text-white' 
-    : 'bg-teal-600 text-white'
+    ? 'bg-bou/10 border-bou/25 text-bou'
+    : 'bg-zag/10 border-zag/25 text-zag'
 
   const contractColors: Record<string, string> = {
-    CDI: 'bg-green-100 text-green-800',
-    CDD: 'bg-orange-100 text-orange-800',
-    Stage: 'bg-purple-100 text-purple-800'
+    CDI: 'bg-success/10 border-success/30 text-success',
+    CDD: 'bg-warning/10 border-warning/30 text-warning',
+    Stage: 'bg-secondary border-input text-muted-foreground'
   }
 
   const formatDeadline = (deadline: string) => {
@@ -128,7 +128,7 @@ export default function JobDetailsPage({ params }: JobDetailsPageProps) {
   }
 
   return (
-    <div className="flex flex-col min-h-screen pb-20 bg-slate-50">
+    <div className="flex flex-col min-h-screen pb-20 bg-background">
       <header className="sticky top-0 bg-background/95 backdrop-blur-sm border-b border-border z-40 safe-area-pt">
         <div className="px-4 py-3">
           <button
@@ -160,7 +160,7 @@ export default function JobDetailsPage({ params }: JobDetailsPageProps) {
                     {job.contractType}
                   </Badge>
                   {hasApplied && (
-                    <Badge variant="outline" className="border-green-500 text-green-600">
+                    <Badge variant="outline" className="border-success/30 text-success">
                       <CheckCircle2 className="h-3 w-3 mr-1" />
                       Applied
                     </Badge>
@@ -210,13 +210,13 @@ export default function JobDetailsPage({ params }: JobDetailsPageProps) {
               )}
 
               {job.showSalary && job.salaryRange && (
-                <Card className="bg-green-50 border-green-200">
+                <Card className="border-success/30 bg-success/10">
                   <CardContent className="p-3">
                     <div className="flex items-center gap-2 text-sm">
-                      <Briefcase className="h-4 w-4 text-green-700" />
+                      <Briefcase className="h-4 w-4 text-success" />
                       <div>
-                        <p className="text-xs text-green-700">Salary Range</p>
-                        <p className="font-medium text-green-900">{job.salaryRange}</p>
+                        <p className="text-xs text-success">Salary Range</p>
+                        <p className="font-medium text-foreground">{job.salaryRange}</p>
                       </div>
                     </div>
                   </CardContent>
@@ -225,15 +225,13 @@ export default function JobDetailsPage({ params }: JobDetailsPageProps) {
             </div>
 
             {/* Deadline */}
-            <Card className="border-orange-200 bg-orange-50">
+            <Card className="border-warning/30 bg-warning/10">
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center">
-                    <Calendar className="h-5 w-5" />
-                  </div>
+                  <Calendar className="h-5 w-5 text-warning" />
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-orange-900">Application Deadline</p>
-                    <p className="text-sm text-orange-700">{formatDeadline(job.deadline)}</p>
+                    <p className="text-sm font-medium text-foreground">Application Deadline</p>
+                    <p className="text-sm text-warning">{formatDeadline(job.deadline)}</p>
                   </div>
                 </div>
               </CardContent>
@@ -259,7 +257,7 @@ export default function JobDetailsPage({ params }: JobDetailsPageProps) {
                   {job.requiredSkills.map((skill, index) => (
                     <span
                       key={index}
-                      className="px-3 py-1.5 text-sm bg-blue-50 text-blue-700 rounded-full border border-blue-200"
+                      className="px-3 py-1.5 text-sm bg-s3 text-muted-foreground rounded-sm border border-border"
                     >
                       {skill}
                     </span>
@@ -275,7 +273,7 @@ export default function JobDetailsPage({ params }: JobDetailsPageProps) {
               <div className="space-y-3">
                 <Button
                   variant="outline"
-                  className="w-full h-12 text-green-600 border-green-200 bg-green-50"
+                  className="w-full h-12 text-success border-success/30 bg-success/10"
                   disabled
                 >
                   <CheckCircle2 className="h-4 w-4 mr-2" />
@@ -292,7 +290,7 @@ export default function JobDetailsPage({ params }: JobDetailsPageProps) {
             ) : (
               <Button
                 onClick={() => router.push(`/apply/${jobId}`)}
-                className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white shadow-lg"
+                className="w-full h-12"
               >
                 Apply for This Position
               </Button>

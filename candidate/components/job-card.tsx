@@ -13,14 +13,14 @@ interface JobCardProps {
 
 export function JobCard({ job, hasApplied = false, onClick }: JobCardProps) {
   const cityColor = job.site === 'Bouarada' 
-    ? 'bg-blue-600 text-white hover:bg-blue-700' 
-    : 'bg-teal-600 text-white hover:bg-teal-700'
+    ? 'bg-bou/10 border-bou/25 text-bou'
+    : 'bg-zag/10 border-zag/25 text-zag'
 
   const contractColors: Record<string, string> = {
-    CDI: 'bg-green-100 text-green-800',
-    CDD: 'bg-orange-100 text-orange-800',
-    Stage: 'bg-purple-100 text-purple-800',
-    Alternance: 'bg-indigo-100 text-indigo-800'
+    CDI: 'bg-success/10 border-success/30 text-success',
+    CDD: 'bg-warning/10 border-warning/30 text-warning',
+    Stage: 'bg-secondary border-input text-muted-foreground',
+    Alternance: 'bg-secondary border-input text-muted-foreground'
   }
 
   // Calculate days until deadline
@@ -29,7 +29,7 @@ export function JobCard({ job, hasApplied = false, onClick }: JobCardProps) {
 
   return (
     <Card 
-      className="cursor-pointer active:scale-[0.98] transition-transform touch-manipulation hover:shadow-md"
+      className="cursor-pointer transition-colors touch-manipulation hover:bg-s2 hover:border-primary/40"
       onClick={onClick}
     >
       <CardContent className="p-4">
@@ -42,7 +42,7 @@ export function JobCard({ job, hasApplied = false, onClick }: JobCardProps) {
                 {job.contractType}
               </Badge>
               {hasApplied && (
-                <Badge variant="outline" className="border-green-500 text-green-600 gap-1 pl-1 pr-2">
+                <Badge variant="outline" className="border-success/30 text-success gap-1 pl-1 pr-2">
                   <CheckCircle2 className="h-3 w-3" />
                   Applied
                 </Badge>
@@ -73,7 +73,7 @@ export function JobCard({ job, hasApplied = false, onClick }: JobCardProps) {
                 {job.requiredSkills.slice(0, 3).map((skill) => (
                   <span
                     key={skill}
-                    className="px-2 py-0.5 text-xs bg-blue-50 text-blue-700 rounded-full border border-blue-200"
+                    className="px-2 py-0.5 text-xs bg-s3 text-muted-foreground rounded-sm border border-border"
                   >
                     {skill}
                   </span>
@@ -107,7 +107,7 @@ export function JobCard({ job, hasApplied = false, onClick }: JobCardProps) {
               </div>
 
               {/* Deadline */}
-              <div className={`flex items-center gap-1 ${isUrgent ? 'text-red-600 font-medium' : ''}`}>
+              <div className={`flex items-center gap-1 ${isUrgent ? 'text-err font-medium' : ''}`}>
                 <Calendar className="h-3.5 w-3.5" />
                 <span>
                   {daysUntilDeadline <= 0 
@@ -125,7 +125,7 @@ export function JobCard({ job, hasApplied = false, onClick }: JobCardProps) {
             {/* Salary Range (if shown) */}
             {job.showSalary && job.salaryRange && (
               <div className="mt-2 pt-2 border-t border-border">
-                <span className="inline-flex items-center gap-1.5 text-xs font-medium text-green-700">
+                <span className="inline-flex items-center gap-1.5 text-xs font-medium text-success">
                   <Banknote className="h-3.5 w-3.5" />
                   {job.salaryRange}
                 </span>

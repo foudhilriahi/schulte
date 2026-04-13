@@ -1,7 +1,7 @@
 import { Skeleton } from "@/components/ui/skeleton";
 
 const JobCardSkeleton = () => (
-  <div className="rounded-2xl border border-border bg-card p-4">
+  <div className="rounded-md border border-border bg-card p-4">
     <div className="flex items-start justify-between">
       <div className="flex-1">
         <div className="mb-2 flex gap-2">

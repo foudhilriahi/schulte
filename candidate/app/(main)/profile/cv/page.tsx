@@ -172,7 +172,7 @@ export default function MyCVPage() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-slate-50">
+    <div className="flex flex-col min-h-screen bg-background">
       <header className="sticky top-0 bg-background/95 backdrop-blur-sm border-b border-border z-40 safe-area-pt">
         <div className="px-4 py-3 flex items-center justify-between">
           <div className="flex items-center">
@@ -194,12 +194,12 @@ export default function MyCVPage() {
       <main className="flex-1 px-4 py-6 max-w-md mx-auto w-full">
         <div className="space-y-4">
           {/* Upload New CV */}
-          <Card className="border-2 border-dashed border-slate-300 hover:border-blue-400 transition-colors">
+          <Card className="border-2 border-dashed border-border hover:border-acch transition-colors">
             <CardContent className="p-6">
               <label className="flex flex-col items-center justify-center cursor-pointer">
-                <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mb-3">
+                <div className="w-12 h-12 rounded-full bg-bou/14 text-bou flex items-center justify-center mb-3">
                   {isUploading ? (
-                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-bou"></div>
                   ) : (
                     <Plus className="h-6 w-6" />
                   )}
@@ -219,7 +219,7 @@ export default function MyCVPage() {
             </CardContent>
           </Card>
 
-          <Card className="border border-slate-200">
+          <Card className="border border-border">
             <CardHeader className="pb-3">
               <CardTitle className="text-base">Build New CV</CardTitle>
             </CardHeader>
@@ -236,7 +236,7 @@ export default function MyCVPage() {
           {/* CV List */}
           {cvs.length === 0 ? (
             <div className="text-center py-12 space-y-4">
-              <div className="w-16 h-16 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center mx-auto">
+              <div className="w-16 h-16 rounded-full bg-s3 text-muted-foreground flex items-center justify-center mx-auto">
                 <FileText className="h-8 w-8" />
               </div>
               <div>
@@ -255,7 +255,7 @@ export default function MyCVPage() {
                       <div className="flex items-center gap-2 mb-1">
                         <CardTitle className="text-base truncate">{cv.name}</CardTitle>
                         {cv.isDefault && (
-                          <Star className="h-4 w-4 text-yellow-500 fill-current flex-shrink-0" />
+                          <Star className="h-4 w-4 text-warn fill-current flex-shrink-0" />
                         )}
                       </div>
                       <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -309,7 +309,7 @@ export default function MyCVPage() {
                       variant="outline"
                       size="sm"
                       onClick={() => handleDelete(cv.id)}
-                      className="text-red-600 hover:text-red-700"
+                      className="text-err hover:text-err"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -320,15 +320,15 @@ export default function MyCVPage() {
           )}
 
           {/* Info Card */}
-          <Card className="bg-blue-50 border-blue-200">
+          <Card className="bg-bou/10 border-bou/25">
             <CardContent className="p-4">
               <div className="flex items-start gap-3">
-                <div className="w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                <div className="w-8 h-8 rounded-full bg-bou/14 text-bou flex items-center justify-center flex-shrink-0 mt-0.5">
                   <FileText className="h-4 w-4" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-sm font-semibold text-blue-900 mb-1">CV Management</h3>
-                  <p className="text-xs text-blue-700">
+                  <h3 className="text-sm font-semibold text-foreground mb-1">CV Management</h3>
+                  <p className="text-xs text-bou">
                     Your default CV (marked with ⭐) will be used automatically when applying. 
                     You can also choose a specific CV during the application process.
                   </p>

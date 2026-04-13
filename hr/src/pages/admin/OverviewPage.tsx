@@ -21,11 +21,11 @@ import {
 } from "recharts";
 
 const statusBadge: Record<string, { label: string; className: string }> = {
-  new: { label: "New", className: "bg-indigo-100 text-indigo-800" },
-  reviewing: { label: "Reviewing", className: "bg-amber-100 text-amber-800" },
-  interview: { label: "Interview", className: "bg-blue-100 text-blue-800" },
-  accepted: { label: "Accepted", className: "bg-emerald-100 text-emerald-800" },
-  rejected: { label: "Rejected", className: "bg-red-100 text-red-800" },
+  new: { label: "New", className: "bg-s3 text-foreground" },
+  reviewing: { label: "Reviewing", className: "bg-warn/14 text-warn" },
+  interview: { label: "Interview", className: "bg-bou/14 text-bou" },
+  accepted: { label: "Accepted", className: "bg-ok/14 text-ok" },
+  rejected: { label: "Rejected", className: "bg-err/14 text-err" },
 };
 
 const AdminOverviewPage = () => {
@@ -94,16 +94,16 @@ const AdminOverviewPage = () => {
   const statusChartData = (stats?.applicationsByStatus || []).map((s: any) => ({
     name: statusBadge[s.status]?.label || s.status,
     value: s.count,
-    color: s.status === 'new' ? '#6366f1' : 
-           s.status === 'reviewing' ? '#F59E0B' :
-           s.status === 'interview' ? '#3b82f6' :
-           s.status === 'accepted' ? '#10b981' : '#ef4444'
+      color: s.status === 'new' ? 'hsl(var(--bouarada))' : 
+        s.status === 'reviewing' ? 'hsl(var(--warning))' :
+        s.status === 'interview' ? 'hsl(var(--bouarada))' :
+        s.status === 'accepted' ? 'hsl(var(--success))' : 'hsl(var(--destructive))'
   }));
 
   const siteChartData = (stats?.offersBySite || []).map((s: any) => ({
     name: s.site,
     value: s.count,
-    color: s.site === 'Bouarada' ? '#3b82f6' : '#14b8a6'
+    color: s.site === 'Bouarada' ? 'hsl(var(--bouarada))' : 'hsl(var(--zaghouan))'
   }));
 
   const retryFetch = async () => {
@@ -134,7 +134,7 @@ const AdminOverviewPage = () => {
       </div>
 
       {error && (
-        <div className="mb-4 flex items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+        <div className="mb-4 flex items-center justify-between gap-3 rounded-lg border border-warn/30 bg-warn/10 px-3 py-2 text-sm text-warn">
           <span>{error}</span>
           <Button variant="outline" size="sm" onClick={retryFetch}>
             Réessayer
@@ -144,17 +144,17 @@ const AdminOverviewPage = () => {
 
       {/* Top KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 mb-6">
-        <StatCard label="Total Candidates" value={stats?.totalCandidates ?? 0} icon={Users} iconColor="text-blue-500" />
-        <StatCard label="HR Accounts" value={stats?.hrAccounts ?? 0} icon={UserCheck} iconColor="text-purple-500" />
-        <StatCard label="Active Offers" value={stats?.activeOffers ?? 0} icon={Briefcase} iconColor="text-amber-500" />
-        <StatCard label="Total Applications" value={stats?.totalApplications ?? 0} icon={ClipboardList} iconColor="text-green-500" />
-        <StatCard label="Apps (Month)" value={stats?.applicationsMonth ?? 0} icon={TrendingUp} iconColor="text-blue-500" />
-        <StatCard label="Interviews (Week)" value={stats?.interviewsWeek ?? 0} icon={CalendarDays} iconColor="text-emerald-500" />
+        <StatCard label="Total Candidates" value={stats?.totalCandidates ?? 0} icon={Users} iconColor="text-bou" />
+        <StatCard label="HR Accounts" value={stats?.hrAccounts ?? 0} icon={UserCheck} iconColor="text-primary" />
+        <StatCard label="Active Offers" value={stats?.activeOffers ?? 0} icon={Briefcase} iconColor="text-warn" />
+        <StatCard label="Total Applications" value={stats?.totalApplications ?? 0} icon={ClipboardList} iconColor="text-ok" />
+        <StatCard label="Apps (Month)" value={stats?.applicationsMonth ?? 0} icon={TrendingUp} iconColor="text-bou" />
+        <StatCard label="Interviews (Week)" value={stats?.interviewsWeek ?? 0} icon={CalendarDays} iconColor="text-ok" />
       </div>
 
       {/* Sites Activity */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-        <Card className="rounded-2xl shadow-sm">
+        <Card className="rounded-md shadow-[0_1px_3px_rgba(0,0,0,0.45)]">
           <CardHeader>
             <CardTitle className="text-base">Offers by Site</CardTitle>
           </CardHeader>
@@ -187,7 +187,7 @@ const AdminOverviewPage = () => {
       </div>
 
       {/* Application Status Chart */}
-      <Card className="rounded-2xl shadow-sm mb-6">
+      <Card className="rounded-md shadow-[0_1px_3px_rgba(0,0,0,0.45)] mb-6">
         <CardHeader>
           <CardTitle className="text-base">Application Status Distribution</CardTitle>
         </CardHeader>
@@ -218,7 +218,7 @@ const AdminOverviewPage = () => {
       </Card>
 
       {/* Recent Applications */}
-      <Card className="rounded-2xl shadow-sm">
+      <Card className="rounded-md shadow-[0_1px_3px_rgba(0,0,0,0.45)]">
         <CardHeader>
           <CardTitle className="text-base">Recent Applications</CardTitle>
         </CardHeader>
@@ -230,10 +230,10 @@ const AdminOverviewPage = () => {
             {(stats?.recentApplications || []).map((a: any, i: number) => {
               const badge = statusBadge[a.status] ?? {
                 label: a.status,
-                className: "bg-slate-100 text-slate-700",
+                className: "bg-s3 text-foreground",
               };
               return (
-                <div key={a.id || i} className={`flex items-center justify-between px-6 py-3 ${i % 2 === 0 ? 'bg-white' : 'bg-slate-50'}`}>
+                <div key={a.id || i} className={`flex items-center justify-between px-6 py-3 ${i % 2 === 0 ? 'bg-card' : 'bg-s2'}`}>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium">{a.candidateName || 'Unknown'}</p>
                     <p className="text-xs text-muted-foreground">

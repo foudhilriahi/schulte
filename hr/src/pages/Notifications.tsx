@@ -22,7 +22,7 @@ const Notifications = () => {
           return (
             <div
               key={n.id}
-              className={`rounded-2xl border border-border bg-card p-4 transition-colors ${
+              className={`rounded-md border border-border bg-card p-4 transition-colors ${
                 !n.read ? "border-l-4 border-l-primary" : ""
               }`}
             >

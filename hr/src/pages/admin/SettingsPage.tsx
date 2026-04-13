@@ -85,28 +85,28 @@ const AdminSettingsPage = () => {
   return (
     <DashboardLayout title="Admin Settings">
       <div className="max-w-lg space-y-6">
-        <Card className="rounded-2xl shadow-sm">
+        <Card className="rounded-md shadow-[0_1px_3px_rgba(0,0,0,0.45)]">
           <CardHeader><CardTitle className="text-base">Profile</CardTitle></CardHeader>
           <CardContent className="space-y-3">
             <div><Label>Display Name</Label><Input value={name} onChange={e => setName(e.target.value)} /></div>
             <div><Label>Email</Label><p className="text-sm text-muted-foreground">{user?.email} (read-only)</p></div>
-            <Button onClick={handleProfile} disabled={savingProfile} className="bg-[#1A2B4A]">
+            <Button onClick={handleProfile} disabled={savingProfile} className="bg-primary">
               {savingProfile ? 'Saving...' : 'Save Profile'}
             </Button>
           </CardContent>
         </Card>
 
-        <Card className="rounded-2xl shadow-sm">
+        <Card className="rounded-md shadow-[0_1px_3px_rgba(0,0,0,0.45)]">
           <CardHeader><CardTitle className="text-base">Change Password</CardTitle></CardHeader>
           <CardContent className="space-y-3">
             <div><Label>Current Password</Label><Input type="password" value={currentPw} onChange={e => setCurrentPw(e.target.value)} /></div>
             <div><Label>New Password</Label><Input type="password" value={newPw} onChange={e => setNewPw(e.target.value)} /><p className="text-[10px] text-muted-foreground mt-1">Min 8 chars, 1 digit</p></div>
             <div><Label>Confirm Password</Label><Input type="password" value={confirmPw} onChange={e => setConfirmPw(e.target.value)} /></div>
-            <Button onClick={handlePassword} disabled={saving} className="bg-[#1A2B4A]">{saving ? 'Saving...' : 'Update Password'}</Button>
+            <Button onClick={handlePassword} disabled={saving} className="bg-primary">{saving ? 'Saving...' : 'Update Password'}</Button>
           </CardContent>
         </Card>
 
-        <Card className="rounded-2xl shadow-sm">
+        <Card className="rounded-md shadow-[0_1px_3px_rgba(0,0,0,0.45)]">
           <CardHeader><CardTitle className="text-base">Mini Messagerie (Admin to HR)</CardTitle></CardHeader>
           <CardContent className="space-y-3">
             <div>
@@ -114,7 +114,7 @@ const AdminSettingsPage = () => {
               <select
                 value={broadcastSite}
                 onChange={e => setBroadcastSite(e.target.value as 'all' | 'Bouarada' | 'Zaghouan')}
-                className="h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
+                className="h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-[0_1px_3px_rgba(0,0,0,0.45)]"
               >
                 <option value="all">All HR sites</option>
                 <option value="Bouarada">Bouarada only</option>
@@ -129,7 +129,7 @@ const AdminSettingsPage = () => {
                 placeholder="Write a short message to HR teams"
               />
             </div>
-            <Button onClick={handleBroadcast} disabled={sendingBroadcast} className="bg-[#1A2B4A]">
+            <Button onClick={handleBroadcast} disabled={sendingBroadcast} className="bg-primary">
               {sendingBroadcast ? 'Sending...' : 'Send Broadcast'}
             </Button>
           </CardContent>

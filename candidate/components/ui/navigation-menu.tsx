@@ -148,7 +148,7 @@ function NavigationMenuIndicator({
       )}
       {...props}
     >
-      <div className="bg-border relative top-[60%] h-2 w-2 rotate-45 rounded-tl-sm shadow-md" />
+      <div className="bg-border relative top-[60%] h-2 w-2 rotate-45 rounded-tl-sm shadow-[0_4px_12px_rgba(0,0,0,0.55)]" />
     </NavigationMenuPrimitive.Indicator>
   )
 }

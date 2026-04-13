@@ -11,9 +11,9 @@ interface KanbanCardProps {
 }
 
 const getScoreColor = (score: number) => {
-  if (score >= 80) return "bg-success text-success-foreground";
-  if (score >= 60) return "bg-accent text-accent-foreground";
-  return "bg-destructive text-destructive-foreground";
+  if (score >= 80) return "bg-success/10 border-success/30 text-success";
+  if (score >= 60) return "bg-warning/10 border-warning/30 text-warning";
+  return "bg-destructive/10 border-destructive/30 text-destructive";
 };
 
 const KanbanCard = ({ candidate, index, onClick }: KanbanCardProps) => {
@@ -31,8 +31,8 @@ const KanbanCard = ({ candidate, index, onClick }: KanbanCardProps) => {
           {...provided.draggableProps}
           {...provided.dragHandleProps}
           onClick={() => onClick(candidate)}
-          className={`rounded-xl border bg-card p-3.5 shadow-sm cursor-pointer transition-all hover:shadow-lg hover:border-accent/50 group ${
-            snapshot.isDragging ? "shadow-lg ring-2 ring-accent/50" : ""
+          className={`rounded-md border bg-card p-3.5 shadow-[0_1px_3px_rgba(0,0,0,0.45)] cursor-pointer transition-colors hover:bg-s2 hover:border-primary/40 group ${
+            snapshot.isDragging ? "bg-s2 border-primary/40 scale-[1.02] shadow-[0_4px_12px_rgba(0,0,0,0.55)]" : ""
           } ${candidate.city === "Bouarada" ? "card-bouarada" : "card-zaghouan"}`}
         >
           <div className="flex items-start justify-between gap-2 mb-2">
@@ -40,7 +40,7 @@ const KanbanCard = ({ candidate, index, onClick }: KanbanCardProps) => {
               <p className="font-semibold text-sm text-card-foreground truncate">{candidate.name}</p>
               <p className="text-xs text-muted-foreground truncate">{candidate.jobTitle}</p>
             </div>
-            <span className={`shrink-0 flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold ${getScoreColor(candidate.aiScore)}`}>
+            <span className={`shrink-0 flex h-8 min-w-8 items-center justify-center rounded-full border text-xs font-medium font-mono px-2 ${getScoreColor(candidate.aiScore)}`}>
               {candidate.aiScore}
             </span>
           </div>
@@ -52,7 +52,7 @@ const KanbanCard = ({ candidate, index, onClick }: KanbanCardProps) => {
               <span className="truncate flex-1">{candidate.phone}</span>
               <button
                 onClick={(e) => handleCopy(e, candidate.phone, "Tél.")}
-                className="opacity-0 group-hover/phone:opacity-100 p-0.5 hover:bg-accent/20 rounded transition-all"
+                className="opacity-0 group-hover/phone:opacity-100 p-0.5 hover:bg-accent rounded-sm transition-colors"
                 title="Copier le téléphone"
               >
                 <Copy className="h-3 w-3" />
@@ -64,7 +64,7 @@ const KanbanCard = ({ candidate, index, onClick }: KanbanCardProps) => {
               {candidate.email && (
                 <button
                   onClick={(e) => handleCopy(e, candidate.email, "Email")}
-                  className="opacity-0 group-hover/email:opacity-100 p-0.5 hover:bg-accent/20 rounded transition-all"
+                  className="opacity-0 group-hover/email:opacity-100 p-0.5 hover:bg-accent rounded-sm transition-colors"
                   title="Copier l'email"
                 >
                   <Copy className="h-3 w-3" />
@@ -88,8 +88,8 @@ const KanbanCard = ({ candidate, index, onClick }: KanbanCardProps) => {
                   key={star}
                   className={`h-3.5 w-3.5 ${
                     star <= candidate.starRating
-                      ? "fill-accent text-accent"
-                      : "text-border"
+                      ? "fill-primary text-primary"
+                      : "text-s4"
                   }`}
                 />
               ))}

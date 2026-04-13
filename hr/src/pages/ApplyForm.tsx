@@ -46,7 +46,7 @@ const ApplyForm = () => {
       <main className="mx-auto max-w-lg px-4 pt-6">
         <StepProgressBar currentStep={step} totalSteps={4} labels={stepLabels} />
 
-        <div className="rounded-2xl border border-border bg-card p-5">
+        <div className="rounded-md border border-border bg-card p-5">
           {step === 0 && (
             <div className="animate-slide-in-right space-y-4">
               <h3 className="text-base font-bold text-card-foreground">Informations personnelles</h3>
@@ -110,7 +110,7 @@ const ApplyForm = () => {
           {step > 0 && (
             <button
               onClick={prev}
-              className="touch-target flex flex-1 items-center justify-center gap-2 rounded-2xl border border-border bg-card py-3 text-sm font-semibold text-card-foreground transition-colors hover:bg-accent"
+              className="touch-target flex flex-1 items-center justify-center gap-2 rounded-md border border-border bg-card py-3 text-sm font-semibold text-card-foreground transition-colors hover:bg-accent"
             >
               <ArrowLeft className="h-4 w-4" />
               Précédent
@@ -119,7 +119,7 @@ const ApplyForm = () => {
           {step < 3 ? (
             <button
               onClick={next}
-              className="touch-target flex flex-1 items-center justify-center gap-2 rounded-2xl bg-primary py-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+              className="touch-target flex flex-1 items-center justify-center gap-2 rounded-md bg-primary py-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
             >
               Suivant
               <ArrowRight className="h-4 w-4" />
@@ -127,7 +127,7 @@ const ApplyForm = () => {
           ) : (
             <button
               onClick={submit}
-              className="touch-target flex flex-1 items-center justify-center gap-2 rounded-2xl bg-success py-3 text-sm font-semibold text-success-foreground transition-colors hover:bg-success/90"
+              className="touch-target flex flex-1 items-center justify-center gap-2 rounded-md bg-success py-3 text-sm font-semibold text-success-foreground transition-colors hover:bg-success/90"
             >
               <Send className="h-4 w-4" />
               Envoyer

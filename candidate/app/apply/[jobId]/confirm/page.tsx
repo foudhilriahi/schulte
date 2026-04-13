@@ -170,7 +170,7 @@ export default function ConfirmApplicationPage({ params }: ConfirmApplicationPag
   if (isLoadingCV) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen pb-20 px-4">
-        <div className="animate-spin rounded-full h-7 w-7 border-b-2 border-blue-600" />
+        <div className="animate-spin rounded-full h-7 w-7 border-b-2 border-primary" />
         <p className="text-sm text-muted-foreground mt-3">Loading selected CV...</p>
       </div>
     )
@@ -193,7 +193,7 @@ export default function ConfirmApplicationPage({ params }: ConfirmApplicationPag
   }
 
   return (
-    <div className="flex flex-col min-h-screen pb-20 bg-slate-50">
+    <div className="flex flex-col min-h-screen pb-20 bg-background">
       <header className="sticky top-0 bg-background/95 backdrop-blur-sm border-b border-border z-40 safe-area-pt">
         <div className="px-4 py-3">
           <button
@@ -217,15 +217,15 @@ export default function ConfirmApplicationPage({ params }: ConfirmApplicationPag
 
           {/* Job Info */}
           {job && (
-            <Card className="bg-blue-50 border-blue-200">
+            <Card className="bg-bou/10 border-bou/25">
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-full bg-bou/14 text-bou flex items-center justify-center">
                     <FileText className="h-5 w-5" />
                   </div>
                   <div className="flex-1">
-                    <h3 className="font-semibold text-blue-900">{job.title}</h3>
-                    <p className="text-sm text-blue-700">{job.site} • {job.contractType}</p>
+                    <h3 className="font-semibold text-foreground">{job.title}</h3>
+                    <p className="text-sm text-bou">{job.site} • {job.contractType}</p>
                   </div>
                 </div>
               </CardContent>
@@ -237,7 +237,7 @@ export default function ConfirmApplicationPage({ params }: ConfirmApplicationPag
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between gap-3">
                 <CardTitle className="text-base flex items-center gap-2">
-                  <FileText className="h-5 w-5 text-green-600" />
+                  <FileText className="h-5 w-5 text-ok" />
                   Selected CV
                 </CardTitle>
                 <Button variant="outline" size="sm" onClick={() => setShowCVSelector(true)}>
@@ -309,7 +309,7 @@ export default function ConfirmApplicationPage({ params }: ConfirmApplicationPag
             <Button
               onClick={handleSubmit}
               disabled={isSubmitting || !selectedCV}
-              className="w-full h-12 bg-green-600 hover:bg-green-700 text-white shadow-lg"
+              className="w-full h-12"
             >
               {isSubmitting ? (
                 <>

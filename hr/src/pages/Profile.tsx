@@ -28,7 +28,7 @@ const Profile = () => {
           ].map(({ icon: Icon, label }) => (
             <div
               key={label}
-              className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4"
+              className="flex items-center gap-3 rounded-md border border-border bg-card p-4"
             >
               <Icon className="h-5 w-5 text-muted-foreground" />
               <span className="text-sm text-card-foreground">{label}</span>
@@ -41,7 +41,7 @@ const Profile = () => {
           {["Mon CV", "Paramètres", "Aide & Support"].map((item) => (
             <button
               key={item}
-              className="touch-target flex w-full items-center justify-between rounded-2xl border border-border bg-card p-4 text-left transition-colors hover:bg-accent"
+              className="touch-target flex w-full items-center justify-between rounded-md border border-border bg-card p-4 text-left transition-colors hover:bg-accent"
             >
               <div className="flex items-center gap-3">
                 <FileText className="h-5 w-5 text-muted-foreground" />

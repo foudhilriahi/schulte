@@ -114,7 +114,7 @@ export default function ApplyPage({ params }: ApplyPageProps) {
         <p className="text-sm text-muted-foreground mt-2">This job posting may have been removed.</p>
         <button
           onClick={() => router.push('/')}
-          className="mt-4 text-blue-600 font-medium min-h-[44px] touch-manipulation"
+          className="mt-4 text-bou font-medium min-h-[44px] touch-manipulation"
         >
           Back to Jobs
         </button>
@@ -126,7 +126,7 @@ export default function ApplyPage({ params }: ApplyPageProps) {
   if (job.status !== 'open') {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen pb-20 px-4">
-        <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mb-4">
+        <div className="w-16 h-16 bg-err/14 text-err rounded-full border border-err/30 flex items-center justify-center mb-4">
           <CheckCircle2 className="h-8 w-8" />
         </div>
         <h1 className="text-lg font-semibold text-foreground">Job Closed</h1>
@@ -147,7 +147,7 @@ export default function ApplyPage({ params }: ApplyPageProps) {
 
   if (hasApplied) {
     return (
-      <div className="flex flex-col min-h-screen pb-20 bg-muted/30">
+      <div className="flex flex-col min-h-screen pb-20 bg-background">
         <header className="sticky top-0 bg-background/95 backdrop-blur-sm border-b border-border z-40 safe-area-pt">
           <div className="px-4 py-3">
             <button
@@ -161,8 +161,8 @@ export default function ApplyPage({ params }: ApplyPageProps) {
         </header>
         
         <main className="flex-1 px-4 py-16 flex flex-col items-center justify-center text-center">
-          <div className="h-20 w-20 bg-green-100 rounded-full flex items-center justify-center mb-6">
-            <CheckCircle2 className="h-10 w-10 text-green-600" />
+          <div className="h-20 w-20 rounded-full border border-ok/30 bg-ok/14 flex items-center justify-center mb-6">
+            <CheckCircle2 className="h-10 w-10 text-ok" />
           </div>
           <h1 className="text-2xl font-bold text-foreground mb-2">Already Applied</h1>
           <p className="text-muted-foreground mb-8">
@@ -203,7 +203,7 @@ export default function ApplyPage({ params }: ApplyPageProps) {
   }
 
   return (
-    <div className="flex flex-col min-h-screen pb-20 bg-slate-50">
+    <div className="flex flex-col min-h-screen pb-20 bg-background">
       <header className="sticky top-0 bg-background/95 backdrop-blur-sm border-b border-border z-40 safe-area-pt">
         <div className="px-4 py-3">
           <button
@@ -229,12 +229,10 @@ export default function ApplyPage({ params }: ApplyPageProps) {
           {cvs.length > 0 && (
             <div className="space-y-3">
               <h2 className="text-sm font-semibold text-foreground">Quick Apply</h2>
-              <Card
-                className="border-blue-200 bg-blue-50/50"
-              >
+              <Card className="border-bou/25 bg-bou/10">
                 <CardContent className="p-4 space-y-3">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full flex items-center justify-center bg-blue-100 text-blue-600">
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center bg-bou/14 text-bou">
                       <FileText className="h-5 w-5" />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -269,9 +267,9 @@ export default function ApplyPage({ params }: ApplyPageProps) {
             </h2>
 
             {cvs.length === 0 && (
-              <Card className="border-amber-200 bg-amber-50">
+              <Card className="border-warn/25 bg-warn/10">
                 <CardContent className="p-4">
-                  <p className="text-sm text-amber-900 mb-3">
+                  <p className="text-sm text-warn mb-3">
                     Build or upload your CV from Profile first, then come back to apply.
                   </p>
                   <Button variant="outline" onClick={() => router.push('/profile/cv')}>
@@ -284,12 +282,12 @@ export default function ApplyPage({ params }: ApplyPageProps) {
             {/* Choose from existing CVs */}
             {cvs.length > 1 && (
               <Card 
-                className="cursor-pointer hover:shadow-md transition-shadow"
+                className="cursor-pointer transition-[border-color,box-shadow] hover:border-acch hover:shadow-[0_4px_16px_rgba(0,0,0,0.32)]"
                 onClick={() => setShowCVSelector(true)}
               >
                 <CardContent className="p-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-green-50 text-green-600 rounded-full flex items-center justify-center">
+                    <div className="w-10 h-10 rounded-full bg-ok/14 text-ok flex items-center justify-center">
                       <FileText className="h-5 w-5" />
                     </div>
                     <div className="flex-1">

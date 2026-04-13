@@ -71,7 +71,7 @@ const TemplateSelector = ({ open, onClose, onSelectTemplate }: TemplateSelectorP
       <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-[#F59E0B]" />
+            <Sparkles className="h-5 w-5 text-warning" />
             Créer une nouvelle offre
           </DialogTitle>
           <p className="text-sm text-muted-foreground">
@@ -100,16 +100,16 @@ const TemplateSelector = ({ open, onClose, onSelectTemplate }: TemplateSelectorP
                 {templates.map((template) => (
                   <Card 
                     key={template.id}
-                    className="cursor-pointer hover:shadow-md transition-shadow border-slate-200 hover:border-[#1A2B4A]"
+                    className="cursor-pointer border-border transition-[border-color,box-shadow] hover:border-acch hover:shadow-[0_4px_16px_rgba(0,0,0,0.32)]"
                     onClick={() => handleSelectTemplate(template)}
                   >
                     <CardHeader className="pb-3">
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
-                          <CardTitle className="text-base text-[#1A2B4A] mb-1">
+                          <CardTitle className="text-base text-foreground mb-1">
                             {template.titleFr}
                           </CardTitle>
-                          <CardDescription className="text-xs text-slate-500">
+                          <CardDescription className="text-xs text-muted-foreground">
                             {template.titleEn}
                           </CardDescription>
                         </div>
@@ -119,16 +119,16 @@ const TemplateSelector = ({ open, onClose, onSelectTemplate }: TemplateSelectorP
                       </div>
                     </CardHeader>
                     <CardContent className="pt-0">
-                      <p className="text-sm text-slate-600 mb-3 line-clamp-2">
+                      <p className="mb-3 line-clamp-2 text-sm text-muted-foreground">
                         {template.description}
                       </p>
                       <div className="space-y-2">
-                        <p className="text-xs font-medium text-slate-700">
+                        <p className="text-xs font-medium text-foreground">
                           Département: {template.department}
                         </p>
                         {template.suggestedSkills.length > 0 && (
                           <div>
-                            <p className="text-xs font-medium text-slate-700 mb-1">
+                            <p className="mb-1 text-xs font-medium text-foreground">
                               Compétences suggérées:
                             </p>
                             <div className="flex flex-wrap gap-1">

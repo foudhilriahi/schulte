@@ -19,22 +19,22 @@ const statusLabels: Record<string, string> = {
 }
 
 const statusColors: Record<string, string> = {
-  new: 'bg-gray-100 text-gray-700',
-  reviewing: 'bg-yellow-100 text-yellow-700',
-  interview: 'bg-blue-100 text-blue-700',
-  accepted: 'bg-green-100 text-green-700',
-  rejected: 'bg-red-100 text-red-700'
+  new: 'bg-secondary text-muted-foreground border-input',
+  reviewing: 'bg-warning/10 text-warning border-warning/30',
+  interview: 'bg-primary/15 text-primary border-primary/30',
+  accepted: 'bg-success/10 text-success border-success/30',
+  rejected: 'bg-destructive/10 text-destructive border-destructive/30'
 }
 
 export function ApplicationCard({ application, onClick }: ApplicationCardProps) {
   const city = application.offer?.site || 'Zaghouan';
   const cityColor = city === 'Bouarada'
-    ? 'bg-blue-600 text-white'
-    : 'bg-teal-600 text-white'
+    ? 'bg-bou/10 border-bou/25 text-bou'
+    : 'bg-zag/10 border-zag/25 text-zag'
 
   return (
     <Card 
-      className="cursor-pointer active:scale-[0.98] transition-transform touch-manipulation"
+      className="cursor-pointer transition-colors touch-manipulation hover:bg-s2 hover:border-primary/40"
       onClick={onClick}
     >
       <CardContent className="p-4">

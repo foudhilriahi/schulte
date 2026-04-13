@@ -82,7 +82,7 @@ export function NotificationsScreen() {
               <Button
                 variant="ghost"
                 size="sm"
-                className="shrink-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50 gap-1.5 text-xs"
+                className="shrink-0 gap-1.5 text-xs text-bou hover:bg-bou/10 hover:text-bou"
                 onClick={() => markAllRead()}
               >
                 <CheckCheck className="h-4 w-4" />
@@ -146,12 +146,12 @@ export function NotificationsScreen() {
                         "relative flex items-start gap-3 p-4 rounded-xl bg-card border cursor-pointer",
                         "transition-colors hover:bg-muted/50 active:bg-muted",
                         !notification.read
-                          ? "border-l-[3px] border-l-blue-500 border-t-border border-r-border border-b-border"
+                          ? "border-l-[3px] border-l-bou border-t-border border-r-border border-b-border"
                           : "border-border",
                       ].join(" ")}
                     >
                       <div className="mt-1 shrink-0 flex items-start pt-0.5">
-                        <span className={notification.read ? "h-2 w-2" : "h-2 w-2 rounded-full bg-blue-500 mt-0.5"} />
+                        <span className={notification.read ? "h-2 w-2" : "h-2 w-2 rounded-full bg-bou mt-0.5"} />
                       </div>
 
                       <div className="flex-1 min-w-0">
@@ -175,7 +175,7 @@ export function NotificationsScreen() {
                         </p>
                         <div className="mt-2 flex items-center gap-2">
                           {!notification.read && (
-                            <span className="text-[10px] font-medium text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full">
+                            <span className="rounded-full bg-bou/14 px-2 py-0.5 text-[10px] font-medium text-bou">
                               Non lue
                             </span>
                           )}
@@ -186,7 +186,7 @@ export function NotificationsScreen() {
                               e.stopPropagation();
                               deleteNotification(notification.id);
                             }}
-                            className="inline-flex items-center gap-1 text-[10px] text-muted-foreground hover:text-red-600"
+                            className="inline-flex items-center gap-1 text-[10px] text-muted-foreground hover:text-err"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
                             Supprimer

@@ -42,42 +42,42 @@ const LoginPage = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
-      <div className="w-full max-w-sm bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
+    <div className="min-h-screen flex items-center justify-center bg-background px-4">
+      <div className="w-full max-w-sm bg-card rounded-md shadow-[0_1px_3px_rgba(0,0,0,0.45)] border border-border p-8">
         <div className="flex flex-col items-center mb-8">
           <img src={logo} alt="Schulte Tunisia" className="h-12 w-auto mb-4" />
-          <h1 className="text-xl font-bold text-[#1A2B4A]">Schulte Tunisia</h1>
-          <p className="text-sm text-slate-500 mt-1">Portail Interne — RH & Admin</p>
+          <h1 className="text-xl font-bold text-foreground">Schulte Tunisia</h1>
+          <p className="text-sm text-muted-foreground mt-1">Portail Interne — RH & Admin</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1.5">
-            <label className="text-sm font-medium text-slate-700">Email</label>
+            <label className="text-sm font-medium text-foreground">Email</label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full h-10 px-3 rounded-lg border border-slate-200 bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-[#1A2B4A]/30 focus:border-[#1A2B4A]"
+              className="w-full h-10 px-3 rounded-sm border border-input bg-s2 text-sm focus:outline-none focus:border-ring"
               placeholder="nom@schulte-tun.com"
               required
             />
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-sm font-medium text-slate-700">Mot de passe</label>
+            <label className="text-sm font-medium text-foreground">Mot de passe</label>
             <div className="relative">
               <input
                 type={showPw ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full h-10 px-3 pr-10 rounded-lg border border-slate-200 bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-[#1A2B4A]/30 focus:border-[#1A2B4A]"
+                className="w-full h-10 px-3 pr-10 rounded-sm border border-input bg-s2 text-sm focus:outline-none focus:border-ring"
                 placeholder="••••••••"
                 required
               />
               <button
                 type="button"
                 onClick={() => setShowPw(!showPw)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-slate-600"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground hover:text-foreground"
               >
                 {showPw ? 'Hide' : 'Show'}
               </button>
@@ -87,15 +87,15 @@ const LoginPage = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full h-10 rounded-lg bg-[#1A2B4A] text-white text-sm font-medium hover:bg-[#243a5e] transition-colors disabled:opacity-50"
+            className="w-full h-10 rounded-md bg-primary text-primary-foreground text-sm font-semibold hover:bg-acch transition-colors disabled:opacity-50"
           >
             {loading ? 'Connexion...' : 'Se connecter'}
           </button>
         </form>
 
         <div className="text-center mt-6 space-y-1">
-          <p className="text-[11px] text-slate-400">Accès réservé. Compte géré par l'administrateur.</p>
-          <p className="text-[11px] text-slate-500">Mot de passe oublié ? Contactez l'administrateur.</p>
+          <p className="text-[11px] text-muted-foreground">Accès réservé. Compte géré par l'administrateur.</p>
+          <p className="text-[11px] text-muted-foreground">Mot de passe oublié ? Contactez l'administrateur.</p>
         </div>
       </div>
     </div>

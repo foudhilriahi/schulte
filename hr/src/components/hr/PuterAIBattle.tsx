@@ -6,10 +6,10 @@ import { toast } from 'sonner';
 
 // Puter.js models for HR second opinion
 const PUTER_MODELS = [
-  { id: 'gpt-4o-mini', name: 'GPT-4o Mini', provider: 'OpenAI', color: '#10b981' },
-  { id: 'claude-haiku-4-5', name: 'Claude Haiku', provider: 'Anthropic', color: '#f59e0b' },
-  { id: 'gemini-2.0-flash', name: 'Gemini Flash', provider: 'Google', color: '#3b82f6' },
-  { id: 'mistral-large-latest', name: 'Mistral Large', provider: 'Mistral', color: '#ec4899' },
+  { id: 'gpt-4o-mini', name: 'GPT-4o Mini', provider: 'OpenAI', color: 'hsl(var(--success))' },
+  { id: 'claude-haiku-4-5', name: 'Claude Haiku', provider: 'Anthropic', color: 'hsl(var(--warning))' },
+  { id: 'gemini-2.0-flash', name: 'Gemini Flash', provider: 'Google', color: 'hsl(var(--bouarada))' },
+  { id: 'mistral-large-latest', name: 'Mistral Large', provider: 'Mistral', color: 'hsl(var(--primary))' },
 ];
 
 interface PuterAIBattleProps {
@@ -246,24 +246,24 @@ Return ONLY valid JSON — no markdown, no backticks, no explanation:
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'pending': return <Clock className="h-4 w-4 text-gray-400" />;
-      case 'running': return <RefreshCw className="h-4 w-4 text-blue-500 animate-spin" />;
-      case 'success': return <CheckCircle className="h-4 w-4 text-green-500" />;
-      case 'error': return <XCircle className="h-4 w-4 text-red-500" />;
+      case 'pending': return <Clock className="h-4 w-4 text-muted-foreground" />;
+      case 'running': return <RefreshCw className="h-4 w-4 text-primary animate-spin" />;
+      case 'success': return <CheckCircle className="h-4 w-4 text-success" />;
+      case 'error': return <XCircle className="h-4 w-4 text-destructive" />;
       default: return null;
     }
   };
 
   const getScoreColor = (score: number) => {
-    if (score >= 75) return 'text-green-600 bg-green-100';
-    if (score >= 50) return 'text-yellow-600 bg-yellow-100';
-    return 'text-red-600 bg-red-100';
+    if (score >= 75) return 'text-success bg-success/10 border border-success/30';
+    if (score >= 50) return 'text-warning bg-warning/10 border border-warning/30';
+    return 'text-destructive bg-destructive/10 border border-destructive/30';
   };
 
   if (!analysisText || analysisText.length < 50) {
     return (
-      <div className="p-4 bg-gray-50 rounded-lg">
-        <p className="text-sm text-gray-600">No CV text available for Puter.js analysis</p>
+      <div className="p-4 bg-secondary rounded-md border border-input">
+        <p className="text-sm text-muted-foreground">No CV text available for Puter.js analysis</p>
       </div>
     );
   }
@@ -273,7 +273,7 @@ Return ONLY valid JSON — no markdown, no backticks, no explanation:
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Bot className="h-5 w-5 text-purple-600" />
+          <Bot className="h-5 w-5 text-primary" />
           <h3 className="font-semibold text-sm">Puter.js AI Battle</h3>
           <Badge variant="outline" className="text-xs">Second opinion</Badge>
         </div>
@@ -306,8 +306,8 @@ Return ONLY valid JSON — no markdown, no backticks, no explanation:
 
       {/* Authentication Status */}
       {!isAuthenticated && (
-        <div className="p-3 bg-purple-50 rounded-lg border border-purple-200">
-          <p className="text-sm text-purple-700">
+        <div className="p-3 bg-secondary rounded-md border border-input">
+          <p className="text-sm text-muted-foreground">
             Sign in to Puter.js for free access to GPT-4o, Claude, Gemini, and Mistral models
           </p>
         </div>
@@ -317,7 +317,7 @@ Return ONLY valid JSON — no markdown, no backticks, no explanation:
       {models.length > 0 && (
         <div className="grid grid-cols-2 gap-3">
           {models.map((model) => (
-            <div key={model.id} className="p-3 border rounded-lg bg-white">
+            <div key={model.id} className="p-3 border rounded-md bg-s2">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <div 
@@ -329,21 +329,21 @@ Return ONLY valid JSON — no markdown, no backticks, no explanation:
                 {getStatusIcon(model.status)}
               </div>
               
-              <div className="text-xs text-gray-500 mb-1">{model.provider}</div>
+              <div className="text-xs text-muted-foreground mb-1 font-mono">{model.provider}</div>
               
               {model.status === 'success' && model.result && (
                 <div className="space-y-1">
-                  <div className={`text-xs font-bold px-2 py-1 rounded ${getScoreColor(model.result.score)}`}>
+                  <div className={`text-xs font-semibold px-2 py-1 rounded-full ${getScoreColor(model.result.score)}`}>
                     {model.result.score}/100
                   </div>
-                  <div className="text-xs text-gray-600">
+                  <div className="text-xs text-muted-foreground">
                     {model.result.recommendation} • {model.duration}ms
                   </div>
                 </div>
               )}
               
               {model.status === 'error' && (
-                <div className="text-xs text-red-600 truncate" title={model.error}>
+                <div className="text-xs text-destructive truncate" title={model.error}>
                   {model.error}
                 </div>
               )}
@@ -354,37 +354,37 @@ Return ONLY valid JSON — no markdown, no backticks, no explanation:
 
       {/* Consensus Result */}
       {consensus && (
-        <div className="p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-200">
+        <div className="p-4 bg-s2 rounded-md border border-input">
           <div className="flex items-center gap-2 mb-3">
-            <Bot className="h-4 w-4 text-purple-600" />
+            <Bot className="h-4 w-4 text-primary" />
             <span className="font-semibold text-sm">Puter.js consensus</span>
           </div>
           
           <div className="grid grid-cols-3 gap-4 mb-3">
             <div className="text-center">
-              <div className={`text-2xl font-bold px-3 py-2 rounded-lg ${getScoreColor(consensus.score)}`}>
+              <div className={`text-2xl font-semibold px-3 py-2 rounded-md font-mono ${getScoreColor(consensus.score)}`}>
                 {consensus.score}
               </div>
-              <div className="text-xs text-gray-600 mt-1">Score</div>
+              <div className="text-xs text-muted-foreground mt-1">Score</div>
             </div>
             <div className="text-center">
-              <div className="text-lg font-semibold text-gray-800">
+              <div className="text-lg font-semibold text-foreground">
                 {consensus.recommendation}
               </div>
-              <div className="text-xs text-gray-600 mt-1">Recommendation</div>
+              <div className="text-xs text-muted-foreground mt-1">Recommendation</div>
             </div>
             <div className="text-center">
-              <div className="text-lg font-semibold text-gray-800">
+              <div className="text-lg font-semibold text-foreground font-mono">
                 {consensus.confidence}%
               </div>
-              <div className="text-xs text-gray-600 mt-1">Confidence</div>
+              <div className="text-xs text-muted-foreground mt-1">Confidence</div>
             </div>
           </div>
           
           {consensus.strengths?.length > 0 && (
             <div className="mb-2">
-              <div className="text-xs font-semibold text-green-700 mb-1">Strengths</div>
-              <div className="text-xs text-green-600 space-y-0.5">
+              <div className="text-xs font-semibold text-success mb-1">Strengths</div>
+              <div className="text-xs text-success space-y-0.5">
                 {consensus.strengths.map((strength: string, i: number) => (
                   <div key={i}>• {strength}</div>
                 ))}
@@ -394,8 +394,8 @@ Return ONLY valid JSON — no markdown, no backticks, no explanation:
           
           {consensus.gaps?.length > 0 && (
             <div>
-              <div className="text-xs font-semibold text-amber-700 mb-1">Gaps</div>
-              <div className="text-xs text-amber-600 space-y-0.5">
+              <div className="text-xs font-semibold text-warning mb-1">Gaps</div>
+              <div className="text-xs text-warning space-y-0.5">
                 {consensus.gaps.map((gap: string, i: number) => (
                   <div key={i}>• {gap}</div>
                 ))}

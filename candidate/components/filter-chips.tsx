@@ -23,19 +23,19 @@ export function FilterChips({ activeFilter, onFilterChange }: FilterChipsProps) 
     <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4">
       {filters.map((filter) => {
         const isActive = activeFilter === filter.value
-        const baseClasses = 'px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors min-h-[44px] flex items-center touch-manipulation'
+        const baseClasses = 'px-3.5 py-1.5 rounded-full text-xs font-medium whitespace-nowrap border transition-colors duration-150 min-h-[36px] flex items-center touch-manipulation'
         
         let colorClasses = ''
         if (isActive) {
           if (filter.color === 'blue') {
-            colorClasses = 'bg-blue-600 text-white'
+            colorClasses = 'bg-bou/10 border-bou/25 text-bou'
           } else if (filter.color === 'teal') {
-            colorClasses = 'bg-teal-600 text-white'
+            colorClasses = 'bg-zag/10 border-zag/25 text-zag'
           } else {
-            colorClasses = 'bg-foreground text-background'
+            colorClasses = 'bg-acc/12 border-acc/30 text-acch'
           }
         } else {
-          colorClasses = 'bg-muted text-muted-foreground'
+          colorClasses = 'bg-s2 border-input text-muted-foreground'
         }
 
         return (

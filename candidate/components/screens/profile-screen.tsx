@@ -54,8 +54,8 @@ export function ProfileScreen() {
   }
 
   const cityColor = user?.city === 'Bouarada'
-    ? 'bg-blue-600 text-white'
-    : 'bg-teal-600 text-white'
+    ? 'bg-bou/10 border-bou/25 text-bou'
+    : 'bg-zag/10 border-zag/25 text-zag'
 
   return (
     <div className="flex flex-col min-h-screen pb-20">
@@ -86,7 +86,7 @@ export function ProfileScreen() {
           <div className="space-y-6">
             {/* Profile Header */}
             <div className="flex flex-col items-center space-y-2">
-              <div className="h-20 w-20 rounded-full bg-blue-600 flex items-center justify-center text-white text-2xl font-semibold">
+              <div className="h-20 w-20 rounded-full bg-s3 border border-input flex items-center justify-center text-foreground text-2xl font-semibold">
                 {user.name.split(' ').map(n => n[0]).join('')}
               </div>
               <h2 className="text-lg font-semibold text-foreground">
@@ -200,7 +200,7 @@ export function ProfileScreen() {
             <div className="mt-6">
               <Button
                 variant="outline"
-                className="w-full min-h-[48px] text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700 touch-manipulation"
+                className="w-full min-h-[48px] border-err/30 text-err hover:bg-err/10 hover:text-err touch-manipulation"
                 onClick={handleLogout}
               >
                 <LogOut className="h-4 w-4 mr-2" />

@@ -30,22 +30,22 @@ const statusConfig: Record<
 > = {
   scheduled: {
     label: "Planifié",
-    className: "bg-blue-100 text-blue-700 border-blue-200",
+    className: "bg-bou/14 text-bou border-bou/28",
     icon: CalendarClock,
   },
   pass: {
     label: "Retenu",
-    className: "bg-emerald-100 text-emerald-700 border-emerald-200",
+    className: "bg-ok/14 text-ok border-ok/28",
     icon: CheckCircle,
   },
   fail: {
     label: "Refusé",
-    className: "bg-red-100 text-red-700 border-red-200",
+    className: "bg-err/14 text-err border-err/28",
     icon: XCircle,
   },
   no_show: {
     label: "Absent",
-    className: "bg-slate-100 text-slate-600 border-slate-200",
+    className: "bg-s3 text-muted-foreground border-border",
     icon: UserX,
   },
 };
@@ -145,7 +145,7 @@ const InterviewsPage = () => {
     return (
       <DashboardLayout title="Entretiens">
         <div className="flex items-center gap-2 text-muted-foreground text-sm">
-          <div className="h-4 w-4 animate-spin rounded-full border-2 border-[#1A2B4A] border-t-transparent" />
+          <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
           Chargement des entretiens...
         </div>
       </DashboardLayout>
@@ -160,22 +160,22 @@ const InterviewsPage = () => {
           {
             label: "Planifiés",
             count: scheduled.length,
-            color: "bg-blue-50 text-blue-700 border-blue-200",
+            color: "bg-bou/12 text-bou border-bou/25",
           },
           {
             label: "Retenus",
             count: interviews.filter((i) => i.status === "pass").length,
-            color: "bg-emerald-50 text-emerald-700 border-emerald-200",
+            color: "bg-ok/12 text-ok border-ok/25",
           },
           {
             label: "Refusés",
             count: interviews.filter((i) => i.status === "fail").length,
-            color: "bg-red-50 text-red-700 border-red-200",
+            color: "bg-err/12 text-err border-err/25",
           },
           {
             label: "Absents",
             count: interviews.filter((i) => i.status === "no_show").length,
-            color: "bg-slate-50 text-slate-600 border-slate-200",
+            color: "bg-s3 text-muted-foreground border-border",
           },
         ].map((s) => (
           <div
@@ -189,7 +189,7 @@ const InterviewsPage = () => {
       </div>
 
       {error && (
-        <div className="mb-4 p-3 bg-red-50 text-red-700 text-sm rounded-lg border border-red-200">
+        <div className="mb-4 rounded-lg border border-err/30 bg-err/10 p-3 text-sm text-err">
           {error}
         </div>
       )}
@@ -203,7 +203,7 @@ const InterviewsPage = () => {
       {/* Scheduled interviews */}
       {scheduled.length > 0 && (
         <section className="mb-8">
-          <h2 className="text-sm font-semibold text-[#1A2B4A] mb-3 uppercase tracking-wide">
+          <h2 className="text-sm font-semibold text-foreground mb-3 uppercase tracking-wide">
             À venir
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -244,7 +244,7 @@ const InterviewsPage = () => {
       {/* Concluded interviews */}
       {concluded.length > 0 && (
         <section>
-          <h2 className="text-sm font-semibold text-[#1A2B4A] mb-3 uppercase tracking-wide">
+          <h2 className="text-sm font-semibold text-foreground mb-3 uppercase tracking-wide">
             Terminés
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -324,7 +324,7 @@ const InterviewCard = ({ interview, onRecordOutcome }: InterviewCardProps) => {
   };
 
   return (
-    <Card className="rounded-2xl shadow-sm hover:shadow-md transition-shadow">
+    <Card className="rounded-md shadow-[0_1px_3px_rgba(0,0,0,0.45)] transition-shadow hover:shadow-[0_4px_16px_rgba(0,0,0,0.32)]">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
@@ -368,7 +368,7 @@ const InterviewCard = ({ interview, onRecordOutcome }: InterviewCardProps) => {
 
         {/* Notes */}
         {interview.notes && (
-          <p className="text-xs text-muted-foreground italic border-l-2 border-[#F59E0B] pl-2 mt-1">
+          <p className="text-xs text-muted-foreground italic border-l-2 border-warning pl-2 mt-1">
             "{interview.notes}"
           </p>
         )}
@@ -377,7 +377,7 @@ const InterviewCard = ({ interview, onRecordOutcome }: InterviewCardProps) => {
         {Array.isArray(interview.prepNotes) &&
           interview.prepNotes.length > 0 && (
             <div className="text-xs text-muted-foreground space-y-0.5">
-              <p className="font-medium text-[#1A2B4A]">Points à aborder :</p>
+              <p className="font-medium text-foreground">Points à aborder :</p>
               <ul className="list-disc list-inside space-y-0.5">
                 {interview.prepNotes.map((note: string, idx: number) => (
                   <li key={idx}>{note}</li>
@@ -390,7 +390,7 @@ const InterviewCard = ({ interview, onRecordOutcome }: InterviewCardProps) => {
         {onRecordOutcome && (
           <Button
             size="sm"
-            className="w-full mt-1 bg-[#1A2B4A] hover:bg-[#243a5e] text-white text-xs gap-1.5"
+            className="mt-1 w-full gap-1.5 bg-primary text-xs text-primary-foreground hover:bg-acch"
             onClick={onRecordOutcome}
           >
             <CheckCircle className="h-3.5 w-3.5" />

@@ -22,11 +22,11 @@ import {
 } from "recharts";
 
 const statusBadge: Record<string, { label: string; className: string }> = {
-  new: { label: "Nouveau", className: "bg-indigo-100 text-indigo-800" },
-  reviewing: { label: "En examen", className: "bg-amber-100 text-amber-800" },
-  interview: { label: "Entretien", className: "bg-blue-100 text-blue-800" },
-  accepted: { label: "Accepté", className: "bg-emerald-100 text-emerald-800" },
-  rejected: { label: "Rejeté", className: "bg-red-100 text-red-800" },
+  new: { label: "Nouveau", className: "bg-s3 text-foreground" },
+  reviewing: { label: "En examen", className: "bg-warn/14 text-warn" },
+  interview: { label: "Entretien", className: "bg-bou/14 text-bou" },
+  accepted: { label: "Accepté", className: "bg-ok/14 text-ok" },
+  rejected: { label: "Rejeté", className: "bg-err/14 text-err" },
 };
 
 const DashboardPage = () => {
@@ -84,27 +84,27 @@ const DashboardPage = () => {
     {
       name: "Nouvelles",
       value: stats.applicationsByStatus.find((s: any) => s.status === "new")?.count || 0,
-      color: "#6366f1",
+      color: "hsl(var(--bouarada))",
     },
     {
       name: "En examen",
       value: stats.applicationsByStatus.find((s: any) => s.status === "reviewing")?.count || 0,
-      color: "#F59E0B",
+      color: "hsl(var(--warning))",
     },
     {
       name: "Entretien",
       value: stats.applicationsByStatus.find((s: any) => s.status === "interview")?.count || 0,
-      color: "#3b82f6",
+      color: "hsl(var(--bouarada))",
     },
     {
       name: "Acceptées",
       value: stats.applicationsByStatus.find((s: any) => s.status === "accepted")?.count || 0,
-      color: "#10b981",
+      color: "hsl(var(--success))",
     },
     {
       name: "Rejetées",
       value: stats.applicationsByStatus.find((s: any) => s.status === "rejected")?.count || 0,
-      color: "#ef4444",
+      color: "hsl(var(--destructive))",
     },
   ];
 
@@ -113,7 +113,7 @@ const DashboardPage = () => {
       {/* ── KPI Row ────────────────────────────────────────────────────── */}
       <div className="mb-4">
         <h2 className="text-lg font-semibold text-foreground">
-          Site: <span className="text-blue-600">{stats.site}</span>
+          Site: <span className="text-bou">{stats.site}</span>
         </h2>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -132,7 +132,7 @@ const DashboardPage = () => {
           label="Candidatures ce mois"
           value={stats.applicationsMonth}
           icon={Users}
-          iconColor="text-blue-500"
+          iconColor="text-bou"
         />
         <StatCard
           label="Entretiens cette semaine"
@@ -145,7 +145,7 @@ const DashboardPage = () => {
       {/* ── 3-col grid ─────────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Card 1 — Recent applications */}
-        <Card className="rounded-2xl shadow-sm">
+        <Card className="rounded-md shadow-[0_1px_3px_rgba(0,0,0,0.45)]">
           <CardHeader>
             <CardTitle className="text-base">Candidatures récentes</CardTitle>
           </CardHeader>
@@ -159,7 +159,7 @@ const DashboardPage = () => {
               {recentApps.map((a: any, i: number) => {
                 const badge = statusBadge[a.status] ?? {
                   label: a.status,
-                  className: "bg-slate-100 text-slate-700",
+                  className: "bg-s3 text-foreground",
                 };
                 return (
                   <div
@@ -185,7 +185,7 @@ const DashboardPage = () => {
         </Card>
 
         {/* Card 2 — Upcoming interviews */}
-        <Card className="rounded-2xl shadow-sm">
+        <Card className="rounded-md shadow-[0_1px_3px_rgba(0,0,0,0.45)]">
           <CardHeader>
             <CardTitle className="text-base">Prochains entretiens</CardTitle>
           </CardHeader>
@@ -226,7 +226,7 @@ const DashboardPage = () => {
                         {interview.location ? ` • ${interview.location}` : ""}
                       </p>
                     </div>
-                    <Badge className="text-xs bg-blue-100 text-blue-800">
+                    <Badge className="text-xs bg-bou/14 text-bou">
                       Planifié
                     </Badge>
                   </div>
@@ -237,7 +237,7 @@ const DashboardPage = () => {
         </Card>
 
         {/* Card 3 — Application status chart */}
-        <Card className="rounded-2xl shadow-sm">
+        <Card className="rounded-md shadow-[0_1px_3px_rgba(0,0,0,0.45)]">
           <CardHeader>
             <CardTitle className="text-base">
               Répartition des candidatures

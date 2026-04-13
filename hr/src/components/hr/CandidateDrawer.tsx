@@ -129,7 +129,7 @@ const CandidateDrawer = ({
       <div className="fixed inset-0 bg-black/20 z-40" onClick={onClose} />
 
       {/* Drawer */}
-      <div className="fixed right-0 top-0 z-50 h-screen w-full max-w-[860px] bg-white border-l border-slate-200 shadow-xl overflow-y-auto animate-in slide-in-from-right duration-300">
+      <div className="fixed right-0 top-0 z-50 h-screen w-full max-w-[860px] bg-card border-l border-border shadow-[0_8px_28px_rgba(0,0,0,0.65)] overflow-y-auto animate-in slide-in-from-right duration-300">
         <div className="flex items-center justify-between p-4 border-b">
           <h2 className="text-lg font-bold">{candidate.name}</h2>
           <Button variant="ghost" size="sm" onClick={onClose}>
@@ -142,7 +142,7 @@ const CandidateDrawer = ({
           <div className="space-y-5">
             {/* Identity */}
             <section>
-              <h3 className="text-sm font-semibold text-[#1A2B4A] mb-2">
+              <h3 className="text-sm font-semibold text-foreground mb-2">
                 Identity
               </h3>
               <div className="space-y-1.5 text-sm">
@@ -168,7 +168,7 @@ const CandidateDrawer = ({
             {/* Skills */}
             {candidate.skills?.length > 0 && (
               <section>
-                <h3 className="text-sm font-semibold text-[#1A2B4A] mb-2">
+                <h3 className="text-sm font-semibold text-foreground mb-2">
                   Skills
                 </h3>
                 <div className="flex flex-wrap gap-1.5">
@@ -183,7 +183,7 @@ const CandidateDrawer = ({
 
             {/* HR Actions */}
             <section>
-              <h3 className="text-sm font-semibold text-[#1A2B4A] mb-2">
+              <h3 className="text-sm font-semibold text-foreground mb-2">
                 HR Actions
               </h3>
               <div className="space-y-3">
@@ -212,10 +212,10 @@ const CandidateDrawer = ({
                   Planifier un entretien
                 </Button>
 
-                <div className="space-y-2 rounded-xl border bg-slate-50 p-3">
-                  <p className="text-xs font-semibold text-[#1A2B4A]">Changer le statut</p>
+                <div className="space-y-2 rounded-md border border-input bg-s2 p-3">
+                  <p className="text-xs font-semibold text-foreground">Changer le statut</p>
                   <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-                    <SelectTrigger className="h-10 bg-white">
+                    <SelectTrigger className="h-10 bg-s1">
                       <SelectValue placeholder="Sélectionnez un statut" />
                     </SelectTrigger>
                     <SelectContent>
@@ -228,7 +228,7 @@ const CandidateDrawer = ({
                   </Select>
                   <Button
                     variant="outline"
-                    className="w-full bg-white"
+                    className="w-full bg-s1"
                     onClick={saveStatus}
                     disabled={statusSaving || selectedStatus === candidate.status}
                   >
@@ -253,14 +253,14 @@ const CandidateDrawer = ({
 
             {/* Dual AI Analysis */}
             <section>
-              <h3 className="text-sm font-semibold text-[#1A2B4A] mb-2">
+              <h3 className="text-sm font-semibold text-foreground mb-2">
                 Dual AI Analysis
               </h3>
               {!analysis ? (
                 <Button
                   onClick={runDualAI}
                   disabled={analysing}
-                  className="w-full gap-2 bg-[#1A2B4A]"
+                  className="w-full gap-2"
                 >
                   {analysing ? (
                     <>
@@ -281,10 +281,10 @@ const CandidateDrawer = ({
                     <span
                       className={`flex h-12 w-12 items-center justify-center rounded-full text-lg font-bold ${
                         analysis.mergedScore >= 70
-                          ? "bg-emerald-100 text-emerald-800"
+                          ? "bg-ok/14 text-ok"
                           : analysis.mergedScore >= 40
-                            ? "bg-amber-100 text-amber-800"
-                            : "bg-red-100 text-red-800"
+                            ? "bg-warn/14 text-warn"
+                            : "bg-err/14 text-err"
                       }`}
                     >
                       {analysis.mergedScore}
@@ -293,12 +293,12 @@ const CandidateDrawer = ({
                       <Badge
                         className={`${
                           analysis.mergedRecommendation === "Hire"
-                            ? "bg-emerald-100 text-emerald-800"
+                            ? "bg-ok/14 text-ok"
                             : analysis.mergedRecommendation === "Interview"
-                              ? "bg-amber-100 text-amber-800"
+                              ? "bg-warn/14 text-warn"
                             : analysis.mergedRecommendation === "Request More Info"
-                              ? "bg-blue-100 text-blue-800"
-                              : "bg-red-100 text-red-800"
+                              ? "bg-bou/14 text-bou"
+                              : "bg-err/14 text-err"
                         }`}
                       >
                         {analysis.mergedRecommendation}
@@ -312,11 +312,11 @@ const CandidateDrawer = ({
                   </div>
 
                   {analysis.providers.length > 1 && (analysis.agreement ? (
-                    <div className="p-3 bg-emerald-50 rounded-lg border border-emerald-200 text-xs text-emerald-900">
+                    <div className="rounded-lg border border-ok/30 bg-ok/10 p-3 text-xs text-ok">
                       Both AI providers reached the same recommendation.
                     </div>
                   ) : (
-                    <div className="p-3 bg-amber-50 rounded-lg border border-amber-200 text-xs text-amber-900">
+                    <div className="rounded-lg border border-warn/30 bg-warn/10 p-3 text-xs text-warn">
                       <p className="font-semibold mb-1">The two assessments disagree.</p>
                       <p>{analysis.disagreementNote}</p>
                       <p className="mt-1">Read both reasoning sections and make your own judgment.</p>
@@ -325,29 +325,29 @@ const CandidateDrawer = ({
 
                   <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                     {analysis.providers.map((provider) => (
-                      <div key={provider.name} className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                      <div key={provider.name} className="rounded-lg border border-border bg-s2 p-3">
                         <div className="flex items-center justify-between mb-2">
-                          <p className="text-xs font-semibold text-blue-900">{provider.name}</p>
+                          <p className="text-xs font-semibold text-foreground">{provider.name}</p>
                           <Badge variant="outline" className="text-xs">
                             {provider.score}/100 • {provider.recommendation}
                           </Badge>
                         </div>
-                        <p className="text-xs text-blue-900 leading-relaxed">{provider.reasoning}</p>
+                        <p className="text-xs leading-relaxed text-muted-foreground">{provider.reasoning}</p>
 
                         <details className="mt-3">
-                          <summary className="cursor-pointer text-xs font-semibold text-slate-700">
+                          <summary className="cursor-pointer text-xs font-semibold text-foreground/85">
                             Show thinking
                           </summary>
-                          <p className="text-xs text-slate-700 mt-1 leading-relaxed">{provider.thinking}</p>
+                          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{provider.thinking}</p>
                         </details>
                       </div>
                     ))}
                   </div>
 
                   {analysis.mergedTips.length > 0 && (
-                    <div className="p-3 bg-slate-50 rounded-lg border">
-                      <p className="text-xs font-semibold text-slate-800 mb-1">Merged candidate tips</p>
-                      <ul className="text-xs text-slate-700 space-y-1">
+                    <div className="rounded-lg border border-border bg-s2 p-3">
+                      <p className="mb-1 text-xs font-semibold text-foreground">Merged candidate tips</p>
+                      <ul className="space-y-1 text-xs text-muted-foreground">
                         {analysis.mergedTips.map((tip, i) => (
                           <li key={i}>• {tip}</li>
                         ))}
@@ -374,11 +374,11 @@ const CandidateDrawer = ({
 
           {/* Right Panel — CV */}
           <div className="space-y-4">
-            <h3 className="text-sm font-semibold text-[#1A2B4A]">
+            <h3 className="text-sm font-semibold text-foreground">
               CV / Application Data
             </h3>
             {candidate.cvUrl ? (
-              <div className="border rounded-xl overflow-hidden bg-slate-50 min-h-[400px] flex items-center justify-center">
+              <div className="border rounded-xl overflow-hidden bg-s2 min-h-[400px] flex items-center justify-center">
                 <div className="text-center space-y-3 p-6">
                   <p className="text-sm text-muted-foreground">PDF uploaded</p>
                   <Button 
@@ -412,7 +412,7 @@ const CandidateDrawer = ({
               </div>
             ) : candidate.formData ? (
               <div className="space-y-3 text-sm">
-                <div className="p-3 bg-slate-50 rounded-lg">
+                <div className="rounded-lg bg-s2 p-3">
                   <p className="text-xs font-semibold mb-1">Personal</p>
                   <p>
                     {candidate.formData.personal?.name} —{" "}
@@ -420,7 +420,7 @@ const CandidateDrawer = ({
                   </p>
                 </div>
                 {candidate.formData.education?.length > 0 && (
-                  <div className="p-3 bg-slate-50 rounded-lg">
+                  <div className="rounded-lg bg-s2 p-3">
                     <p className="text-xs font-semibold mb-1">Education</p>
                     {candidate.formData.education.map((e: any, i: number) => (
                       <p key={i}>
@@ -430,7 +430,7 @@ const CandidateDrawer = ({
                   </div>
                 )}
                 {candidate.formData.experience?.length > 0 && (
-                  <div className="p-3 bg-slate-50 rounded-lg">
+                  <div className="rounded-lg bg-s2 p-3">
                     <p className="text-xs font-semibold mb-1">Experience</p>
                     {candidate.formData.experience.map((e: any, i: number) => (
                       <p key={i}>
@@ -440,7 +440,7 @@ const CandidateDrawer = ({
                   </div>
                 )}
                 {candidate.formData.skills?.length > 0 && (
-                  <div className="p-3 bg-slate-50 rounded-lg">
+                  <div className="rounded-lg bg-s2 p-3">
                     <p className="text-xs font-semibold mb-1">Skills</p>
                     <div className="flex flex-wrap gap-1">
                       {candidate.formData.skills.map((s: string) => (
@@ -457,7 +457,7 @@ const CandidateDrawer = ({
                 )}
               </div>
             ) : (
-              <div className="flex items-center justify-center h-[200px] bg-slate-50 rounded-xl">
+              <div className="flex h-[200px] items-center justify-center rounded-xl bg-s2">
                 <p className="text-sm text-muted-foreground">
                   No CV/form data available
                 </p>

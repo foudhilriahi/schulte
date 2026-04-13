@@ -165,12 +165,12 @@ const NewOfferPage = () => {
               <ArrowLeft className="h-4 w-4" />
             </Button>
             <div>
-              <h1 className="text-2xl font-bold text-[#1A2B4A]">
+              <h1 className="text-2xl font-bold text-foreground">
                 Nouvelle offre (depuis modèle)
               </h1>
               {selectedTemplate && (
                 <div className="flex items-center gap-2 mt-1">
-                  <Sparkles className="h-4 w-4 text-[#F59E0B]" />
+                  <Sparkles className="h-4 w-4 text-warning" />
                   <span className="text-sm text-muted-foreground">
                     Basée sur le modèle: {selectedTemplate.titleFr}
                   </span>
@@ -362,7 +362,7 @@ const NewOfferPage = () => {
             <Button type="button" variant="outline" onClick={() => navigate('/offers')}>
               Annuler
             </Button>
-            <Button type="submit" disabled={loading} className="bg-[#1A2B4A] hover:bg-[#243a5e]">
+            <Button type="submit" disabled={loading} className="bg-primary hover:bg-acch">
               {loading ? 'Création...' : 'Créer l\'offre'}
             </Button>
           </div>

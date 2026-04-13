@@ -1,8 +1,21 @@
 import type { Metadata, Viewport } from "next";
+import { Inter, JetBrains_Mono } from "next/font/google";
 import { BottomNav } from "@/components/bottom-nav";
 import { ToastProvider } from "@/components/toast-provider";
 import { Providers } from "@/components/providers";
 import "./globals.css";
+
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-jetbrains-mono",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "Schulte Tunisia Jobs",
@@ -27,7 +40,7 @@ export const viewport: Viewport = {
   maximumScale: 5,
   userScalable: true,
   viewportFit: "cover",
-  themeColor: "#2563eb",
+  themeColor: "rgb(8, 9, 13)",
 };
 
 export default function RootLayout({
@@ -38,7 +51,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className="font-sans antialiased"
+        className={`${inter.variable} ${jetbrainsMono.variable} font-sans antialiased`}
         suppressHydrationWarning
       >
         <Providers>

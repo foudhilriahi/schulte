@@ -158,22 +158,22 @@ const TemplatesPage = () => {
     <DashboardLayout title="Job Templates">
       <div className="flex items-center justify-between mb-4 gap-4">
         <div className="flex items-center gap-3">
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search templates..." className="h-9 w-64 px-3 rounded-lg border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#1A2B4A]/20" />
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search templates..." className="h-9 w-64 px-3 rounded-lg border border-input bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
           <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
             <input type="checkbox" checked={showInactive} onChange={e => setShowInactive(e.target.checked)} className="rounded" />
             Show inactive
           </label>
         </div>
-        <Button onClick={() => { setForm({ titleFr: '', titleEn: '', contractType: 'CDI', department: '', description: '', suggestedSkills: [], skillInput: '' }); setCreateOpen(true) }} className="gap-2 bg-[#1A2B4A] hover:bg-[#243a5e]">
+        <Button onClick={() => { setForm({ titleFr: '', titleEn: '', contractType: 'CDI', department: '', description: '', suggestedSkills: [], skillInput: '' }); setCreateOpen(true) }} className="gap-2 bg-primary hover:bg-acch">
           <Plus className="h-4 w-4" /> Create Template
         </Button>
       </div>
 
-      <p className="mb-3 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-3 py-2">
+      <p className="mb-3 rounded-md border border-warn/30 bg-warn/10 px-3 py-2 text-xs text-warn">
         Core templates are protected and cannot be deactivated.
       </p>
 
-      <Card className="rounded-2xl shadow-sm">
+      <Card className="rounded-md shadow-[0_1px_3px_rgba(0,0,0,0.45)]">
         <CardContent className="p-0">
           <table className="w-full text-sm">
             <thead>
@@ -192,12 +192,12 @@ const TemplatesPage = () => {
                 (() => {
                   const isCore = CORE_TEMPLATE_IDS.has(t.id)
                   return (
-                <tr key={t.id} className={`border-b hover:bg-slate-50 ${i % 2 === 0 ? '' : 'bg-slate-50/50'}`}>
+                <tr key={t.id} className={`border-b hover:bg-s2 ${i % 2 === 0 ? '' : 'bg-s2/50'}`}>
                   <td className="px-4 py-3 font-medium">
                     <div className="flex items-center gap-2">
                       <span>{t.titleFr}</span>
                       {isCore && (
-                        <Badge variant="outline" className="gap-1 text-[10px] border-amber-300 text-amber-700">
+                        <Badge variant="outline" className="gap-1 text-[10px] border-warn/30 text-warn">
                           <Lock className="h-3 w-3" /> Core
                         </Badge>
                       )}
@@ -215,7 +215,7 @@ const TemplatesPage = () => {
                     </div>
                   </td>
                   <td className="px-4 py-3">
-                    <Badge className={`text-xs ${t.isActive !== false ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'}`}>
+                    <Badge className={`text-xs ${t.isActive !== false ? 'bg-ok/14 text-ok' : 'bg-s3 text-muted-foreground'}`}>
                       {t.isActive !== false ? 'Active' : 'Inactive'}
                     </Badge>
                   </td>
@@ -244,11 +244,11 @@ const TemplatesPage = () => {
                         title={isCore ? 'Core templates cannot be deactivated' : 'Toggle active status'}
                       >
                         {isCore ? (
-                          <Lock className="h-4 w-4 text-amber-600" />
+                          <Lock className="h-4 w-4 text-warn" />
                         ) : t.isActive !== false ? (
-                          <ToggleRight className="h-4 w-4 text-emerald-500" />
+                          <ToggleRight className="h-4 w-4 text-ok" />
                         ) : (
-                          <ToggleLeft className="h-4 w-4 text-slate-400" />
+                          <ToggleLeft className="h-4 w-4 text-muted-foreground" />
                         )}
                       </Button>
                     </div>
@@ -268,7 +268,7 @@ const TemplatesPage = () => {
         <Dialog key={title} open={open} onOpenChange={setOpen}>
           <DialogContent className="max-w-lg">
             <DialogHeader><DialogTitle>{title}</DialogTitle></DialogHeader>
-            {title === 'Edit Template' && <p className="text-xs text-amber-600 bg-amber-50 p-2 rounded">Editing will not change existing offers created from this template.</p>}
+            {title === 'Edit Template' && <p className="rounded p-2 text-xs text-warn bg-warn/10 border border-warn/30">Editing will not change existing offers created from this template.</p>}
             <div className="space-y-3">
               <div><Label>Position (French)</Label><Input value={form.titleFr} onChange={e => setForm({ ...form, titleFr: e.target.value })} /></div>
               <div><Label>Reference (English)</Label><Input value={form.titleEn} onChange={e => setForm({ ...form, titleEn: e.target.value })} /></div>
@@ -278,7 +278,7 @@ const TemplatesPage = () => {
                   <select
                     value={form.contractType}
                     onChange={e => setForm({ ...form, contractType: e.target.value })}
-                    className="h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
+                    className="h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-[0_1px_3px_rgba(0,0,0,0.45)]"
                   >
                     <option value="CDI">CDI</option>
                     <option value="CDD">CDD</option>
@@ -305,7 +305,7 @@ const TemplatesPage = () => {
                 </div>
               </div>
             </div>
-            <DialogFooter><Button onClick={action} className="bg-[#1A2B4A]">{title === 'Create Template' ? 'Create' : 'Save'}</Button></DialogFooter>
+            <DialogFooter><Button onClick={action} className="bg-primary">{title === 'Create Template' ? 'Create' : 'Save'}</Button></DialogFooter>
           </DialogContent>
         </Dialog>
       ))}

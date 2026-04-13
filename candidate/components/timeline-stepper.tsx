@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Check, MapPin, Clock, FileText, ChevronDown, ChevronUp } from 'lucide-react'
+import { Check, MapPin, Clock, FileText, ChevronDown, ChevronUp, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { Application, ApplicationStatus } from '@/lib/types'
 import { Card, CardContent } from '@/components/ui/card'
@@ -97,15 +97,16 @@ export function TimelineStepper({ application }: TimelineStepperProps) {
           <div key={step.status} className={cn('relative pb-6', index === steps.length - 1 && 'pb-0')}>
             <div className="absolute -left-6 flex items-center justify-center">
               {state === 'completed' ? (
-                <div className="h-6 w-6 rounded-full bg-green-500 flex items-center justify-center">
-                  <Check className="h-3.5 w-3.5 text-white" strokeWidth={3} />
+                <div className="h-6 w-6 rounded-full bg-primary flex items-center justify-center">
+                  <Check className="h-3.5 w-3.5 text-s0" strokeWidth={2.5} />
                 </div>
               ) : state === 'current' ? (
-                <div className="h-6 w-6 rounded-full bg-blue-600 flex items-center justify-center animate-pulse-dot">
-                  <div className="h-2.5 w-2.5 rounded-full bg-white" />
+                <div className="relative h-6 w-6 flex items-center justify-center">
+                  <div className="absolute inset-0 rounded-full border-2 border-primary/40 animate-timeline-ring" />
+                  <div className="h-6 w-6 rounded-full bg-card border-2 border-primary" />
                 </div>
               ) : (
-                <div className="h-6 w-6 rounded-full border-2 border-muted-foreground/30 bg-background" />
+                <div className="h-6 w-6 rounded-full border-2 border-s5 bg-s4" />
               )}
             </div>
 
@@ -120,8 +121,8 @@ export function TimelineStepper({ application }: TimelineStepperProps) {
                 <div>
                   <p className={cn(
                     'font-medium text-sm',
-                    state === 'completed' && 'text-green-600',
-                    state === 'current' && 'text-blue-600',
+                    state === 'completed' && 'text-primary',
+                    state === 'current' && 'text-primary',
                     state === 'pending' && 'text-muted-foreground'
                   )}>
                     {step.label}
@@ -142,11 +143,11 @@ export function TimelineStepper({ application }: TimelineStepperProps) {
               </div>
 
               {isInterview && showInterviewCard && expandedInterview && application.interview && (
-                <Card className="mt-3 border-blue-200 bg-blue-50/50">
+                <Card className="mt-3 border-primary/30 bg-s2">
                   <CardContent className="p-4 space-y-3">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2 text-sm">
-                        <Clock className="h-4 w-4 text-blue-600" />
+                        <Clock className="h-4 w-4 text-primary" />
                         <span className="font-medium">
                           {application.interview.scheduledAt 
                             ? new Date(application.interview.scheduledAt).toLocaleDateString('en-GB', { 
@@ -162,7 +163,7 @@ export function TimelineStepper({ application }: TimelineStepperProps) {
                           }
                         </span>
                       </div>
-                      <span className="text-xs font-medium text-blue-600 bg-blue-100 px-2 py-1 rounded-full">
+                      <span className="text-xs font-medium text-primary bg-primary/15 border border-primary/30 px-2 py-1 rounded-full">
                         {application.interview.scheduledAt 
                           ? getCountdown(application.interview.scheduledAt)
                           : application.interview.date && application.interview.time
@@ -178,7 +179,7 @@ export function TimelineStepper({ application }: TimelineStepperProps) {
                     </div>
 
                     {application.interview.prepNotes && application.interview.prepNotes.length > 0 && (
-                      <div className="pt-2 border-t border-blue-200">
+                      <div className="pt-2 border-t border-primary/30">
                         <div className="flex items-center gap-2 text-sm mb-2">
                           <FileText className="h-4 w-4 text-muted-foreground" />
                           <span className="font-medium">Prep Notes</span>
@@ -203,12 +204,12 @@ export function TimelineStepper({ application }: TimelineStepperProps) {
       {isRejected && (
         <div className="relative pb-0 mt-2">
           <div className="absolute -left-6 flex items-center justify-center">
-            <div className="h-6 w-6 rounded-full bg-red-500 flex items-center justify-center">
-              <span className="text-white text-xs font-bold">✕</span>
+            <div className="h-6 w-6 rounded-full bg-destructive flex items-center justify-center">
+              <X className="h-3.5 w-3.5 text-foreground" strokeWidth={2.5} />
             </div>
           </div>
           <div className="ml-4">
-            <p className="font-medium text-sm text-red-600">Rejected</p>
+            <p className="font-medium text-sm text-destructive">Rejected</p>
             <p className="text-xs text-muted-foreground mt-0.5">
               {formatDate(application.updatedAt)}
             </p>

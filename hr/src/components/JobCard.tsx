@@ -13,7 +13,7 @@ const JobCard = ({ job, onClick }: JobCardProps) => {
   return (
     <button
       onClick={onClick}
-      className={`touch-target w-full rounded-2xl border border-border bg-card p-4 text-left transition-shadow hover:shadow-md ${
+      className={`touch-target w-full rounded-md border border-border bg-card p-4 text-left transition-[border-color,box-shadow] hover:border-primary/40 hover:shadow-[0_4px_16px_rgba(0,0,0,0.32)] ${
         isBouarada ? "card-bouarada" : "card-zaghouan"
       }`}
     >

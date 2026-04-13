@@ -131,7 +131,7 @@ const TopBar = ({ title }: TopBarProps) => {
             <button className="relative rounded-lg p-2 hover:bg-secondary transition-colors">
               <Bell className="h-5 w-5 text-muted-foreground" />
               {displayUnread > 0 && (
-                <span className="absolute -right-1 -top-1 min-w-[18px] rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white">
+                <span className="absolute -right-1 -top-1 min-w-[18px] rounded-full bg-primary px-1 text-[10px] font-semibold text-primary-foreground">
                   {displayUnread > 99 ? "99+" : displayUnread}
                 </span>
               )}
@@ -143,14 +143,14 @@ const TopBar = ({ title }: TopBarProps) => {
               <div className="flex items-center gap-3">
                 <button
                   onClick={markAllRead}
-                  className="inline-flex items-center gap-1 text-xs text-[#1A2B4A] hover:underline"
+                  className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
                 >
                   <CheckCheck className="h-3.5 w-3.5" />
                   Mark all read
                 </button>
                 <button
                   onClick={clearAll}
-                  className="inline-flex items-center gap-1 text-xs text-red-600 hover:underline"
+                  className="inline-flex items-center gap-1 text-xs text-destructive hover:underline"
                   title="Clear all notifications"
                 >
                   <X className="h-3.5 w-3.5" />
@@ -172,7 +172,7 @@ const TopBar = ({ title }: TopBarProps) => {
                     <span className="text-sm font-medium">
                       {n.payload?.title || "Update"}
                     </span>
-                    {!n.readAt && <span className="h-2 w-2 rounded-full bg-blue-500" />}
+                    {!n.readAt && <span className="h-2 w-2 rounded-full bg-primary" />}
                   </div>
                   <p className="line-clamp-2 text-xs text-muted-foreground">
                     {n.payload?.message || "A new event was received."}

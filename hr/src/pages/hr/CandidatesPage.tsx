@@ -73,13 +73,13 @@ const CandidatesPage = () => {
   return (
     <DashboardLayout title="Candidats">
       {error && (
-        <div className="mb-4 flex items-center justify-between gap-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+        <div className="mb-4 flex items-center justify-between gap-3 rounded-lg border border-err/30 bg-err/10 px-3 py-2 text-sm text-err">
           <span>{error}</span>
           <Button variant="outline" size="sm" onClick={fetchCandidates}>Réessayer</Button>
         </div>
       )}
 
-      <Card className="rounded-2xl shadow-sm">
+      <Card className="rounded-md shadow-[0_1px_3px_rgba(0,0,0,0.45)]">
         <CardHeader>
           <div className="flex items-center justify-between gap-3">
             <CardTitle className="text-base">Tous les candidats</CardTitle>
@@ -147,9 +147,9 @@ const CandidatesPage = () => {
                             </div>
                             <div>
                               <span className={`inline-flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold ${
-                                c.aiScore >= 80 ? 'bg-emerald-100 text-emerald-800' :
-                                c.aiScore >= 60 ? 'bg-amber-100 text-amber-800' :
-                                'bg-red-100 text-red-800'
+                                c.aiScore >= 80 ? 'bg-ok/14 text-ok' :
+                                c.aiScore >= 60 ? 'bg-warn/14 text-warn' :
+                                'bg-err/14 text-err'
                               }`}>{c.aiScore}</span>
                             </div>
                             <div className="flex gap-0.5">

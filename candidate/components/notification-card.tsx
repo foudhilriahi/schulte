@@ -38,16 +38,16 @@ export function NotificationCard({
 
   const iconColor =
     notification.type === "success"
-      ? "text-green-600"
+      ? "text-ok"
       : notification.type === "warning"
-        ? "text-yellow-600"
-        : "text-blue-600";
+        ? "text-warn"
+        : "text-bou";
 
   return (
     <Card
       className={cn(
         "cursor-pointer active:scale-[0.98] transition-all touch-manipulation",
-        !notification.read && "border-l-4 border-l-blue-600 bg-blue-50/30",
+        !notification.read && "border-l-4 border-l-bou bg-bou/10",
       )}
       onClick={onClick}
     >

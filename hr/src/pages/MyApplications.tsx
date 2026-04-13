@@ -14,7 +14,7 @@ const MyApplications = () => {
         {mockApplications.map((app) => (
           <div
             key={app.id}
-            className={`rounded-2xl border border-border bg-card p-4 ${
+            className={`rounded-md border border-border bg-card p-4 ${
               app.city === "Bouarada" ? "card-bouarada" : "card-zaghouan"
             }`}
           >

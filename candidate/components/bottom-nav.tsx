@@ -40,13 +40,13 @@ export function BottomNav() {
               href={item.href}
               className={cn(
                 "flex flex-col items-center justify-center gap-1 min-w-[64px] min-h-[44px] px-3 py-2 rounded-lg transition-colors touch-manipulation",
-                isActive ? "text-blue-600" : "text-muted-foreground",
+                isActive ? "text-acch" : "text-muted-foreground",
               )}
             >
               <div className="relative">
                 <Icon className="h-5 w-5" strokeWidth={isActive ? 2.5 : 2} />
                 {item.label === "Notifications" && unreadCount > 0 && (
-                  <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                  <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground border border-s1">
                     {unreadCount > 9 ? "9+" : unreadCount}
                   </span>
                 )}
@@ -54,7 +54,7 @@ export function BottomNav() {
               <span
                 className={cn(
                   "text-[10px] font-medium",
-                  isActive ? "text-blue-600" : "text-muted-foreground",
+                  isActive ? "text-acch" : "text-muted-foreground",
                 )}
               >
                 {item.label}

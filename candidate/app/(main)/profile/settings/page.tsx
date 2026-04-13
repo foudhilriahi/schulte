@@ -32,7 +32,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-slate-50">
+    <div className="flex flex-col min-h-screen bg-background">
       <header className="sticky top-0 bg-background/95 backdrop-blur-sm border-b border-border z-40 safe-area-pt">
         <div className="px-4 py-3 flex items-center">
           <button
@@ -48,7 +48,7 @@ export default function SettingsPage() {
       
       <main className="flex-1 px-4 py-8 max-w-md mx-auto w-full">
         <div className="space-y-6">
-          <div className="p-5 bg-white border border-slate-200 rounded-2xl shadow-sm space-y-4">
+          <div className="p-5 bg-card border border-border rounded-md shadow-[0_1px_3px_rgba(0,0,0,0.45)] space-y-4">
             <h2 className="text-lg font-bold text-foreground mb-4">Personal Details</h2>
             
             <div className="space-y-2">
@@ -58,7 +58,7 @@ export default function SettingsPage() {
                 value={email} 
                 onChange={(e) => setEmail(e.target.value)} 
                 placeholder="nom@exemple.com"
-                className="bg-slate-50"
+                className="bg-s2"
               />
             </div>
 
@@ -69,7 +69,7 @@ export default function SettingsPage() {
                 value={password} 
                 onChange={(e) => setPassword(e.target.value)} 
                 placeholder="Leave blank to keep current"
-                className="bg-slate-50"
+                className="bg-s2"
               />
               <p className="text-[10px] text-muted-foreground mt-1">Min 8 characters, 1 digit.</p>
             </div>
@@ -83,11 +83,11 @@ export default function SettingsPage() {
             </Button>
           </div>
           
-          <div className="p-4 bg-red-50 rounded-xl border border-red-100 flex items-start gap-3">
+          <div className="p-4 bg-destructive/10 rounded-md border border-destructive/30 flex items-start gap-3">
             <div className="flex-1">
-              <h3 className="text-sm font-semibold text-red-800">Danger Zone</h3>
-              <p className="text-xs text-red-600 mt-1">Delete your account and all associated applications permanently.</p>
-              <Button variant="outline" className="mt-3 text-red-600 border-red-200 hover:bg-red-100 hover:text-red-700 h-9" onClick={() => toast.error('Action blocked during demo mode.')}>
+              <h3 className="text-sm font-semibold text-destructive">Danger Zone</h3>
+              <p className="text-xs text-muted-foreground mt-1">Delete your account and all associated applications permanently.</p>
+              <Button variant="outline" className="mt-3 text-destructive border-destructive/30 hover:bg-destructive/15 hover:text-destructive h-9" onClick={() => toast.error('Action blocked during demo mode.')}>
                 Delete Account
               </Button>
             </div>

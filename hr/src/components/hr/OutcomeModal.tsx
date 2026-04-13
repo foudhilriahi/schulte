@@ -44,7 +44,7 @@ const OutcomeModal = ({
     <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) onClose() }}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-[#1A2B4A]">
+          <DialogTitle className="text-foreground">
             Résultat de l&apos;entretien — {candidateName}
           </DialogTitle>
           <p className="text-sm text-muted-foreground pt-1">
@@ -54,7 +54,7 @@ const OutcomeModal = ({
 
         <div className="flex flex-col sm:flex-row gap-3 py-4">
           <Button
-            className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold py-6"
+            className="flex-1 bg-success/15 border border-success/30 text-success text-sm font-semibold py-6 hover:bg-success/25"
             disabled={loading}
             onClick={() => handleOutcome('pass')}
           >
@@ -62,7 +62,7 @@ const OutcomeModal = ({
           </Button>
 
           <Button
-            className="flex-1 bg-red-500 hover:bg-red-600 text-white text-sm font-semibold py-6"
+            className="flex-1 bg-destructive/15 border border-destructive/30 text-destructive text-sm font-semibold py-6 hover:bg-destructive/25"
             disabled={loading}
             onClick={() => handleOutcome('fail')}
           >
@@ -70,7 +70,7 @@ const OutcomeModal = ({
           </Button>
 
           <Button
-            className="flex-1 bg-slate-400 hover:bg-slate-500 text-white text-sm font-semibold py-6"
+            className="flex-1 bg-secondary border border-input text-muted-foreground text-sm font-semibold py-6 hover:bg-s3"
             disabled={loading}
             onClick={() => handleOutcome('no_show')}
           >

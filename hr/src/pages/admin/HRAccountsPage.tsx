@@ -218,7 +218,7 @@ const HRAccountsPage = () => {
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Search by name or email..."
-            className="h-9 w-64 px-3 rounded-lg border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#1A2B4A]/20"
+            className="h-9 w-64 px-3 rounded-lg border border-input bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
           />
           <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
             <input
@@ -230,12 +230,12 @@ const HRAccountsPage = () => {
             Show inactive
           </label>
         </div>
-        <Button onClick={() => { setForm({ name: '', email: '', password: '', site: 'bouarada' }); setCreateOpen(true) }} className="gap-2 bg-[#1A2B4A] hover:bg-[#243a5e]">
+        <Button onClick={() => { setForm({ name: '', email: '', password: '', site: 'bouarada' }); setCreateOpen(true) }} className="gap-2 bg-primary hover:bg-acch">
           <Plus className="h-4 w-4" /> Create HR Account
         </Button>
       </div>
 
-      <Card className="rounded-2xl shadow-sm">
+      <Card className="rounded-md shadow-[0_1px_3px_rgba(0,0,0,0.45)]">
         <CardContent className="p-0">
           <table className="w-full text-sm">
             <thead>
@@ -251,16 +251,16 @@ const HRAccountsPage = () => {
               {loading && <tr><td colSpan={5} className="px-4 py-6 text-center text-muted-foreground">Loading...</td></tr>}
               {!loading && filtered.length === 0 && <tr><td colSpan={5} className="px-4 py-6 text-center text-muted-foreground">No HR accounts found.</td></tr>}
               {filtered.map((a, i) => (
-                <tr key={a.id} className={`border-b hover:bg-slate-50 ${i % 2 === 0 ? '' : 'bg-slate-50/50'}`}>
+                <tr key={a.id} className={`border-b hover:bg-s2 ${i % 2 === 0 ? '' : 'bg-s2/50'}`}>
                   <td className="px-4 py-3 font-medium">{a.name}</td>
                   <td className="px-4 py-3 text-muted-foreground">{a.email}</td>
                   <td className="px-4 py-3">
-                    <Badge variant="outline" className={`text-xs ${a.site === 'bouarada' ? 'bg-blue-50 text-blue-700' : 'bg-teal-50 text-teal-700'}`}>
+                    <Badge variant="outline" className={`text-xs ${a.site === 'bouarada' ? 'bg-bou/10 text-bou border-bou/25' : 'bg-zag/10 text-zag border-zag/25'}`}>
                       {a.site || '—'}
                     </Badge>
                   </td>
                   <td className="px-4 py-3">
-                    <Badge className={`text-xs ${(a.isActive !== false && !a.deletedAt && !String(a.email || '').startsWith('deleted_')) ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}`}>
+                    <Badge className={`text-xs ${(a.isActive !== false && !a.deletedAt && !String(a.email || '').startsWith('deleted_')) ? 'bg-ok/14 text-ok' : 'bg-err/14 text-err'}`}>
                       {(a.isActive !== false && !a.deletedAt && !String(a.email || '').startsWith('deleted_')) ? 'Active' : 'Inactive'}
                     </Badge>
                   </td>
@@ -283,8 +283,8 @@ const HRAccountsPage = () => {
                       </Button>
                       <Button variant="ghost" size="sm" onClick={() => openDeactivateDialog(a)}>
                         {(a.isActive !== false && !a.deletedAt && !String(a.email || '').startsWith('deleted_'))
-                          ? <UserX className="h-3.5 w-3.5 text-red-500" />
-                          : <UserCheck className="h-3.5 w-3.5 text-emerald-500" />}
+                          ? <UserX className="h-3.5 w-3.5 text-err" />
+                          : <UserCheck className="h-3.5 w-3.5 text-ok" />}
                       </Button>
                     </div>
                   </td>
@@ -314,7 +314,7 @@ const HRAccountsPage = () => {
               </Select>
             </div>
           </div>
-          <DialogFooter><Button onClick={handleCreate} disabled={creatingAccount} className="bg-[#1A2B4A]">{creatingAccount ? 'Creating...' : 'Create'}</Button></DialogFooter>
+          <DialogFooter><Button onClick={handleCreate} disabled={creatingAccount} className="bg-primary">{creatingAccount ? 'Creating...' : 'Create'}</Button></DialogFooter>
         </DialogContent>
       </Dialog>
 
@@ -336,7 +336,7 @@ const HRAccountsPage = () => {
               </Select>
             </div>
           </div>
-          <DialogFooter><Button onClick={handleEdit} disabled={updatingAccount} className="bg-[#1A2B4A]">{updatingAccount ? 'Saving...' : 'Save'}</Button></DialogFooter>
+          <DialogFooter><Button onClick={handleEdit} disabled={updatingAccount} className="bg-primary">{updatingAccount ? 'Saving...' : 'Save'}</Button></DialogFooter>
         </DialogContent>
       </Dialog>
 
@@ -345,7 +345,7 @@ const HRAccountsPage = () => {
         <DialogContent>
           <DialogHeader><DialogTitle>Reset Password — {selected?.name}</DialogTitle></DialogHeader>
           <div><Label>New Password</Label><Input type="password" value={resetPw} onChange={e => setResetPw(e.target.value)} /></div>
-          <DialogFooter><Button onClick={handleReset} disabled={resettingPassword} className="bg-[#1A2B4A]">{resettingPassword ? 'Resetting...' : 'Reset'}</Button></DialogFooter>
+          <DialogFooter><Button onClick={handleReset} disabled={resettingPassword} className="bg-primary">{resettingPassword ? 'Resetting...' : 'Reset'}</Button></DialogFooter>
         </DialogContent>
       </Dialog>
 
