@@ -1,34 +1,9 @@
 // ============================================================
-// AI BATTLE SERVICE  —  Production Ready  —  March 2026
-// Fires ALL available models simultaneously (Promise.allSettled)
-// Sources: Gemini Direct API + OpenRouter Free
-//
-// ⚠️  Puter.js is BROWSER-ONLY — keep it in your HTML file.
-//     It cannot be called from Node.js backend.
-//
-// VERIFIED MODEL IDs as of March 14, 2026:
-//
-//  GEMINI (free tier, resets midnight Pacific):
-//    gemini-2.5-flash       — 250 req/day, 10 RPM  ← primary
-//    gemini-2.5-flash-lite  — 1000 req/day, 15 RPM ← most generous
-//    gemini-2.5-pro         — 100 req/day, 5 RPM
-//    gemini-2.0-flash       — still alive (deprecated June 1 2026)
-//    ❌ gemini-1.5-flash-8b  — REMOVED April 2025
-//    ❌ gemini-2.0-flash-lite — deprecated June 1 2026, avoid
-//
-//  OPENROUTER (free, ~200 req/day, 20 RPM per model):
-//    openrouter/free                          ← magic auto-router
-//    meta-llama/llama-4-maverick:free         ← best quality free
-//    meta-llama/llama-4-scout:free
-//    meta-llama/llama-3.3-70b-instruct:free
-//    mistralai/mistral-small-3.1-24b-instruct:free
-//    deepseek/deepseek-chat-v3-0324:free
-//    deepseek/deepseek-r1-zero:free
-//    nvidia/nemotron-3-super-120b-a12b:free
-//    google/gemini-2.5-pro-exp-03-25:free
-//    ❌ gemma-3-4b-it:free        — removed
-//    ❌ deepseek-r1-distill:free  — removed
-//    ❌ qwen3-8b:free             — removed
+// AI ANALYSIS SERVICE
+// Cost-safe strategy:
+// - run one primary model first
+// - try backups only if the previous attempt fails
+// - keep deterministic fallback when providers are unavailable
 // ============================================================
 
 import fs from 'fs';
@@ -68,7 +43,7 @@ export interface BattleResult {
   totalFailed: number;
 }
 
-// ─── Internal model descriptor ────────────────────────────
+// ─── Descripteur interne de modèle ────────────────────────
 
 interface AIModel {
   id: string;
@@ -78,7 +53,7 @@ interface AIModel {
   modelId: string;
 }
 
-// ─── Model lists — verified March 2026 ───────────────────
+// ─── Model lists (ordered by cost-efficiency) ─────────────
 
 const GEMINI_MODELS: AIModel[] = [
   {
@@ -95,20 +70,6 @@ const GEMINI_MODELS: AIModel[] = [
     type: 'gemini',
     modelId: 'gemini-2.5-flash',
   },
-  {
-    id: 'gem-25-pro',
-    label: 'Gemini 2.5 Pro',
-    provider: 'Google',
-    type: 'gemini',
-    modelId: 'gemini-2.5-pro',
-  },
-  {
-    id: 'gem-20-flash',
-    label: 'Gemini 2.0 Flash',
-    provider: 'Google',
-    type: 'gemini',
-    modelId: 'gemini-2.0-flash',
-  },
 ];
 
 const OR_MODELS: AIModel[] = [
@@ -119,22 +80,40 @@ const OR_MODELS: AIModel[] = [
     type: 'openrouter',
     modelId: 'openrouter/free',
   },
-  {
-    id: 'or-llama4-maverick',
-    label: 'Llama 4 Maverick',
-    provider: 'Meta',
-    type: 'openrouter',
-    modelId: 'meta-llama/llama-4-maverick:free',
-  },
 ];
 // ─── Prompt ───────────────────────────────────────────────
 
 let sharedPromptTemplate: string | null = null;
+const FALLBACK_PROMPT_TEMPLATE = `Tu es un assistant RH. Evalue la correspondance entre ce CV et le poste, puis retourne UNIQUEMENT un JSON valide.
+
+Contexte offre:
+- Titre: {{offerTitle}}
+- Competences requises: {{requiredSkills}}
+- Experience requise: {{experienceYears}} ans
+- Description: {{description}}
+
+CV:
+{{cvText}}
+
+Format JSON attendu:
+{"thinking":"2-3 phrases en anglais montrant comment le score a ete construit","score":<0-100>,"confidence":"<high|medium|low>","recommendation":"<Hire|Interview|Request More Info|Reject>","reasoning":"<un paragraphe en francais>","tips_for_candidate":["conseil1","conseil2"],"language":"<langue detectee du CV>","strengths":["s1","s2"],"gaps":["g1","g2"]}`;
 
 function getSharedPromptTemplate(): string {
   if (sharedPromptTemplate) return sharedPromptTemplate;
 
-  const promptPath = path.resolve(process.cwd(), '../hr/public/shared/analysis-prompt.txt');
+  const candidatePaths = [
+    path.resolve(process.cwd(), '../hr/public/shared/analysis-prompt.txt'),
+    path.resolve(process.cwd(), 'hr/public/shared/analysis-prompt.txt'),
+    path.resolve(process.cwd(), 'public/shared/analysis-prompt.txt'),
+  ];
+
+  const promptPath = candidatePaths.find((p) => fs.existsSync(p));
+  if (!promptPath) {
+    logger.warn('Shared prompt template not found; using embedded fallback template');
+    sharedPromptTemplate = FALLBACK_PROMPT_TEMPLATE;
+    return sharedPromptTemplate;
+  }
+
   sharedPromptTemplate = fs.readFileSync(promptPath, 'utf8');
   return sharedPromptTemplate;
 }
@@ -176,7 +155,7 @@ function recommendationFromScore(
   return 'Reject';
 }
 
-// ─── JSON parser ──────────────────────────────────────────
+// ─── Parseur JSON ─────────────────────────────────────────
 
 export function parseAIResponse(raw: string, provider: string, input?: AnalyseInput): AnalysisResult {
   let s = raw.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
@@ -216,28 +195,28 @@ export function parseAIResponse(raw: string, provider: string, input?: AnalyseIn
     ? p.tips_for_candidate.slice(0, 3).map(String)
     : Array.isArray(p.tipsForCandidate)
       ? p.tipsForCandidate.slice(0, 3).map(String)
-      : ['Highlight relevant skills clearly', 'Quantify your experience with concrete examples'];
+      : ['Mettre clairement en avant les compétences pertinentes', 'Quantifier l’expérience avec des exemples concrets'];
 
   return {
-    thinking: String(p.thinking || 'Hard skills, experience, and CV quality were evaluated before deriving the final score.'),
+    thinking: String(p.thinking || 'Les compétences techniques, l’expérience et la qualité du CV ont été évaluées avant de produire le score final.'),
     score,
     confidence,
     confidenceScore: toConfidenceScore(confidence),
     reasoning,
     strengths: Array.isArray(p.strengths)
       ? p.strengths.slice(0, 5).map(String)
-      : ['Profile received and processed'],
+      : ['Profil reçu et traité'],
     gaps: Array.isArray(p.gaps)
       ? p.gaps.slice(0, 3).map(String)
-      : ['Manual review recommended'],
+      : ['Revue manuelle recommandée'],
     recommendation,
     tipsForCandidate: tips,
     tips_for_candidate: tips,
     aiProvider: provider,
-    language: String(p.language || 'Unknown'),
+    language: String(p.language || 'Inconnue'),
   };
 }
-// ─── Gemini caller ───────────────────────────────────────
+// ─── Appel Gemini ─────────────────────────────────────────
 
 async function callGemini(model: AIModel, input: AnalyseInput): Promise<AnalysisResult> {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model.modelId}:generateContent?key=${env.GEMINI_API_KEY}`;
@@ -267,7 +246,7 @@ async function callGemini(model: AIModel, input: AnalyseInput): Promise<Analysis
   return parseAIResponse(text, `${model.label} (Gemini)`, input);
 }
 
-// ─── OpenRouter caller ────────────────────────────────────
+// ─── Appel OpenRouter ─────────────────────────────────────
 
 async function callOpenRouter(model: AIModel, input: AnalyseInput): Promise<AnalysisResult> {
   const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
@@ -295,17 +274,17 @@ async function callOpenRouter(model: AIModel, input: AnalyseInput): Promise<Anal
 
   return parseAIResponse(text, `${model.label} (OpenRouter)`, input);
 }
-// ─── Router ───────────────────────────────────────────────
+// ─── Routeur ──────────────────────────────────────────────
 
 function callModel(model: AIModel, input: AnalyseInput): Promise<AnalysisResult> {
   switch (model.type) {
     case 'gemini':     return callGemini(model, input);
     case 'openrouter': return callOpenRouter(model, input);
-    default:           throw new Error(`Unknown model type: ${(model as any).type}`);
+    default:           throw new Error(`Type de modèle inconnu : ${(model as any).type}`);
   }
 }
 
-// ─── Consensus builder ────────────────────────────────────
+// ─── Construction du consensus ────────────────────────────
 
 function buildConsensus(results: AnalysisResult[]): AnalysisResult {
   if (results.length === 1) return results[0];
@@ -338,11 +317,11 @@ function buildConsensus(results: AnalysisResult[]): AnalysisResult {
     recommendation: topRec,
     confidence,
     confidenceScore: toConfidenceScore(confidence),
-    aiProvider: `Consensus (${results.length} models): ${results.map(r => r.aiProvider).join(', ')}`,
+    aiProvider: `Consensus (${results.length} modèles) : ${results.map(r => r.aiProvider).join(', ')}`,
   };
 }
 
-// ─── Keyword fallback ────────────────────────────────────
+// ─── Repli par mots-clés ──────────────────────────────────
 
 function buildFallback(input: AnalyseInput): AnalysisResult {
   const cv    = input.cvText.toLowerCase();
@@ -351,37 +330,37 @@ function buildFallback(input: AnalyseInput): AnalysisResult {
   const score = Math.max(40, Math.min(70, Math.round(ratio * 80 + 20)));
 
   return {
-    thinking: 'Hard skills overlap is estimated from keyword matches, then adjusted for role fit and limited context quality.',
+    thinking: 'Le recouvrement des compétences techniques est estimé via des mots-clés, puis ajusté selon l’adéquation au poste et la qualité du contexte.',
     score,
     confidence: toConfidenceLevel(input.cvText),
     confidenceScore: toConfidenceScore(toConfidenceLevel(input.cvText)),
     reasoning: 'Le systeme automatique detecte certains elements compatibles avec le poste, mais l evaluation reste limitee sans analyse IA complete. Une revue RH est recommandee pour confirmer les points cles.',
     strengths: [
-      'CV received and processed',
-      found.length > 0 ? `Matching skills detected: ${found.join(', ')}` : 'Profile submitted for review',
-      'Application queued for manual HR review',
+      'CV reçu et traité',
+      found.length > 0 ? `Compétences correspondantes détectées : ${found.join(', ')}` : 'Profil transmis pour revue',
+      'Candidature mise en file pour revue RH manuelle',
     ],
     gaps: [
-      input.requiredSkills.length > found.length ? 'Some required skills not explicitly mentioned' : 'Minor gaps identified',
-      'AI analysis temporarily unavailable — manual review required',
+      input.requiredSkills.length > found.length ? 'Certaines compétences requises ne sont pas mentionnées explicitement' : 'Écarts mineurs identifiés',
+      'Analyse IA temporairement indisponible — revue manuelle requise',
     ],
     recommendation: recommendationFromScore(score, toConfidenceLevel(input.cvText)),
     tipsForCandidate: [
-      'List all technical and domain skills explicitly in your CV',
-      'Highlight any automotive or manufacturing experience',
+      'Lister explicitement toutes les compétences techniques et métier dans le CV',
+      'Mettre en avant toute expérience en automobile ou en industrie',
     ],
     tips_for_candidate: [
-      'List all technical and domain skills explicitly in your CV',
-      'Highlight any automotive or manufacturing experience',
+      'Lister explicitement toutes les compétences techniques et métier dans le CV',
+      'Mettre en avant toute expérience en automobile ou en industrie',
     ],
-    aiProvider: 'Keyword Fallback (all AI services unavailable)',
-    language: 'Auto-detected',
+    aiProvider: 'Repli mots-clés (tous les services IA indisponibles)',
+    language: 'Détection automatique',
   };
 }
-// ─── CV text utilities ────────────────────────────────────
+// ─── Utilitaires de texte CV ──────────────────────────────
 
 export class CVTextExtractor {
-  /** Extract text from a base64-encoded PDF buffer */
+  /** Extrait le texte d'un PDF encodé en base64 */
   static async extractFromPDF(base64Data: string): Promise<string> {
     try {
       const { PDFParse } = await import('pdf-parse');
@@ -391,19 +370,19 @@ export class CVTextExtractor {
       if (typeof parser.destroy === 'function') await parser.destroy();
       const text     = data.text.replace(/\s+/g, ' ').trim();
 
-      logger.info(`📄 PDF extracted: ${text.length} chars`);
+      logger.info(`📄 PDF extrait : ${text.length} caractères`);
 
       if (!text || text.length < 50) {
-        return `[PDF processed — minimal text found. May be a scanned image. File size: ${Math.round(base64Data.length * 0.75)} bytes. Manual review recommended.]`;
+        return `[PDF traité — texte minimal détecté. Le fichier peut être une image scannée. Taille : ${Math.round(base64Data.length * 0.75)} octets. Revue manuelle recommandée.]`;
       }
       return text;
     } catch (err) {
       logger.error('PDF extraction failed:', err);
-      return `[PDF extraction failed: ${err instanceof Error ? err.message : 'unknown'}. Manual review required.]`;
+      return `[Échec d'extraction PDF : ${err instanceof Error ? err.message : 'inconnu'}. Revue manuelle requise.]`;
     }
   }
 
-  /** Assemble a readable CV string from a structured form-data object */
+  /** Assemble une chaîne CV lisible depuis un objet form-data structuré */
   static assembleFromFormData(form: Record<string, any>): string {
     if (!form) return '';
     const parts: string[] = [];
@@ -415,158 +394,140 @@ export class CVTextExtractor {
     const phone = get('phone') ?? get('personal', 'phone');
     const city  = get('city')  ?? get('personal', 'city');
 
-    if (name)  parts.push(`Name: ${name}`);
-    if (email) parts.push(`Email: ${email}`);
-    if (phone) parts.push(`Phone: ${phone}`);
-    if (city)  parts.push(`Location: ${city}`);
+    if (name)  parts.push(`Nom : ${name}`);
+    if (email) parts.push(`Email : ${email}`);
+    if (phone) parts.push(`Téléphone : ${phone}`);
+    if (city)  parts.push(`Localisation : ${city}`);
 
     const edu = form.education;
     if (Array.isArray(edu) && edu.length) {
-      parts.push('\nEducation:');
+      parts.push('\nFormation :');
       edu.forEach((e: any) =>
-        parts.push(`- ${e.degree ?? e.level ?? ''} in ${e.field ?? ''} at ${e.institution ?? ''} (${e.year ?? ''})`)
+        parts.push(`- ${e.degree ?? e.level ?? ''} en ${e.field ?? ''} à ${e.institution ?? ''} (${e.year ?? ''})`)
       );
     }
 
     const exp = form.experience;
     if (Array.isArray(exp) && exp.length) {
-      parts.push('\nProfessional Experience:');
+      parts.push('\nExpérience professionnelle :');
       exp.forEach((e: any) => {
-        parts.push(`- ${e.title ?? ''} at ${e.company ?? ''} (${e.startDate ?? e.duration ?? ''} – ${e.endDate ?? 'Present'})`);
+        parts.push(`- ${e.title ?? ''} chez ${e.company ?? ''} (${e.startDate ?? e.duration ?? ''} – ${e.endDate ?? 'Présent'})`);
         if (e.description) parts.push(`  ${e.description}`);
       });
     }
 
     if (Array.isArray(form.skills) && form.skills.length)
-      parts.push(`\nSkills: ${form.skills.join(', ')}`);
+      parts.push(`\nCompétences : ${form.skills.join(', ')}`);
 
     if (Array.isArray(form.languages) && form.languages.length)
-      parts.push(`\nLanguages: ${(form.languages as any[]).map(l => `${l.language ?? l.name ?? ''} (${l.level ?? ''})`).join(', ')}`);
+      parts.push(`\nLangues : ${(form.languages as any[]).map(l => `${l.language ?? l.name ?? ''} (${l.level ?? ''})`).join(', ')}`);
 
-    if (form.coverNote) parts.push(`\nCover Note: ${form.coverNote}`);
+    if (form.coverNote) parts.push(`\nLettre de motivation : ${form.coverNote}`);
 
     return parts.filter(Boolean).join('\n');
   }
 
-  /** Trim + normalise a CV string before sending to AI */
+  /** Nettoie + normalise une chaîne CV avant envoi à l'IA */
   static prepareForAnalysis(cvText: string): string {
     let s = cvText.replace(/\s+/g, ' ').trim();
     if (s.length > 5000) {
-      s = s.substring(0, 5000) + '\n[CV truncated — full version available for manual review]';
+      s = s.substring(0, 5000) + '\n[CV tronqué — version complète disponible pour revue manuelle]';
     }
     return s;
   }
 }
 // ══════════════════════════════════════════════════════════
-// 🏆  MAIN BATTLE ENGINE
+// 🏆  MOTEUR PRINCIPAL DE BATAILLE
 // ══════════════════════════════════════════════════════════
 
 export class AIBattleService {
 
   /**
-   * Fire all available models simultaneously.
-   * Returns every individual result + a consensus.
+   * Runs providers in sequence and stops at the first successful result.
+   * This preserves reliability while reducing token consumption.
    */
   static async battle(rawInput: AnalyseInput): Promise<BattleResult> {
-    logger.info(`⚔️  AI Battle — "${rawInput.offerTitle}" | CV ${rawInput.cvText.length} chars`);
+    logger.info(`⚔️  Bataille IA — "${rawInput.offerTitle}" | CV ${rawInput.cvText.length} caractères`);
 
     const input: AnalyseInput = {
       ...rawInput,
       cvText: CVTextExtractor.prepareForAnalysis(rawInput.cvText),
     };
 
-    // Build active model list based on which keys are configured
+    // Build execution plan in ascending token-cost order.
     const models: AIModel[] = [];
 
     if (env.GEMINI_API_KEY) {
       models.push(...GEMINI_MODELS);
-      logger.info(`🔵 Gemini: queuing ${GEMINI_MODELS.length} models`);
+      logger.info(`🔵 Gemini configured: ${GEMINI_MODELS.length} model(s) ready`);
     } else {
-      logger.warn('⚠️  GEMINI_API_KEY not set');
+      logger.warn('⚠️  GEMINI_API_KEY non définie');
     }
 
     if (env.OPENROUTER_API_KEY) {
       models.push(...OR_MODELS);
-      logger.info(`🟠 OpenRouter: queuing ${OR_MODELS.length} models`);
+      logger.info(`🟠 OpenRouter configured: ${OR_MODELS.length} fallback model(s) ready`);
     } else {
-      logger.warn('⚠️  OPENROUTER_API_KEY not set');
+      logger.warn('⚠️  OPENROUTER_API_KEY non définie');
     }
 
     if (models.length === 0) {
-      logger.warn('⚠️  No API keys configured — returning keyword fallback');
+      logger.warn('⚠️  Aucune clé API configurée — retour du repli mots-clés');
       const fb = buildFallback(rawInput);
       return { results: [fb], consensus: fb, totalFired: 0, totalSucceeded: 0, totalFailed: 0 };
     }
 
-    logger.info(`🚀 Firing ${models.length} models simultaneously…`);
+    logger.info(`💰 Token-saver mode: run until first successful provider (max ${models.length} attempts)`);
 
-    // Fire ALL at the same time — failures don't block successes
-    const settled = await Promise.allSettled(
-      models.map(model =>
-        callModel(model, input)
-          .then(result => {
-            logger.info(`✅ ${model.label}: score=${result.score} rec=${result.recommendation}`);
-            return result;
-          })
-          .catch(err => {
-            logger.warn(`❌ ${model.label}: ${err.message}`);
-            throw err;
-          })
-      )
-    );
+    const results: AnalysisResult[] = [];
+    let attempted = 0;
+    let failed = 0;
 
-    const results = settled
-      .filter((s): s is PromiseFulfilledResult<AnalysisResult> => s.status === 'fulfilled')
-      .map(s => s.value);
+    for (const model of models) {
+      attempted += 1;
+      try {
+        const result = await callModel(model, input);
+        logger.info(`✅ ${model.label}: score=${result.score} rec=${result.recommendation}`);
+        results.push(result);
+        break;
+      } catch (err: any) {
+        failed += 1;
+        logger.warn(`❌ ${model.label}: ${err?.message || 'unknown error'}`);
+      }
+    }
 
-    const failed = settled.filter(s => s.status === 'rejected').length;
-
-    logger.info(`📊 Battle complete: ${results.length} succeeded, ${failed} failed / ${models.length} total`);
+    logger.info(`📊 Analysis complete: ${results.length} succeeded, ${failed} failed / ${attempted} attempted`);
 
     if (results.length === 0) {
-      logger.warn('⚠️  All models failed — returning keyword fallback');
+      logger.warn('⚠️  Tous les modèles ont échoué — retour du repli mots-clés');
       const fb = buildFallback(rawInput);
-      return { results: [fb], consensus: fb, totalFired: models.length, totalSucceeded: 0, totalFailed: failed };
+      return { results: [fb], consensus: fb, totalFired: attempted, totalSucceeded: 0, totalFailed: failed };
     }
 
     const consensus = buildConsensus(results);
-    logger.info(`🏆 Consensus: score=${consensus.score} rec=${consensus.recommendation} confidence=${consensus.confidence}%`);
+    logger.info(`🏆 Consensus : score=${consensus.score} rec=${consensus.recommendation} confiance=${consensus.confidence}%`);
 
     return {
       results,
       consensus,
-      totalFired: models.length,
+      totalFired: attempted,
       totalSucceeded: results.length,
       totalFailed: failed,
     };
   }
 
   /**
-   * Convenience wrapper — returns only the consensus result.
+   * Wrapper pratique — retourne uniquement le résultat de consensus.
    */
   static async analyse(input: AnalyseInput): Promise<AnalysisResult> {
     const battle = await this.battle(input);
     return battle.consensus;
   }
 }
-// ─── Backwards-compatible exports ────────────────────────
+// ─── Exports rétrocompatibles ─────────────────────────────
 
 export async function analyseApplication(input: AnalyseInput): Promise<AnalysisResult> {
   return AIBattleService.analyse(input);
-}
-
-export class AIService {
-  static analyseWithGemini  = (i: AnalyseInput) => AIBattleService.analyse(i);
-  static buildPromptForFrontend   = buildPrompt;
-  static parseResponseFromFrontend = (raw: string) => parseAIResponse(raw, 'Frontend');
-}
-
-export class DualAIService {
-  static analyseWithFallback = (i: AnalyseInput) => AIBattleService.analyse(i);
-}
-
-export class IntelligentAIService {
-  static analyzeInBackground = (i: AnalyseInput) => AIBattleService.analyse(i);
 }
 
 export function assembleFormText(formData: any): string {

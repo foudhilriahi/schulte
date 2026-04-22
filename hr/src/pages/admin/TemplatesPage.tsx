@@ -47,7 +47,7 @@ const TemplatesPage = () => {
     try {
       const { data } = await api.get('/admin/templates')
       setTemplates(data)
-    } catch { toast.error('Failed to load templates') }
+    } catch { toast.error('Echec du chargement des modeles') }
     finally { setLoading(false) }
   }
 
@@ -74,24 +74,24 @@ const TemplatesPage = () => {
       }
 
       if (!payload.titleFr || !payload.titleEn || !payload.department) {
-        toast.error('Title FR, Title EN and Department are required')
+        toast.error('Le titre FR, le titre EN et le departement sont obligatoires')
         return
       }
 
       if (payload.titleFr.length < 2 || payload.titleEn.length < 2) {
-        toast.error('Template titles must be at least 2 characters')
+        toast.error('Les titres du modele doivent contenir au moins 2 caracteres')
         return
       }
 
       if (payload.description.length < 10) {
-        toast.error('Description must be at least 10 characters')
+        toast.error('La description doit contenir au moins 10 caracteres')
         return
       }
 
       await api.post('/admin/templates', {
         ...payload,
       })
-      toast.success('Template created.')
+      toast.success('Modele cree.')
       setCreateOpen(false)
       setForm({ titleFr: '', titleEn: '', contractType: 'CDI', department: '', description: '', suggestedSkills: [], skillInput: '' })
       fetchTemplates()
@@ -101,7 +101,7 @@ const TemplatesPage = () => {
         toast.error(details[0])
         return
       }
-      toast.error(err.response?.data?.error || 'Error')
+      toast.error(err.response?.data?.error || 'Erreur')
     }
   }
 
@@ -120,7 +120,7 @@ const TemplatesPage = () => {
       await api.patch(`/admin/templates/${selected.id}`, {
         ...payload,
       })
-      toast.success('Template updated.')
+      toast.success('Modele mis a jour.')
       setEditOpen(false)
       fetchTemplates()
     } catch (err: any) {
@@ -129,17 +129,17 @@ const TemplatesPage = () => {
         toast.error(details[0])
         return
       }
-      toast.error(err.response?.data?.error || 'Error')
+      toast.error(err.response?.data?.error || 'Erreur')
     }
   }
 
   const handleToggle = async (t: any) => {
     try {
       const { data } = await api.delete(`/admin/templates/${t.id}`)
-      toast.success(data?.message || 'Template status updated.')
+      toast.success(data?.message || 'Statut du modele mis a jour.')
       fetchTemplates()
     } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Error')
+      toast.error(err.response?.data?.error || 'Erreur')
     }
   }
 
@@ -155,50 +155,50 @@ const TemplatesPage = () => {
   }
 
   return (
-    <DashboardLayout title="Job Templates">
+    <DashboardLayout title="Modeles d'offres">
       <div className="flex items-center justify-between mb-4 gap-4">
         <div className="flex items-center gap-3">
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search templates..." className="h-9 w-64 px-3 rounded-lg border border-input bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Rechercher des modeles..." className="h-9 w-64 px-3 rounded-lg border border-input bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
           <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
             <input type="checkbox" checked={showInactive} onChange={e => setShowInactive(e.target.checked)} className="rounded" />
-            Show inactive
+            Afficher inactifs
           </label>
         </div>
-        <Button onClick={() => { setForm({ titleFr: '', titleEn: '', contractType: 'CDI', department: '', description: '', suggestedSkills: [], skillInput: '' }); setCreateOpen(true) }} className="gap-2 bg-primary hover:bg-acch">
-          <Plus className="h-4 w-4" /> Create Template
+        <Button onClick={() => { setForm({ titleFr: '', titleEn: '', contractType: 'CDI', department: '', description: '', suggestedSkills: [], skillInput: '' }); setCreateOpen(true) }} className="gap-2 bg-primary hover:bg-violeth">
+          <Plus className="h-4 w-4" /> Creer un modele
         </Button>
       </div>
 
       <p className="mb-3 rounded-md border border-warn/30 bg-warn/10 px-3 py-2 text-xs text-warn">
-        Core templates are protected and cannot be deactivated.
+        Les modeles coeur sont proteges et ne peuvent pas etre desactives.
       </p>
 
-      <Card className="rounded-md shadow-[0_1px_3px_rgba(0,0,0,0.45)]">
+      <Card className="rounded-md shadow-card">
         <CardContent className="p-0">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b">
                 <th className="text-left px-4 py-3 font-medium text-muted-foreground">Position (FR)</th>
                 <th className="text-left px-4 py-3 font-medium text-muted-foreground">Reference (EN)</th>
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Skills</th>
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Status</th>
+                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Competences</th>
+                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Statut</th>
                 <th className="text-left px-4 py-3 font-medium text-muted-foreground">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {loading && <tr><td colSpan={5} className="px-4 py-6 text-center text-muted-foreground">Loading...</td></tr>}
-              {!loading && filtered.length === 0 && <tr><td colSpan={5} className="px-4 py-6 text-center text-muted-foreground">No templates found.</td></tr>}
+              {loading && <tr><td colSpan={5} className="px-4 py-6 text-center text-muted-foreground">Chargement...</td></tr>}
+              {!loading && filtered.length === 0 && <tr><td colSpan={5} className="px-4 py-6 text-center text-muted-foreground">Aucun modele trouve.</td></tr>}
               {filtered.map((t, i) => (
                 (() => {
                   const isCore = CORE_TEMPLATE_IDS.has(t.id)
                   return (
-                <tr key={t.id} className={`border-b hover:bg-s2 ${i % 2 === 0 ? '' : 'bg-s2/50'}`}>
+                <tr key={t.id} className={`border-b hover:bg-card2 ${i % 2 === 0 ? '' : 'bg-card2/50'}`}>
                   <td className="px-4 py-3 font-medium">
                     <div className="flex items-center gap-2">
                       <span>{t.titleFr}</span>
                       {isCore && (
                         <Badge variant="outline" className="gap-1 text-[10px] border-warn/30 text-warn">
-                          <Lock className="h-3 w-3" /> Core
+                          <Lock className="h-3 w-3" /> Coeur
                         </Badge>
                       )}
                     </div>
@@ -215,8 +215,8 @@ const TemplatesPage = () => {
                     </div>
                   </td>
                   <td className="px-4 py-3">
-                    <Badge className={`text-xs ${t.isActive !== false ? 'bg-ok/14 text-ok' : 'bg-s3 text-muted-foreground'}`}>
-                      {t.isActive !== false ? 'Active' : 'Inactive'}
+                    <Badge className={`text-xs ${t.isActive !== false ? 'bg-ok/14 text-ok' : 'bg-card2 text-muted-foreground'}`}>
+                      {t.isActive !== false ? 'Actif' : 'Inactif'}
                     </Badge>
                   </td>
                   <td className="px-4 py-3">
@@ -241,7 +241,7 @@ const TemplatesPage = () => {
                         size="sm"
                         onClick={() => handleToggle(t)}
                         disabled={isCore}
-                        title={isCore ? 'Core templates cannot be deactivated' : 'Toggle active status'}
+                        title={isCore ? 'Les modeles coeur ne peuvent pas etre desactives' : 'Basculer le statut actif'}
                       >
                         {isCore ? (
                           <Lock className="h-4 w-4 text-warn" />
@@ -263,22 +263,22 @@ const TemplatesPage = () => {
       </Card>
 
       {/* Create/Edit shared modal content */}
-      {[{ open: createOpen, setOpen: setCreateOpen, title: 'Create Template', action: handleCreate },
-        { open: editOpen, setOpen: setEditOpen, title: 'Edit Template', action: handleEdit }].map(({ open, setOpen, title, action }) => (
+      {[{ open: createOpen, setOpen: setCreateOpen, title: 'Creer un modele', action: handleCreate },
+        { open: editOpen, setOpen: setEditOpen, title: 'Modifier le modele', action: handleEdit }].map(({ open, setOpen, title, action }) => (
         <Dialog key={title} open={open} onOpenChange={setOpen}>
           <DialogContent className="max-w-lg">
             <DialogHeader><DialogTitle>{title}</DialogTitle></DialogHeader>
-            {title === 'Edit Template' && <p className="rounded p-2 text-xs text-warn bg-warn/10 border border-warn/30">Editing will not change existing offers created from this template.</p>}
+            {title === 'Modifier le modele' && <p className="rounded p-2 text-xs text-warn bg-warn/10 border border-warn/30">La modification ne change pas les offres deja creees depuis ce modele.</p>}
             <div className="space-y-3">
-              <div><Label>Position (French)</Label><Input value={form.titleFr} onChange={e => setForm({ ...form, titleFr: e.target.value })} /></div>
-              <div><Label>Reference (English)</Label><Input value={form.titleEn} onChange={e => setForm({ ...form, titleEn: e.target.value })} /></div>
+              <div><Label>Intitule du poste (FR)</Label><Input value={form.titleFr} onChange={e => setForm({ ...form, titleFr: e.target.value })} /></div>
+              <div><Label>Reference (EN)</Label><Input value={form.titleEn} onChange={e => setForm({ ...form, titleEn: e.target.value })} /></div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label>Contract Type</Label>
+                  <Label>Type de contrat</Label>
                   <select
                     value={form.contractType}
                     onChange={e => setForm({ ...form, contractType: e.target.value })}
-                    className="h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-[0_1px_3px_rgba(0,0,0,0.45)]"
+                    className="h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-card"
                   >
                     <option value="CDI">CDI</option>
                     <option value="CDD">CDD</option>
@@ -287,16 +287,16 @@ const TemplatesPage = () => {
                   </select>
                 </div>
                 <div>
-                  <Label>Department</Label>
+                  <Label>Departement</Label>
                   <Input value={form.department} onChange={e => setForm({ ...form, department: e.target.value })} />
                 </div>
               </div>
               <div><Label>Description</Label><Textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} className="min-h-[100px]" /></div>
               <div>
-                <Label>Suggested Skills</Label>
+                <Label>Competences suggerees</Label>
                 <div className="flex gap-2">
-                  <Input value={form.skillInput} onChange={e => setForm({ ...form, skillInput: e.target.value })} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addSkill() } }} placeholder="Type + Enter" />
-                  <Button type="button" variant="outline" onClick={addSkill}>Add</Button>
+                  <Input value={form.skillInput} onChange={e => setForm({ ...form, skillInput: e.target.value })} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addSkill() } }} placeholder="Saisir + Entrer" />
+                  <Button type="button" variant="outline" onClick={addSkill}>Ajouter</Button>
                 </div>
                 <div className="flex flex-wrap gap-1 mt-2">
                   {form.suggestedSkills.map(s => (
@@ -305,7 +305,7 @@ const TemplatesPage = () => {
                 </div>
               </div>
             </div>
-            <DialogFooter><Button onClick={action} className="bg-primary">{title === 'Create Template' ? 'Create' : 'Save'}</Button></DialogFooter>
+            <DialogFooter><Button onClick={action} className="bg-primary">{title === 'Creer un modele' ? 'Creer' : 'Enregistrer'}</Button></DialogFooter>
           </DialogContent>
         </Dialog>
       ))}

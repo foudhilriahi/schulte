@@ -1,4 +1,5 @@
 import { api } from "@/lib/axios";
+import { recommendationToFrench } from "@/lib/recommendation-labels";
 
 export type ConfidenceLevel = "high" | "medium" | "low";
 export type Recommendation = "Hire" | "Interview" | "Request More Info" | "Reject";
@@ -101,6 +102,76 @@ function parseRawJSON(raw: string): any {
   return JSON.parse(cleaned);
 }
 
+function parseStoredAnalysis(value: unknown): any | null {
+  if (!value) return null;
+
+  if (typeof value === "string") {
+    try {
+      return JSON.parse(value);
+    } catch {
+      return null;
+    }
+  }
+
+  if (typeof value === "object") {
+    return value;
+  }
+
+  return null;
+}
+
+function extractCachedBackendProvider(value: unknown): ProviderAnalysis | null {
+  const parsed = parseStoredAnalysis(value);
+  if (!parsed) return null;
+
+  if (Array.isArray(parsed.providers)) {
+    const providerCandidate =
+      parsed.providers.find((p: any) => p?.source === "gemini") ||
+      parsed.providers.find((p: any) => String(p?.source || "").toLowerCase() !== "puter");
+
+    if (providerCandidate) {
+      return normalizeProviderAnalysis(
+        {
+          ...providerCandidate,
+          tipsForCandidate: providerCandidate?.tipsForCandidate ?? providerCandidate?.tips_for_candidate,
+        },
+        String(
+          providerCandidate?.name ||
+            providerCandidate?.aiProvider ||
+            "Analyse backend (cache)",
+        ),
+        "gemini",
+      );
+    }
+  }
+
+  if (typeof parsed?.score === "number" && parsed?.recommendation) {
+    return normalizeProviderAnalysis(
+      parsed,
+      String(parsed?.aiProvider || "Analyse backend (cache)"),
+      "gemini",
+    );
+  }
+
+  if (typeof parsed?.mergedScore === "number" && parsed?.mergedRecommendation) {
+    return normalizeProviderAnalysis(
+      {
+        score: parsed.mergedScore,
+        recommendation: parsed.mergedRecommendation,
+        confidence: parsed.mergedConfidence,
+        tipsForCandidate: parsed.mergedTips,
+        reasoning:
+          parsed.disagreementNote ||
+          "Résultat fusionné déjà disponible depuis une analyse précédente.",
+      },
+      "Analyse fusionnee (cache)",
+      "gemini",
+    );
+  }
+
+  return null;
+}
+
 let sharedPromptTemplate: string | null = null;
 
 async function loadSharedPromptTemplate(): Promise<string> {
@@ -108,7 +179,7 @@ async function loadSharedPromptTemplate(): Promise<string> {
 
   const response = await fetch("/shared/analysis-prompt.txt");
   if (!response.ok) {
-    throw new Error("Failed to load shared analysis prompt template");
+    throw new Error("Echec du chargement du template de prompt partagé");
   }
 
   sharedPromptTemplate = await response.text();
@@ -141,12 +212,12 @@ function normalizeProviderAnalysis(parsed: any, providerName: string, source: "p
     score,
     confidence,
     recommendation,
-    thinking: String(parsed?.thinking || "No detailed thinking was returned."),
+    thinking: String(parsed?.thinking || "Aucun détail de raisonnement n'a été retourné."),
     reasoning: String(parsed?.reasoning || "Aucune justification detaillee n'a ete retournee."),
     strengths: safeArray(parsed?.strengths, 5),
     gaps: safeArray(parsed?.gaps, 4),
-    tipsForCandidate: mergedTips.length > 0 ? mergedTips.slice(0, 4) : ["Clarify role-relevant achievements."],
-    language: String(parsed?.language || "Unknown"),
+    tipsForCandidate: mergedTips.length > 0 ? mergedTips.slice(0, 4) : ["Préciser des réalisations directement liées au poste."],
+    language: String(parsed?.language || "Inconnue"),
   };
 }
 
@@ -175,7 +246,7 @@ function dedupeTips(providers: ProviderAnalysis[]): string[] {
 
 async function collectPuterResponse(prompt: string): Promise<string> {
   if (typeof window === "undefined" || !window.puter?.ai?.chat) {
-    throw new Error("Puter.js is not available in this browser session");
+    throw new Error("Puter.js n'est pas disponible dans cette session navigateur");
   }
 
   const response = await window.puter.ai.chat(prompt, {
@@ -199,39 +270,46 @@ async function collectPuterResponse(prompt: string): Promise<string> {
 export async function runDualAnalysis(
   applicationId: string,
   input: AnalyseInput,
+  existingAnalysis?: unknown,
 ): Promise<DualAnalysisResult> {
   const prompt = await buildPrompt(input);
-
-  const settled = await Promise.allSettled([
-    collectPuterResponse(prompt),
-    api.post(`/applications/${applicationId}/analyse`).then((r) => r.data),
-  ]);
-
   const providers: ProviderAnalysis[] = [];
 
-  const puterResult = settled[0];
-  if (puterResult.status === "fulfilled") {
-    try {
-      const parsed = parseRawJSON(puterResult.value);
-      providers.push(normalizeProviderAnalysis(parsed, "GPT-4o (Puter.js)", "puter"));
-    } catch {
-      // Ignore malformed Puter output and continue with other providers.
-    }
+  // Reuse previously stored backend analysis to avoid re-spending API tokens.
+  const cachedBackend = extractCachedBackendProvider(existingAnalysis);
+  if (cachedBackend) {
+    providers.push(cachedBackend);
   }
 
-  const geminiResult = settled[1];
-  if (geminiResult.status === "fulfilled") {
-    try {
-      providers.push(
-        normalizeProviderAnalysis(geminiResult.value, "Gemini 2.5 Flash", "gemini"),
-      );
-    } catch {
-      // Ignore malformed backend output and continue with other providers.
-    }
+  let puterError: unknown = null;
+
+  try {
+    const puterRaw = await collectPuterResponse(prompt);
+    const parsed = parseRawJSON(puterRaw);
+    providers.push(normalizeProviderAnalysis(parsed, "GPT-4o (Puter.js)", "puter"));
+  } catch (error) {
+    puterError = error;
   }
 
+  // Safety net: keep the workflow functional if Puter fails and no cached analysis exists.
   if (providers.length === 0) {
-    throw new Error("Both AI providers failed. Please retry.");
+    try {
+      const backendResult = await api.post(`/applications/${applicationId}/analyse`).then((r) => r.data);
+      providers.push(
+        normalizeProviderAnalysis(backendResult, "Gemini 2.5 Flash (backend fallback)", "gemini"),
+      );
+    } catch (backendError: any) {
+      const puterMessage =
+        puterError instanceof Error
+          ? puterError.message
+          : puterError
+            ? String(puterError)
+            : "inconnu";
+      const backendMessage = backendError?.response?.data?.error || backendError?.message || "inconnu";
+      throw new Error(
+        `Aucun fournisseur IA disponible (Puter: ${puterMessage}; Backend: ${backendMessage})`,
+      );
+    }
   }
 
   const mergedScore =
@@ -249,7 +327,7 @@ export async function runDualAnalysis(
 
   const disagreementNote =
     providers.length > 1 && !agreement
-      ? `${providers[0].name} recommends ${providers[0].recommendation}, while ${providers[1].name} recommends ${providers[1].recommendation}.`
+      ? `${providers[0].name} recommande ${recommendationToFrench(providers[0].recommendation)}, tandis que ${providers[1].name} recommande ${recommendationToFrench(providers[1].recommendation)}.`
       : undefined;
 
   return {
@@ -269,9 +347,19 @@ export async function persistDualAnalysis(
   applicationId: string,
   analysis: DualAnalysisResult,
 ): Promise<void> {
+  // Keep legacy-friendly fields so candidate views can still read tips directly.
+  const persistedPayload = {
+    ...analysis,
+    score: analysis.mergedScore,
+    confidence: analysis.mergedConfidence,
+    recommendation: analysis.mergedRecommendation,
+    tipsForCandidate: analysis.mergedTips,
+    tips_for_candidate: analysis.mergedTips,
+  };
+
   await api.patch(`/applications/${applicationId}/analysis`, {
     aiScore: analysis.mergedScore,
-    aiAnalysis: analysis,
+    aiAnalysis: persistedPayload,
   });
 }
 
@@ -303,7 +391,7 @@ export function normalizeStoredDualAnalysis(value: unknown): DualAnalysisResult 
             ...p,
             tipsForCandidate: p?.tipsForCandidate,
           },
-          String(p?.name || "AI Provider"),
+          String(p?.name || "Fournisseur IA"),
           p?.source === "puter" ? "puter" : "gemini",
         ),
       ),
@@ -312,7 +400,7 @@ export function normalizeStoredDualAnalysis(value: unknown): DualAnalysisResult 
     };
   }
 
-  // Backward compatibility: old single-provider shape from backend
+  // Compatibilité ascendante : ancien format mono-fournisseur provenant du backend
   if (typeof parsed?.score === "number" && parsed?.recommendation) {
     const single = normalizeProviderAnalysis(parsed, "Gemini 2.5 Flash", "gemini");
     return {

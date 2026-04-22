@@ -2,6 +2,8 @@ import { create } from 'zustand';
 import { UserProfile } from '../lib/types';
 import { api } from '../lib/axios';
 import { storage, STORAGE_KEYS } from '../lib/storage';
+import { useNotificationStore } from './notifications';
+import { clearUserRuntimeCaches } from '../lib/runtime-cache';
 
 interface AuthState {
   user: UserProfile | null;
@@ -35,6 +37,8 @@ export const useAuthStore = create<AuthState>((set) => ({
     }
     
     storage.setItem(STORAGE_KEYS.ACCESS_TOKEN, token);
+    useNotificationStore.getState().reset();
+    void clearUserRuntimeCaches();
     set({ user: userData, isAuthenticated: true, error: null, isLoading: false });
   },
 
@@ -46,6 +50,8 @@ export const useAuthStore = create<AuthState>((set) => ({
     } finally {
       storage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
       storage.removeItem(STORAGE_KEYS.LEGACY_ACCESS_TOKEN);
+      useNotificationStore.getState().reset();
+      void clearUserRuntimeCaches();
       set({ user: null, isAuthenticated: false, isLoading: false });
     }
   },
@@ -57,6 +63,8 @@ export const useAuthStore = create<AuthState>((set) => ({
       const token = storage.getItem<string>(STORAGE_KEYS.ACCESS_TOKEN);
       if (!token) {
         storage.removeItem(STORAGE_KEYS.LEGACY_ACCESS_TOKEN);
+        useNotificationStore.getState().reset();
+        void clearUserRuntimeCaches();
         // If no token at all, probably not logged in
         set({ user: null, isAuthenticated: false, isLoading: false });
         // Attempt a silent refresh just in case we have a cookie but no local token
@@ -71,6 +79,8 @@ export const useAuthStore = create<AuthState>((set) => ({
           if (meRes.data.role !== 'CANDIDATE') {
             storage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
             storage.removeItem(STORAGE_KEYS.LEGACY_ACCESS_TOKEN);
+            useNotificationStore.getState().reset();
+            void clearUserRuntimeCaches();
             set({ 
               user: null, 
               isAuthenticated: false, 
@@ -93,6 +103,8 @@ export const useAuthStore = create<AuthState>((set) => ({
       if (res.data.role !== 'CANDIDATE') {
         storage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
         storage.removeItem(STORAGE_KEYS.LEGACY_ACCESS_TOKEN);
+        useNotificationStore.getState().reset();
+        void clearUserRuntimeCaches();
         set({ 
           user: null, 
           isAuthenticated: false, 

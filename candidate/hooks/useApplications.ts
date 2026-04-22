@@ -17,6 +17,7 @@ export function useMyApplications() {
 
   return useQuery<Application[]>({
     queryKey: candidateQueryKeys.applicationsMine,
+    staleTime: 30 * 1000,
     enabled: isAuthenticated,
     queryFn: async () => {
       const res = await api.get('/applications/mine');

@@ -10,7 +10,7 @@ interface FilterChipsProps {
 }
 
 const filters: { value: FilterType; label: string; color?: string }[] = [
-  { value: 'all', label: 'All' },
+  { value: 'all', label: 'Tous' },
   { value: 'Bouarada', label: 'Bouarada', color: 'blue' },
   { value: 'Zaghouan', label: 'Zaghouan', color: 'teal' },
   { value: 'CDI', label: 'CDI' },
@@ -23,19 +23,13 @@ export function FilterChips({ activeFilter, onFilterChange }: FilterChipsProps) 
     <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4">
       {filters.map((filter) => {
         const isActive = activeFilter === filter.value
-        const baseClasses = 'px-3.5 py-1.5 rounded-full text-xs font-medium whitespace-nowrap border transition-colors duration-150 min-h-[36px] flex items-center touch-manipulation'
+        const baseClasses = 'px-4 py-[7px] rounded-full text-xs font-semibold whitespace-nowrap border-[1.5px] transition-all duration-150 min-h-[36px] flex items-center touch-manipulation'
         
         let colorClasses = ''
         if (isActive) {
-          if (filter.color === 'blue') {
-            colorClasses = 'bg-bou/10 border-bou/25 text-bou'
-          } else if (filter.color === 'teal') {
-            colorClasses = 'bg-zag/10 border-zag/25 text-zag'
-          } else {
-            colorClasses = 'bg-acc/12 border-acc/30 text-acch'
-          }
+          colorClasses = 'bg-primary border-primary text-primary-foreground'
         } else {
-          colorClasses = 'bg-s2 border-input text-muted-foreground'
+          colorClasses = 'bg-card border-border text-ink3 hover:border-[var(--violet-b)] hover:text-violet hover:bg-violetl'
         }
 
         return (

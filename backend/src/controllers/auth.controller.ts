@@ -13,13 +13,13 @@ export class AuthController {
 
       const existing = await UserRepository.findByEmail(email);
       if (existing) {
-        res.status(409).json({ error: 'Email already registered' });
+        res.status(409).json({ error: 'E-mail deja enregistre' });
         return;
       }
 
       const existingPhone = await UserRepository.findByPhone(phone);
       if (existingPhone) {
-        res.status(409).json({ error: 'Phone already registered' });
+        res.status(409).json({ error: 'Numero de telephone deja enregistre' });
         return;
       }
 
@@ -63,18 +63,18 @@ export class AuthController {
       if (err?.code === 'P2002') {
         const fields: string[] = err?.meta?.target || [];
         if (fields.includes('email')) {
-          res.status(409).json({ error: 'Email already registered' });
+          res.status(409).json({ error: 'E-mail deja enregistre' });
           return;
         }
         if (fields.includes('phone')) {
-          res.status(409).json({ error: 'Phone already registered' });
+          res.status(409).json({ error: 'Numero de telephone deja enregistre' });
           return;
         }
-        res.status(409).json({ error: 'Duplicate account data' });
+        res.status(409).json({ error: 'Donnees de compte en doublon' });
         return;
       }
 
-      res.status(500).json({ error: 'Registration failed' });
+      res.status(500).json({ error: 'Echec de l\'inscription' });
     }
   }
 
@@ -85,18 +85,18 @@ export class AuthController {
 
       const user = await UserRepository.findByEmail(email);
       if (!user) {
-        res.status(401).json({ error: 'Invalid email or password' });
+        res.status(401).json({ error: 'E-mail ou mot de passe invalide' });
         return;
       }
 
       if (user.isActive === false || user.deletedAt) {
-        res.status(403).json({ error: 'Account is inactive. Please contact the administrator.' });
+        res.status(403).json({ error: 'Le compte est inactif. Veuillez contacter l\'administrateur.' });
         return;
       }
 
       const valid = await AuthService.comparePassword(password, user.passwordHash);
       if (!valid) {
-        res.status(401).json({ error: 'Invalid email or password' });
+        res.status(401).json({ error: 'E-mail ou mot de passe invalide' });
         return;
       }
 
@@ -126,7 +126,7 @@ export class AuthController {
       });
     } catch (err: any) {
       logger.error('Login error:', err);
-      res.status(500).json({ error: 'Login failed' });
+      res.status(500).json({ error: 'Echec de la connexion' });
     }
   }
 
@@ -135,7 +135,7 @@ export class AuthController {
     try {
       const token = req.cookies?.refreshToken;
       if (!token) {
-        res.status(401).json({ error: 'No refresh token' });
+        res.status(401).json({ error: 'Aucun jeton de rafraichissement' });
         return;
       }
 
@@ -143,7 +143,7 @@ export class AuthController {
       const stored = await UserRepository.findRefreshToken(tokenHash);
 
       if (!stored || stored.expiresAt < new Date()) {
-        res.status(401).json({ error: 'Invalid or expired refresh token' });
+        res.status(401).json({ error: 'Jeton de rafraichissement invalide ou expire' });
         return;
       }
 
@@ -165,7 +165,7 @@ export class AuthController {
       res.json({ accessToken });
     } catch (err: any) {
       logger.error('Refresh error:', err);
-      res.status(500).json({ error: 'Token refresh failed' });
+      res.status(500).json({ error: 'Echec du rafraichissement du jeton' });
     }
   }
 
@@ -180,10 +180,10 @@ export class AuthController {
 
       AuthService.clearRefreshCookie(res);
 
-      res.json({ message: 'Logged out successfully' });
+      res.json({ message: 'Deconnexion reussie' });
     } catch (err: any) {
       logger.error('Logout error:', err);
-      res.status(500).json({ error: 'Logout failed' });
+      res.status(500).json({ error: 'Echec de la deconnexion' });
     }
   }
 
@@ -191,13 +191,13 @@ export class AuthController {
   static async me(req: Request, res: Response): Promise<void> {
     try {
       if (!req.user) {
-        res.status(401).json({ error: 'Not authenticated' });
+        res.status(401).json({ error: 'Non authentifie' });
         return;
       }
 
       const user = await UserRepository.findById(req.user.userId);
       if (!user) {
-        res.status(404).json({ error: 'User not found' });
+        res.status(404).json({ error: 'Utilisateur introuvable' });
         return;
       }
 
@@ -215,7 +215,7 @@ export class AuthController {
       });
     } catch (err: any) {
       logger.error('Me error:', err);
-      res.status(500).json({ error: 'Failed to fetch profile' });
+      res.status(500).json({ error: 'Echec de la recuperation du profil' });
     }
   }
 
@@ -227,7 +227,7 @@ export class AuthController {
       const user = await UserRepository.findByEmail(email);
       if (!user) {
         // Don't reveal if email exists or not for security
-        res.json({ message: 'If the email exists, a reset link has been sent.' });
+        res.json({ message: 'Si l\'e-mail existe, un lien de reinitialisation a ete envoye.' });
         return;
       }
 
@@ -253,10 +253,10 @@ export class AuthController {
         // Continue anyway - don't reveal email sending issues
       }
 
-      res.json({ message: 'If the email exists, a reset link has been sent.' });
+      res.json({ message: 'Si l\'e-mail existe, un lien de reinitialisation a ete envoye.' });
     } catch (err: any) {
       logger.error('Forgot password error:', err);
-      res.status(500).json({ error: 'Failed to process password reset request' });
+      res.status(500).json({ error: 'Echec du traitement de la demande de reinitialisation du mot de passe' });
     }
   }
 
@@ -266,7 +266,7 @@ export class AuthController {
       const { token, password } = req.body;
 
       if (!token || !password) {
-        res.status(400).json({ error: 'Token and password are required' });
+        res.status(400).json({ error: 'Le jeton et le mot de passe sont requis' });
         return;
       }
 
@@ -276,7 +276,7 @@ export class AuthController {
       // Find user with valid reset token
       const user = await UserRepository.findByResetToken(resetTokenHash);
       if (!user || !user.resetTokenExpiry || user.resetTokenExpiry < new Date()) {
-        res.status(400).json({ error: 'Invalid or expired reset token' });
+        res.status(400).json({ error: 'Jeton de reinitialisation invalide ou expire' });
         return;
       }
 
@@ -293,10 +293,10 @@ export class AuthController {
 
       logger.info(`Password reset successful for: ${user.email}`);
 
-      res.json({ message: 'Password reset successful. Please log in with your new password.' });
+      res.json({ message: 'Mot de passe reinitialise avec succes. Veuillez vous connecter avec votre nouveau mot de passe.' });
     } catch (err: any) {
       logger.error('Reset password error:', err);
-      res.status(500).json({ error: 'Failed to reset password' });
+      res.status(500).json({ error: 'Echec de la reinitialisation du mot de passe' });
     }
   }
 }

@@ -23,7 +23,7 @@ flowchart TB
             H6["Bell notifications live"]
         end
 
-        subgraph PWA_APP ["PWA Candidat Next.js 14 + next-pwa"]
+        subgraph PWA_APP ["PWA Candidat Next.js 15 + @ducanh2912/next-pwa"]
             P1["Installable Android sans Play Store"]
             P2["Parcourir offres filtre ville contrat"]
             P3["Bibliotheque CV: upload PDF + CV builder valide"]
@@ -59,13 +59,13 @@ flowchart TB
             M1["authenticate JWT verify"]
             M2["requireRole RBAC admin hr candidate"]
             M3["requireSiteOwnership offre site egale user site"]
-            M4["loginLimiter 5 tentatives 15 min"]
+            M4["loginLimiter rateLimiter 100 req / minute (login)"]
             M5["validate schemas Joi"]
             M6["helmet + cors en-tetes HTTP"]
         end
 
         SOCKET["Socket.io rooms admin hr-site candidate"]
-        EVENTS["EventEmitter statusChanged interviewScheduled analysisComplete"]
+        EVENTS["EventEmitter application.statusChanged interview.scheduled interview.reminder"]
     end
 
     subgraph DB ["BASE DE DONNEES PostgreSQL Prisma ORM"]
@@ -93,8 +93,8 @@ flowchart TB
     HR_APP -->|"HTTPS REST JWT"| API
     PWA_APP -->|"HTTPS REST JWT"| API
 
-    HR_APP <-->|"Socket.io application:new application:analysed interview:scheduled"| SOCKET
-    PWA_APP <-->|"Socket.io status:changed ai:analysis_complete interview:scheduled reminder"| SOCKET
+    HR_APP <-->|"Socket.io application:new application:analysed application:manual_analysis interview:scheduled"| SOCKET
+    PWA_APP <-->|"Socket.io status:changed ai:analysis_complete ai:analysis_updated interview:scheduled interview:reminder"| SOCKET
 
     API --> MIDDLEWARE
     MIDDLEWARE --> SERVICES

@@ -54,7 +54,7 @@ const OutcomeModal = ({
 
         <div className="flex flex-col sm:flex-row gap-3 py-4">
           <Button
-            className="flex-1 bg-success/15 border border-success/30 text-success text-sm font-semibold py-6 hover:bg-success/25"
+            className="flex-1 bg-okl border border-[var(--ok-b)] text-ok text-sm font-semibold py-6 hover:bg-okl"
             disabled={loading}
             onClick={() => handleOutcome('pass')}
           >
@@ -62,7 +62,7 @@ const OutcomeModal = ({
           </Button>
 
           <Button
-            className="flex-1 bg-destructive/15 border border-destructive/30 text-destructive text-sm font-semibold py-6 hover:bg-destructive/25"
+            className="flex-1 bg-errl border border-[var(--err-b)] text-err text-sm font-semibold py-6 hover:bg-errl"
             disabled={loading}
             onClick={() => handleOutcome('fail')}
           >
@@ -70,7 +70,7 @@ const OutcomeModal = ({
           </Button>
 
           <Button
-            className="flex-1 bg-secondary border border-input text-muted-foreground text-sm font-semibold py-6 hover:bg-s3"
+            className="flex-1 bg-secondary border border-input text-muted-foreground text-sm font-semibold py-6 hover:bg-card2"
             disabled={loading}
             onClick={() => handleOutcome('no_show')}
           >

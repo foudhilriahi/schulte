@@ -1,0 +1,13 @@
+{
+  "pages": {},
+  "app": {
+    "[project]/app/(main)/apply/[jobId]/page": [
+      "static/media/NotoSans_Regular-s.p.60036e66.ttf",
+      "static/media/NotoSans_Bold-s.p.b8715417.ttf",
+      "static/media/JetBrainsMono_400-s.p.7d81c911.woff2",
+      "static/media/JetBrainsMono_500-s.p.0b0311a6.woff2"
+    ]
+  },
+  "appUsingSizeAdjust": true,
+  "pagesUsingSizeAdjust": false
+}

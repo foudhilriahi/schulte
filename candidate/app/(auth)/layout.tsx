@@ -21,7 +21,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           </div>
         </div>
 
-        <div className="flex items-center justify-center flex-1 w-full p-8 bg-s2 border rounded-md md:rounded-l-none md:rounded-r-md border-border md:h-[600px]">
+        <div className="flex items-center justify-center flex-1 w-full p-8 bg-card2 border rounded-md md:rounded-l-none md:rounded-r-md border-border md:h-[600px]">
           <div className="w-full max-w-[350px]">
             {children}
           </div>

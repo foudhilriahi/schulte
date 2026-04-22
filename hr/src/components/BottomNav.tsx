@@ -22,14 +22,14 @@ const BottomNav = () => {
             <button
               key={tab.path}
               onClick={() => navigate(tab.path)}
-              className={`touch-target flex flex-1 flex-col items-center justify-center gap-1 py-2 transition-colors ${
+              className={`touch-target flex h-[58px] flex-1 flex-col items-center justify-center gap-1 py-2 transition-colors ${
                 isActive
-                  ? "text-primary"
-                  : "text-muted-foreground hover:text-foreground"
+                  ? "text-violet"
+                  : "text-ink4 hover:text-ink"
               }`}
             >
               <Icon className="h-5 w-5" />
-              <span className="text-[11px] font-medium">{tab.label}</span>
+              <span className="text-[10px] font-semibold">{tab.label}</span>
             </button>
           );
         })}

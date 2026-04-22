@@ -71,7 +71,7 @@ const TemplateSelector = ({ open, onClose, onSelectTemplate }: TemplateSelectorP
       <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-warning" />
+            <Sparkles className="h-5 w-5 text-warn" />
             Créer une nouvelle offre
           </DialogTitle>
           <p className="text-sm text-muted-foreground">
@@ -100,7 +100,7 @@ const TemplateSelector = ({ open, onClose, onSelectTemplate }: TemplateSelectorP
                 {templates.map((template) => (
                   <Card 
                     key={template.id}
-                    className="cursor-pointer border-border transition-[border-color,box-shadow] hover:border-acch hover:shadow-[0_4px_16px_rgba(0,0,0,0.32)]"
+                    className="cursor-pointer border-border transition-[border-color,box-shadow] hover:border-[var(--border2)] hover:shadow-hover"
                     onClick={() => handleSelectTemplate(template)}
                   >
                     <CardHeader className="pb-3">

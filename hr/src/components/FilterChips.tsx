@@ -12,10 +12,10 @@ const FilterChips = ({ active, onSelect }: FilterChipsProps) => {
         <button
           key={f}
           onClick={() => onSelect(f)}
-          className={`touch-target shrink-0 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+          className={`touch-target shrink-0 rounded-full border-[1.5px] px-4 py-[7px] text-xs font-semibold transition-colors ${
             active === f
-              ? "bg-primary text-primary-foreground"
-              : "bg-card text-muted-foreground border border-border hover:bg-accent"
+              ? "bg-primary border-primary text-primary-foreground"
+              : "bg-card border-border text-ink3 hover:border-[var(--violet-b)] hover:text-violet hover:bg-violetl"
           }`}
         >
           {f}

@@ -27,24 +27,24 @@ describe("dual-ai-analysis", () => {
     axiosMocks.patch.mockReset();
     globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
-      text: async () => `You are a senior HR recruiter at Schulte Automotive Tunisia, a German-owned cable assembly factory.
-Analyze this candidate's CV against the job requirements with professional depth.
+      text: async () => `Tu es un recruteur RH senior chez Schulte Automotive Tunisia, une usine de câblage automobile à capitaux allemands.
+Analyse ce CV candidat par rapport aux exigences du poste avec un niveau professionnel.
 
-JOB POSITION: {{offerTitle}}
-REQUIRED SKILLS: {{requiredSkills}}
-MINIMUM EXPERIENCE: {{experienceYears}} years
-JOB DESCRIPTION: {{description}}
+POSTE : {{offerTitle}}
+COMPETENCES REQUISES : {{requiredSkills}}
+EXPERIENCE MINIMALE : {{experienceYears}} ans
+DESCRIPTION DU POSTE : {{description}}
 
-CANDIDATE CV:
+CV CANDIDAT :
 {{cvText}}
 
-Return ONLY valid JSON — no markdown, no backticks, no explanation:
-{"thinking":"2-3 sentences showing how score was reached","score":<0-100>,"confidence":"<high|medium|low>","recommendation":"<Hire|Interview|Request More Info|Reject>","reasoning":"<one French paragraph>","tips_for_candidate":["tip1","tip2"],"language":"<detected CV language>","strengths":["s1","s2"],"gaps":["g1","g2"]}`,
+Retourne UNIQUEMENT du JSON valide — sans markdown, sans backticks, sans explication :
+{"thinking":"2-3 phrases en anglais montrant comment le score a été construit","score":<0-100>,"confidence":"<high|medium|low>","recommendation":"<Hire|Interview|Request More Info|Reject>","reasoning":"<un paragraphe en français>","tips_for_candidate":["conseil1","conseil2"],"language":"<langue détectée du CV>","strengths":["s1","s2"],"gaps":["g1","g2"]}`,
     } as any);
     (globalThis as any).window = (globalThis as any).window || {};
   });
 
-  it("merges both providers with conservative recommendation and lower confidence", async () => {
+  it("fusionne les deux fournisseurs avec recommandation prudente et confiance réduite", async () => {
     (window as any).puter = {
       ai: {
         chat: vi.fn().mockResolvedValue(
@@ -55,7 +55,7 @@ Return ONLY valid JSON — no markdown, no backticks, no explanation:
               recommendation: "Hire",
               thinking: "Puter thinking",
               reasoning: "Raisonnement puter",
-              tips_for_candidate: ["Tip A", "Tip B"],
+              tips_for_candidate: ["Conseil A", "Conseil B"],
               strengths: ["s1"],
               gaps: ["g1"],
             }),
@@ -64,25 +64,22 @@ Return ONLY valid JSON — no markdown, no backticks, no explanation:
       },
     };
 
-    axiosMocks.post.mockResolvedValue({
-      data: {
-        score: 74,
-        confidence: "medium",
-        recommendation: "Interview",
-        thinking: "Gemini thinking",
-        reasoning: "Raisonnement gemini",
-        tipsForCandidate: ["Tip B", "Tip C"],
-        strengths: ["s2"],
-        gaps: ["g2"],
-      },
-    });
-
     const result = await runDualAnalysis("app-1", {
-      cvText: "Long enough CV text".repeat(20),
+      cvText: "Texte CV suffisamment long".repeat(20),
       offerTitle: "Planner",
       requiredSkills: ["sap"],
       experienceYears: 2,
       description: "desc",
+    }, {
+      score: 74,
+      confidence: "medium",
+      recommendation: "Interview",
+      thinking: "Raisonnement Gemini",
+      reasoning: "Raisonnement gemini",
+      tipsForCandidate: ["Conseil B", "Conseil C"],
+      strengths: ["s2"],
+      gaps: ["g2"],
+      aiProvider: "Gemini cache",
     });
 
     expect(result.providers).toHaveLength(2);
@@ -91,12 +88,13 @@ Return ONLY valid JSON — no markdown, no backticks, no explanation:
     expect(result.mergedConfidence).toBe("medium");
     expect(result.agreement).toBe(false);
     expect(result.mergedTips.length).toBeGreaterThan(0);
+    expect(axiosMocks.post).not.toHaveBeenCalled();
   });
 
-  it("keeps single provider result when the other fails", async () => {
+  it("conserve le résultat mono-fournisseur quand l'autre échoue", async () => {
     (window as any).puter = {
       ai: {
-        chat: vi.fn().mockRejectedValue(new Error("Puter unavailable")),
+        chat: vi.fn().mockRejectedValue(new Error("Puter indisponible")),
       },
     };
 
@@ -105,16 +103,16 @@ Return ONLY valid JSON — no markdown, no backticks, no explanation:
         score: 66,
         confidence: "medium",
         recommendation: "Interview",
-        thinking: "Gemini only",
+        thinking: "Gemini seul",
         reasoning: "Raisonnement",
-        tipsForCandidate: ["Tip X"],
+        tipsForCandidate: ["Conseil X"],
         strengths: ["s"],
         gaps: ["g"],
       },
     });
 
     const result = await runDualAnalysis("app-2", {
-      cvText: "Long enough CV text".repeat(20),
+      cvText: "Texte CV suffisamment long".repeat(20),
       offerTitle: "Planner",
       requiredSkills: ["sap"],
       experienceYears: 2,
@@ -126,15 +124,15 @@ Return ONLY valid JSON — no markdown, no backticks, no explanation:
     expect(result.mergedRecommendation).toBe("Interview");
   });
 
-  it("normalizes old single-provider stored analysis", () => {
+  it("normalise un ancien format d'analyse mono-fournisseur stocké", () => {
     const normalized = normalizeStoredDualAnalysis(
       JSON.stringify({
         score: 55,
         confidence: "low",
         recommendation: "Request More Info",
-        thinking: "old",
-        reasoning: "old reason",
-        tipsForCandidate: ["Tip 1"],
+        thinking: "ancien",
+        reasoning: "ancien raisonnement",
+        tipsForCandidate: ["Conseil 1"],
       }),
     );
 

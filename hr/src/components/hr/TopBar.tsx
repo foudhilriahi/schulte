@@ -88,7 +88,7 @@ const TopBar = ({ title }: TopBarProps) => {
       setNotifications((prev) => prev.map((n) => ({ ...n, readAt: n.readAt || new Date().toISOString() })));
       setUnreadCount(0);
     } catch {
-      toast.error("Failed to mark notifications as read");
+      toast.error("Echec du marquage des notifications comme lues");
     }
   };
 
@@ -98,7 +98,7 @@ const TopBar = ({ title }: TopBarProps) => {
       setNotifications([]);
       setUnreadCount(0);
     } catch {
-      toast.error("Failed to clear notifications");
+      toast.error("Echec de la suppression des notifications");
     }
   };
 
@@ -117,23 +117,28 @@ const TopBar = ({ title }: TopBarProps) => {
   const displayUnread = unreadCount > unread ? unreadCount : unread;
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-card px-6">
-      <h1 className="text-xl font-bold text-foreground">{title}</h1>
+    <header className="sticky top-0 z-30 flex h-[54px] items-center justify-between border-b border-border bg-card px-[22px]">
+      <h1 className="text-[15px] font-bold text-ink">{title}</h1>
       <div className="flex items-center gap-4">
         {user?.site && (
-          <Badge variant="outline" className="text-xs font-medium">
+          <Badge
+            variant="outline"
+            className={`text-[10px] font-mono font-medium tracking-[-0.05em] ${
+              user.site === 'Bouarada'
+                ? 'bg-boul border-[var(--bou-b)] text-primary'
+                : 'bg-zagl border-[var(--zag-b)] text-ok'
+            }`}
+          >
             Site: {user.site}
           </Badge>
         )}
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="relative rounded-lg p-2 hover:bg-secondary transition-colors">
-              <Bell className="h-5 w-5 text-muted-foreground" />
+            <button className="relative p-2 hover:text-ink transition-colors text-ink4">
+              <Bell className="h-5 w-5" />
               {displayUnread > 0 && (
-                <span className="absolute -right-1 -top-1 min-w-[18px] rounded-full bg-primary px-1 text-[10px] font-semibold text-primary-foreground">
-                  {displayUnread > 99 ? "99+" : displayUnread}
-                </span>
+                <span className="absolute right-0 top-0 h-2 w-2 rounded-full bg-coral border-2 border-card" />
               )}
             </button>
           </DropdownMenuTrigger>
@@ -143,15 +148,15 @@ const TopBar = ({ title }: TopBarProps) => {
               <div className="flex items-center gap-3">
                 <button
                   onClick={markAllRead}
-                  className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+                  className="inline-flex items-center gap-1 text-xs text-violet hover:underline"
                 >
                   <CheckCheck className="h-3.5 w-3.5" />
-                  Mark all read
+                  Tout marquer comme lu
                 </button>
                 <button
                   onClick={clearAll}
-                  className="inline-flex items-center gap-1 text-xs text-destructive hover:underline"
-                  title="Clear all notifications"
+                  className="inline-flex items-center gap-1 text-xs text-err hover:underline"
+                  title="Effacer toutes les notifications"
                 >
                   <X className="h-3.5 w-3.5" />
                 </button>
@@ -160,7 +165,7 @@ const TopBar = ({ title }: TopBarProps) => {
             <DropdownMenuSeparator />
             <div className="max-h-80 overflow-y-auto">
               {notifications.length === 0 && (
-                <p className="px-3 py-4 text-sm text-muted-foreground">No notifications yet.</p>
+                <p className="px-3 py-4 text-sm text-muted-foreground">Aucune notification pour le moment.</p>
               )}
               {notifications.map((n) => (
                 <DropdownMenuItem
@@ -170,9 +175,9 @@ const TopBar = ({ title }: TopBarProps) => {
                 >
                   <div className="flex w-full items-center justify-between gap-2">
                     <span className="text-sm font-medium">
-                      {n.payload?.title || "Update"}
+                      {n.payload?.title || "Mise a jour"}
                     </span>
-                    {!n.readAt && <span className="h-2 w-2 rounded-full bg-primary" />}
+                    {!n.readAt && <span className="h-2 w-2 rounded-full bg-coral" />}
                   </div>
                   <p className="line-clamp-2 text-xs text-muted-foreground">
                     {n.payload?.message || "A new event was received."}

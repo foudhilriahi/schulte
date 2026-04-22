@@ -1,36 +1,58 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, JetBrains_Mono } from "next/font/google";
-import { BottomNav } from "@/components/bottom-nav";
-import { ToastProvider } from "@/components/toast-provider";
-import { Providers } from "@/components/providers";
+import localFont from "next/font/local";
+import { GlobalNetworkLoader } from "@/components/global-network-loader";
+import { RouteActivitySync } from "@/components/route-activity-sync";
 import "./globals.css";
 
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
+const plusJakartaSans = localFont({
+  src: [
+    {
+      path: "./fonts/NotoSans-Regular.ttf",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "./fonts/NotoSans-Bold.ttf",
+      weight: "700",
+      style: "normal",
+    },
+  ],
+  variable: "--font-plus-jakarta-sans",
   display: "swap",
 });
 
-const jetbrainsMono = JetBrains_Mono({
-  subsets: ["latin"],
+const jetBrainsMono = localFont({
+  src: [
+    {
+      path: "./fonts/JetBrainsMono-400.woff2",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "./fonts/JetBrainsMono-500.woff2",
+      weight: "500",
+      style: "normal",
+    },
+  ],
   variable: "--font-jetbrains-mono",
   display: "swap",
+  preload: false,
 });
 
 export const metadata: Metadata = {
-  title: "Schulte Tunisia Jobs",
+  title: "Offres Schulte Tunisie",
   description:
-    "Find your next career opportunity at Schulte Tunisia automotive factory",
+    "Trouvez votre prochaine opportunite de carriere chez Schulte Tunisie",
   manifest: "/manifest.json",
   icons: {
-    icon: "/icon.svg",
-    shortcut: "/icon.svg",
+    icon: "/icon-192.png",
+    shortcut: "/icon-192.png",
     apple: "/apple-touch-icon.svg",
   },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Schulte Jobs",
+    title: "Offres Schulte",
   },
 };
 
@@ -40,7 +62,7 @@ export const viewport: Viewport = {
   maximumScale: 5,
   userScalable: true,
   viewportFit: "cover",
-  themeColor: "rgb(8, 9, 13)",
+  themeColor: "#F4F2EF",
 };
 
 export default function RootLayout({
@@ -49,18 +71,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="fr" suppressHydrationWarning>
       <body
-        className={`${inter.variable} ${jetbrainsMono.variable} font-sans antialiased`}
+        className={`${plusJakartaSans.variable} ${jetBrainsMono.variable} font-sans antialiased`}
         suppressHydrationWarning
       >
-        <Providers>
-          <div className="max-w-lg mx-auto bg-background min-h-screen relative">
-            {children}
-            <BottomNav />
-          </div>
-          <ToastProvider />
-        </Providers>
+        <RouteActivitySync />
+        <GlobalNetworkLoader />
+        {children}
       </body>
     </html>
   );

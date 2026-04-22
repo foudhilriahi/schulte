@@ -39,7 +39,7 @@ export class InterviewsController {
       res.json(interviews);
     } catch (err: any) {
       logger.error("Get interviews error:", err);
-      res.status(500).json({ error: "Failed to fetch interviews" });
+      res.status(500).json({ error: "Echec de la recuperation des entretiens" });
     }
   }
 
@@ -51,7 +51,7 @@ export class InterviewsController {
       // Validate scheduledAt
       const interviewDate = new Date(scheduledAt);
       if (isNaN(interviewDate.getTime())) {
-        res.status(400).json({ error: "Invalid date format" });
+        res.status(400).json({ error: "Format de date invalide" });
         return;
       }
 
@@ -123,7 +123,7 @@ export class InterviewsController {
       res.status(201).json(interview);
     } catch (err: any) {
       logger.error("Schedule interview error:", err);
-      res.status(500).json({ error: "Failed to schedule interview" });
+      res.status(500).json({ error: "Echec de la planification de l'entretien" });
     }
   }
 
@@ -138,7 +138,7 @@ export class InterviewsController {
       res.json(interview);
     } catch (err: any) {
       logger.error("Mark interview outcome error:", err);
-      res.status(500).json({ error: "Failed to mark interview outcome" });
+      res.status(500).json({ error: "Echec de la mise a jour du resultat de l'entretien" });
     }
   }
 }

@@ -174,7 +174,7 @@ const ScheduleInterviewModal = ({
           <Button
             onClick={handleSubmit}
             disabled={loading}
-            className="bg-primary text-primary-foreground hover:bg-acch"
+            className="bg-primary text-primary-foreground hover:bg-violeth"
           >
             {loading ? 'Planification...' : 'Planifier'}
           </Button>

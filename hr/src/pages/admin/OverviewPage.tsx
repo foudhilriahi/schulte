@@ -21,11 +21,11 @@ import {
 } from "recharts";
 
 const statusBadge: Record<string, { label: string; className: string }> = {
-  new: { label: "New", className: "bg-s3 text-foreground" },
-  reviewing: { label: "Reviewing", className: "bg-warn/14 text-warn" },
-  interview: { label: "Interview", className: "bg-bou/14 text-bou" },
-  accepted: { label: "Accepted", className: "bg-ok/14 text-ok" },
-  rejected: { label: "Rejected", className: "bg-err/14 text-err" },
+  new: { label: "Nouveau", className: "bg-card2 text-ink" },
+  reviewing: { label: "En examen", className: "bg-warn/14 text-warn" },
+  interview: { label: "Entretien", className: "bg-boul text-primary" },
+  accepted: { label: "Accepté", className: "bg-ok/14 text-ok" },
+  rejected: { label: "Rejeté", className: "bg-err/14 text-err" },
 };
 
 const AdminOverviewPage = () => {
@@ -89,21 +89,21 @@ const AdminOverviewPage = () => {
     }
   }, [])
 
-  if (loading) return <DashboardLayout title="Overview"><p>Loading...</p></DashboardLayout>
+  if (loading) return <DashboardLayout title="Vue d'ensemble"><p>Chargement...</p></DashboardLayout>
 
   const statusChartData = (stats?.applicationsByStatus || []).map((s: any) => ({
     name: statusBadge[s.status]?.label || s.status,
     value: s.count,
-      color: s.status === 'new' ? 'hsl(var(--bouarada))' : 
-        s.status === 'reviewing' ? 'hsl(var(--warning))' :
-        s.status === 'interview' ? 'hsl(var(--bouarada))' :
-        s.status === 'accepted' ? 'hsl(var(--success))' : 'hsl(var(--destructive))'
+      color: s.status === 'new' ? 'hsl(var(--primary))' : 
+        s.status === 'reviewing' ? 'var(--warning)' :
+        s.status === 'interview' ? 'hsl(var(--primary))' :
+        s.status === 'accepted' ? 'hsl(var(--success))' : 'var(--destructive)'
   }));
 
   const siteChartData = (stats?.offersBySite || []).map((s: any) => ({
     name: s.site,
     value: s.count,
-    color: s.site === 'Bouarada' ? 'hsl(var(--bouarada))' : 'hsl(var(--zaghouan))'
+    color: s.site === 'Bouarada' ? 'var(--bouarada)' : 'var(--zaghouan)'
   }));
 
   const retryFetch = async () => {
@@ -121,7 +121,7 @@ const AdminOverviewPage = () => {
   }
 
   return (
-    <DashboardLayout title="Admin Overview">
+    <DashboardLayout title="Vue d'ensemble admin">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <p className="text-xs text-muted-foreground">
           {lastUpdated
@@ -144,19 +144,19 @@ const AdminOverviewPage = () => {
 
       {/* Top KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 mb-6">
-        <StatCard label="Total Candidates" value={stats?.totalCandidates ?? 0} icon={Users} iconColor="text-bou" />
-        <StatCard label="HR Accounts" value={stats?.hrAccounts ?? 0} icon={UserCheck} iconColor="text-primary" />
-        <StatCard label="Active Offers" value={stats?.activeOffers ?? 0} icon={Briefcase} iconColor="text-warn" />
-        <StatCard label="Total Applications" value={stats?.totalApplications ?? 0} icon={ClipboardList} iconColor="text-ok" />
-        <StatCard label="Apps (Month)" value={stats?.applicationsMonth ?? 0} icon={TrendingUp} iconColor="text-bou" />
-        <StatCard label="Interviews (Week)" value={stats?.interviewsWeek ?? 0} icon={CalendarDays} iconColor="text-ok" />
+        <StatCard label="Total candidats" value={stats?.totalCandidates ?? 0} icon={Users} iconColor="text-primary" />
+        <StatCard label="Comptes RH" value={stats?.hrAccounts ?? 0} icon={UserCheck} iconColor="text-primary" />
+        <StatCard label="Offres actives" value={stats?.activeOffers ?? 0} icon={Briefcase} iconColor="text-warn" />
+        <StatCard label="Total candidatures" value={stats?.totalApplications ?? 0} icon={ClipboardList} iconColor="text-ok" />
+        <StatCard label="Candidatures (mois)" value={stats?.applicationsMonth ?? 0} icon={TrendingUp} iconColor="text-primary" />
+        <StatCard label="Entretiens (semaine)" value={stats?.interviewsWeek ?? 0} icon={CalendarDays} iconColor="text-ok" />
       </div>
 
       {/* Sites Activity */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-        <Card className="rounded-md shadow-[0_1px_3px_rgba(0,0,0,0.45)]">
+        <Card className="rounded-md shadow-card">
           <CardHeader>
-            <CardTitle className="text-base">Offers by Site</CardTitle>
+            <CardTitle className="text-base">Offres par site</CardTitle>
           </CardHeader>
           <CardContent>
             {siteChartData.length > 0 ? (
@@ -180,16 +180,16 @@ const AdminOverviewPage = () => {
                 </PieChart>
               </ResponsiveContainer>
             ) : (
-              <p className="text-sm text-muted-foreground text-center py-8">No data</p>
+              <p className="text-sm text-muted-foreground text-center py-8">Aucune donnée</p>
             )}
           </CardContent>
         </Card>
       </div>
 
       {/* Application Status Chart */}
-      <Card className="rounded-md shadow-[0_1px_3px_rgba(0,0,0,0.45)] mb-6">
+      <Card className="rounded-md shadow-card mb-6">
         <CardHeader>
-          <CardTitle className="text-base">Application Status Distribution</CardTitle>
+          <CardTitle className="text-base">Répartition des statuts</CardTitle>
         </CardHeader>
         <CardContent>
           {statusChartData.length > 0 ? (
@@ -202,7 +202,7 @@ const AdminOverviewPage = () => {
                 <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
                 <Tooltip
                   contentStyle={{ fontSize: 12, borderRadius: 8 }}
-                  formatter={(value: number) => [value, "Applications"]}
+                  formatter={(value: number) => [value, "Candidatures"]}
                 />
                 <Bar dataKey="value" radius={[4, 4, 0, 0]}>
                   {statusChartData.map((entry: any, index: number) => (
@@ -212,30 +212,30 @@ const AdminOverviewPage = () => {
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <p className="text-sm text-muted-foreground text-center py-8">No data</p>
+            <p className="text-sm text-muted-foreground text-center py-8">Aucune donnée</p>
           )}
         </CardContent>
       </Card>
 
       {/* Recent Applications */}
-      <Card className="rounded-md shadow-[0_1px_3px_rgba(0,0,0,0.45)]">
+      <Card className="rounded-md shadow-card">
         <CardHeader>
-          <CardTitle className="text-base">Recent Applications</CardTitle>
+          <CardTitle className="text-base">Candidatures recentes</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           <div className="divide-y divide-border">
             {(stats?.recentApplications || []).length === 0 && (
-              <p className="px-6 py-4 text-sm text-muted-foreground">No recent applications.</p>
+              <p className="px-6 py-4 text-sm text-muted-foreground">Aucune candidature recente.</p>
             )}
             {(stats?.recentApplications || []).map((a: any, i: number) => {
               const badge = statusBadge[a.status] ?? {
                 label: a.status,
-                className: "bg-s3 text-foreground",
+                className: "bg-card2 text-foreground",
               };
               return (
-                <div key={a.id || i} className={`flex items-center justify-between px-6 py-3 ${i % 2 === 0 ? 'bg-card' : 'bg-s2'}`}>
+                <div key={a.id || i} className={`flex items-center justify-between px-6 py-3 ${i % 2 === 0 ? 'bg-card' : 'bg-card2'}`}>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium">{a.candidateName || 'Unknown'}</p>
+                    <p className="text-sm font-medium">{a.candidateName || 'Inconnu'}</p>
                     <p className="text-xs text-muted-foreground">
                       {a.offerTitle || ''} • {a.offerSite} • {a.contractType}
                     </p>

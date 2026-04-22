@@ -14,8 +14,8 @@ interface ApplicationDetailScreenProps {
 export function ApplicationDetailScreen({ application, onBack }: ApplicationDetailScreenProps) {
   const city = application.offer?.site || 'Zaghouan'
   const cityColor = city === 'Bouarada'
-    ? 'bg-bou/10 border-bou/25 text-bou'
-    : 'bg-zag/10 border-zag/25 text-zag'
+    ? 'bg-boul border-[var(--bou-b)] text-primary'
+    : 'bg-zagl border-[var(--zag-b)] text-ok'
 
   // Parse AI analysis if available
   let aiAnalysis = null
@@ -29,11 +29,19 @@ export function ApplicationDetailScreen({ application, onBack }: ApplicationDeta
     // Ignore parsing errors
   }
 
-  const hasAITips = aiAnalysis?.tipsForCandidate && Array.isArray(aiAnalysis.tipsForCandidate) && aiAnalysis.tipsForCandidate.length > 0
+  const aiTips = Array.isArray(aiAnalysis?.tipsForCandidate)
+    ? aiAnalysis.tipsForCandidate
+    : Array.isArray(aiAnalysis?.tips_for_candidate)
+      ? aiAnalysis.tips_for_candidate
+      : Array.isArray(aiAnalysis?.mergedTips)
+        ? aiAnalysis.mergedTips
+        : []
+
+  const hasAITips = aiTips.length > 0
 
   return (
-    <div className="flex flex-col min-h-screen pb-20">
-      <header className="sticky top-0 bg-background/95 backdrop-blur-sm border-b border-border z-40 safe-area-pt">
+    <div className="flex flex-col min-h-screen pb-20 bg-page">
+      <header className="sticky top-0 bg-card/95 backdrop-blur-sm border-b border-border z-40 safe-area-pt">
         <div className="px-4 py-3">
           <button
             onClick={onBack}
@@ -49,15 +57,15 @@ export function ApplicationDetailScreen({ application, onBack }: ApplicationDeta
         <div className="mb-6">
           <Badge className={cityColor}>{city}</Badge>
           <h1 className="text-xl font-semibold text-foreground mt-3">
-            {application.offer?.title || 'Job Application'}
+            {application.offer?.title || 'Candidature'}
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Applied {new Date(application.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+            Candidature envoyee le {new Date(application.createdAt).toLocaleDateString('fr-TN', { day: 'numeric', month: 'short', year: 'numeric' })}
           </p>
         </div>
 
-        <div className="bg-muted/30 rounded-lg p-4">
-          <h2 className="font-medium text-foreground mb-4">Application Status</h2>
+        <div className="bg-card2 rounded-lg p-4 border border-border">
+          <h2 className="font-bold text-ink mb-4">Statut de candidature</h2>
           <TimelineStepper application={application} />
         </div>
 
@@ -66,22 +74,22 @@ export function ApplicationDetailScreen({ application, onBack }: ApplicationDeta
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
-                <Lightbulb className="h-4 w-4 text-primary" />
-                Tips for Improvement
+                <Lightbulb className="h-4 w-4 text-violet" />
+                Conseils d'amelioration
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {aiAnalysis.tipsForCandidate.slice(0, 2).map((tip: string, index: number) => (
+                {aiTips.slice(0, 2).map((tip: string, index: number) => (
                   <div key={index} className="flex gap-3">
-                    <div className="w-6 h-6 rounded-full bg-primary/15 border border-primary/30 text-primary flex items-center justify-center text-xs font-medium flex-shrink-0 mt-0.5">
+                    <div className="w-6 h-6 rounded-full bg-violet text-white flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">
                       {index + 1}
                     </div>
-                    <p className="text-sm text-foreground">{tip}</p>
+                    <p className="text-sm text-ink2">{tip}</p>
                   </div>
                 ))}
               </div>
-              <p className="text-xs text-muted-foreground mt-4">
+              <p className="text-xs text-ink4 mt-4">
                 Ces suggestions sont générées par l'IA pour aider à améliorer votre profil
               </p>
             </CardContent>

@@ -9,18 +9,16 @@ stateDiagram-v2
 
     state Creation {
         [*] --> ChoixTemplate
-        ChoixTemplate --> FormulairePreRempli : Choisit un template
-        ChoixTemplate --> FormulaireVide : Creer depuis zero
-        FormulairePreRempli --> Validation : Remplit contrat delai sieges
-        FormulaireVide --> Validation : Remplit tous les champs
+        ChoixTemplate --> FormulairePreRempli : Choisit un template actif
+        FormulairePreRempli --> Validation : Complete les champs requis
         note right of ChoixTemplate
             RH voit uniquement templates actifs
             Liste mise a jour en temps reel via template:updated
+            Creation RH depuis template uniquement
         end note
     }
 
-    Validation --> Brouillon : Enregistre comme brouillon status paused
-    Validation --> Ouverte : Publie immediatement status open
+    Validation --> Ouverte : POST /api/offers (status open par defaut)
 
     state Ouverte {
         [*] --> Publiee
@@ -30,12 +28,12 @@ stateDiagram-v2
         end note
     }
 
-    Brouillon --> Ouverte : RH change statut open
     Ouverte --> EnPause : RH met en pause status paused
     EnPause --> Ouverte : RH reouvre status open
 
     Ouverte --> Cloturee : RH cloture manuellement status closed
     Ouverte --> Cloturee : Deadline depassee via cron job
+    EnPause --> Cloturee : RH cloture manuellement status closed
 
     state Cloturee {
         [*] --> Fermee
@@ -46,10 +44,13 @@ stateDiagram-v2
         end note
     }
 
-    Brouillon --> Supprimee : Soft delete deletedAt
-    Ouverte --> Supprimee : Soft delete deletedAt
-    EnPause --> Supprimee : Soft delete deletedAt
-    Cloturee --> Supprimee : Soft delete deletedAt
+    Ouverte --> Supprimee : DELETE /api/offers/:id
+    EnPause --> Supprimee : DELETE /api/offers/:id
+    Cloturee --> Supprimee : DELETE /api/offers/:id
+    note right of Supprimee
+        Suppression hard delete cote repository
+        Emission offer:closed vers les candidats
+    end note
 
     Cloturee --> [*]
     Supprimee --> [*]

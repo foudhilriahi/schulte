@@ -73,7 +73,7 @@ export function CVSelector({ open, onClose, onSelectCV, onUploadNew, allowCreate
   }
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
+    return new Date(dateString).toLocaleDateString('fr-TN', {
       month: 'short',
       day: 'numeric'
     })
@@ -88,11 +88,11 @@ export function CVSelector({ open, onClose, onSelectCV, onUploadNew, allowCreate
       <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <FileText className="h-5 w-5 text-bou" />
-            Choose Your CV
+            <FileText className="h-5 w-5 text-primary" />
+            Choisir votre CV
           </DialogTitle>
           <p className="text-sm text-muted-foreground">
-            Select which CV to use for this application
+            Selectionnez le CV a utiliser pour cette candidature
           </p>
         </DialogHeader>
 
@@ -102,22 +102,22 @@ export function CVSelector({ open, onClose, onSelectCV, onUploadNew, allowCreate
             <div>
               <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
                 <FileText className="h-4 w-4" />
-                Your CVs ({cvs.length})
+                Vos CV ({cvs.length})
               </h3>
               
               <div className="space-y-2">
                 {cvs.map((cv) => (
                   <Card 
                     key={cv.id}
-                    className="cursor-pointer border-border transition-[border-color,box-shadow] hover:border-acch hover:shadow-[0_4px_16px_rgba(0,0,0,0.32)]"
+                    className="cursor-pointer border-border transition-[transform,border-color,box-shadow] duration-200 ease-[cubic-bezier(.34,1.56,.64,1)] hover:-translate-y-[3px] hover:border-[var(--border2)] hover:shadow-hover"
                     onClick={() => handleSelectCV(cv)}
                   >
                     <CardContent className="p-4">
                       <div className="flex items-center gap-3">
                         <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
                           cv.type === 'uploaded' 
-                            ? 'bg-ok/14 text-ok' 
-                            : 'bg-bou/14 text-bou'
+                            ? 'bg-okl text-ok' 
+                            : 'bg-boul text-primary'
                         }`}>
                           <FileText className="h-5 w-5" />
                         </div>
@@ -133,7 +133,7 @@ export function CVSelector({ open, onClose, onSelectCV, onUploadNew, allowCreate
                               variant={cv.type === 'uploaded' ? 'default' : 'secondary'} 
                               className="text-xs"
                             >
-                              {cv.type === 'uploaded' ? 'Uploaded' : 'Generated'}
+                              {cv.type === 'uploaded' ? 'Televerse' : 'Genere'}
                             </Badge>
                             <span>•</span>
                             <span>{formatDate(cv.createdAt)}</span>
@@ -153,12 +153,12 @@ export function CVSelector({ open, onClose, onSelectCV, onUploadNew, allowCreate
             </div>
           ) : (
             <div className="text-center py-8">
-              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-s3 text-muted-foreground">
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-card2 text-ink4">
                 <FileText className="h-8 w-8" />
               </div>
-              <h3 className="font-semibold text-foreground mb-2">No CVs Available</h3>
+              <h3 className="font-semibold text-foreground mb-2">Aucun CV disponible</h3>
               <p className="text-sm text-muted-foreground">
-                You need to create or upload a CV first.
+                Vous devez d'abord creer ou televerser un CV.
               </p>
             </div>
           )}
@@ -166,37 +166,37 @@ export function CVSelector({ open, onClose, onSelectCV, onUploadNew, allowCreate
           {/* Create New Options */}
           {allowCreateNew && (
             <div className="space-y-3 pt-4 border-t">
-              <h3 className="text-sm font-semibold text-foreground">Create New</h3>
+              <h3 className="text-sm font-semibold text-foreground">Creer nouveau</h3>
               
               <Card 
-                className="cursor-pointer border-2 border-dashed border-bou/35 transition-colors hover:border-bou/55"
+                className="cursor-pointer border-2 border-dashed border-[var(--bou-b)] transition-[transform,border-color,box-shadow] duration-200 ease-[cubic-bezier(.34,1.56,.64,1)] hover:-translate-y-[2px] hover:border-[var(--bou)] hover:shadow-card"
                 onClick={handleCreateNew}
               >
                 <CardContent className="p-4">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-bou/14 text-bou">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-boul text-primary">
                       <Plus className="h-5 w-5" />
                     </div>
                     <div className="flex-1">
-                      <h3 className="font-medium text-foreground">Create New CV</h3>
-                      <p className="text-sm text-muted-foreground">Fill out the application form</p>
+                      <h3 className="font-medium text-foreground">Creer un nouveau CV</h3>
+                      <p className="text-sm text-muted-foreground">Remplir le formulaire de candidature</p>
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
               <Card 
-                className="cursor-pointer border-2 border-dashed border-border transition-colors hover:border-acch"
+                className="cursor-pointer border-2 border-dashed border-border transition-[transform,border-color,box-shadow] duration-200 ease-[cubic-bezier(.34,1.56,.64,1)] hover:-translate-y-[2px] hover:border-[var(--violet-b)] hover:shadow-card"
                 onClick={handleUploadNew}
               >
                 <CardContent className="p-4">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-s3 text-muted-foreground">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-card2 text-ink4">
                       <Upload className="h-5 w-5" />
                     </div>
                     <div className="flex-1">
-                      <h3 className="font-medium text-foreground">Upload PDF</h3>
-                      <p className="text-sm text-muted-foreground">Use an existing PDF resume</p>
+                      <h3 className="font-medium text-foreground">Televerser un PDF</h3>
+                      <p className="text-sm text-muted-foreground">Utiliser un CV PDF existant</p>
                     </div>
                   </div>
                 </CardContent>
@@ -207,7 +207,7 @@ export function CVSelector({ open, onClose, onSelectCV, onUploadNew, allowCreate
 
         <div className="flex justify-end gap-3 pt-4 border-t">
           <Button variant="outline" onClick={onClose}>
-            Cancel
+            Annuler
           </Button>
         </div>
       </DialogContent>

@@ -6,7 +6,7 @@ sequenceDiagram
     actor Admin as Admin
     actor RH as RH
     actor Candidat as Candidat PWA
-    participant Frontend as Next.js Frontend
+    participant Frontend as Frontend Web (React Vite / Next.js)
     participant Backend as Express API
     participant DB as PostgreSQL
     participant Cookie as Cookie httpOnly
@@ -15,7 +15,7 @@ sequenceDiagram
 
     Admin->>Frontend: Saisit email + mot de passe
     Frontend->>Backend: POST /api/auth/login avec email et password
-    Backend->>Backend: Login limiter (fenetre de protection)
+    Backend->>Backend: Login limiter rateLimiter 100 req / minute / IP
     alt Trop de tentatives
         Backend-->>Frontend: 429 Trop de tentatives
     else OK
@@ -81,9 +81,10 @@ sequenceDiagram
     end
 
     Note over RH, Admin: Politique reset mot de passe RH
-    RH-->>RH: Pas de changement mot de passe en self-service
+    RH-->>RH: Pas d'ecran self-service mot de passe dans le dashboard RH
     RH->>Admin: Demande reset mot de passe
     Admin->>Backend: PATCH /api/admin/hr-accounts/:id avec nouveau password
-    Backend->>DB: Update passwordHash + revoke refreshTokens
+    Backend->>DB: Update passwordHash
     Backend-->>Admin: 200 Password reset
+    Note over RH, Backend: Endpoint /api/profile/password existe cote API pour utilisateur authentifie
 ```

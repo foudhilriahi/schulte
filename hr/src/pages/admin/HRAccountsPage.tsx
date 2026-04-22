@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import DashboardLayout from '@/components/hr/DashboardLayout'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -59,15 +59,15 @@ const HRAccountsPage = () => {
     if (!open) setResetPw('')
   }
 
-  const fetchAccounts = async () => {
+  const fetchAccounts = useCallback(async () => {
     try {
       const { data } = await api.get('/admin/hr-accounts', { params: { includeInactive: showInactive } })
       setAccounts(data)
-    } catch { toast.error('Failed to load HR accounts') }
+    } catch { toast.error('Echec du chargement des comptes RH') }
     finally { setLoading(false) }
-  }
+  }, [showInactive])
 
-  useEffect(() => { fetchAccounts() }, [showInactive])
+  useEffect(() => { fetchAccounts() }, [fetchAccounts])
 
   useEffect(() => {
     const socket = socketService.getSocket()
@@ -76,31 +76,31 @@ const HRAccountsPage = () => {
     return () => {
       socket?.off('admin:hr-account:changed', refresh)
     }
-  }, [])
+  }, [fetchAccounts])
 
   const handleCreate = async () => {
     const email = form.email.trim().toLowerCase()
     const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
     if (!emailOk) {
-      toast.error('Please enter a valid email address (example: hr@schulte.tn)')
+      toast.error('Veuillez saisir une adresse e-mail valide (exemple : hr@schulte.tn)')
       return
     }
 
     const passwordOk = /^(?=.*[0-9]).{8,}$/.test(form.password)
     if (!passwordOk) {
-      toast.error('Password must be at least 8 characters and include at least 1 number')
+      toast.error('Le mot de passe doit contenir au moins 8 caracteres et 1 chiffre')
       return
     }
 
     setCreatingAccount(true)
     try {
       await api.post('/admin/hr-accounts', { ...form, email })
-      toast.success('HR account created.')
+      toast.success('Compte RH cree.')
       handleCreateOpenChange(false)
       fetchAccounts()
     } catch (err: any) {
       const details = err?.response?.data?.details
-      toast.error(details?.[0] || err?.response?.data?.error || 'Error creating account')
+      toast.error(details?.[0] || err?.response?.data?.error || 'Erreur lors de la creation du compte')
     } finally {
       setCreatingAccount(false)
     }
@@ -125,26 +125,26 @@ const HRAccountsPage = () => {
     if (normalizedEmail && normalizedEmail !== String(selected.email || '').toLowerCase()) {
       const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)
       if (!emailOk) {
-        toast.error('Please enter a valid email address (example: hr@schulte.tn)')
+        toast.error('Veuillez saisir une adresse e-mail valide (exemple : hr@schulte.tn)')
         return
       }
       payload.email = normalizedEmail
     }
 
     if (Object.keys(payload).length === 0) {
-      toast.info('No changes to save')
+      toast.info('Aucun changement a enregistrer')
       return
     }
 
     setUpdatingAccount(true)
     try {
       await api.patch(`/admin/hr-accounts/${selected.id}`, payload)
-      toast.success('Account updated.')
+      toast.success('Compte mis a jour.')
       handleEditOpenChange(false)
       fetchAccounts()
     } catch (err: any) {
       const details = err?.response?.data?.details
-      toast.error(details?.[0] || err?.response?.data?.error || 'Error updating account')
+      toast.error(details?.[0] || err?.response?.data?.error || 'Erreur lors de la mise a jour du compte')
     } finally {
       setUpdatingAccount(false)
     }
@@ -155,25 +155,25 @@ const HRAccountsPage = () => {
 
     const password = resetPw.trim()
     if (!password) {
-      toast.error('Please enter a new password')
+      toast.error('Veuillez saisir un nouveau mot de passe')
       return
     }
 
     const passwordOk = /^(?=.*[0-9]).{8,}$/.test(password)
     if (!passwordOk) {
-      toast.error('Password must be at least 8 characters and include at least 1 number')
+      toast.error('Le mot de passe doit contenir au moins 8 caracteres et 1 chiffre')
       return
     }
 
     setResettingPassword(true)
     try {
       await api.patch(`/admin/hr-accounts/${selected.id}`, { password })
-      toast.success('Password reset.')
+      toast.success('Mot de passe reinitialise.')
       handleResetOpenChange(false)
       fetchAccounts()
     } catch (err: any) {
       const details = err?.response?.data?.details
-      toast.error(details?.[0] || err?.response?.data?.error || 'Error resetting password')
+      toast.error(details?.[0] || err?.response?.data?.error || 'Erreur lors de la reinitialisation du mot de passe')
     } finally {
       setResettingPassword(false)
     }
@@ -182,7 +182,7 @@ const HRAccountsPage = () => {
   const openDeactivateDialog = (user: any) => {
     const isInactive = user?.isActive === false || !!user?.deletedAt || String(user?.email || '').startsWith('deleted_')
     if (isInactive) {
-      toast.error('This account is already deactivated')
+      toast.error('Ce compte est deja desactive')
       return
     }
 
@@ -195,13 +195,13 @@ const HRAccountsPage = () => {
 
     try {
       await api.delete(`/admin/hr-accounts/${pendingDeactivate.id}`)
-      toast.success('Account deactivated.')
+      toast.success('Compte desactive.')
       setDeactivateOpen(false)
       setPendingDeactivate(null)
       fetchAccounts()
     } catch (err: any) {
       const details = err?.response?.data?.details
-      toast.error(details?.[0] || err?.response?.data?.error || 'Error deactivating account')
+      toast.error(details?.[0] || err?.response?.data?.error || 'Erreur lors de la desactivation du compte')
     }
   }
 
@@ -211,13 +211,13 @@ const HRAccountsPage = () => {
   )
 
   return (
-    <DashboardLayout title="HR Accounts">
+    <DashboardLayout title="Comptes RH">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
           <input
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder="Search by name or email..."
+            placeholder="Rechercher par nom ou email..."
             className="h-9 w-64 px-3 rounded-lg border border-input bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
           />
           <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
@@ -227,15 +227,15 @@ const HRAccountsPage = () => {
               onChange={(e) => setShowInactive(e.target.checked)}
               className="rounded"
             />
-            Show inactive
+            Afficher inactifs
           </label>
         </div>
-        <Button onClick={() => { setForm({ name: '', email: '', password: '', site: 'bouarada' }); setCreateOpen(true) }} className="gap-2 bg-primary hover:bg-acch">
-          <Plus className="h-4 w-4" /> Create HR Account
+        <Button onClick={() => { setForm({ name: '', email: '', password: '', site: 'bouarada' }); setCreateOpen(true) }} className="gap-2 bg-primary hover:bg-violeth">
+          <Plus className="h-4 w-4" /> Creer un compte RH
         </Button>
       </div>
 
-      <Card className="rounded-md shadow-[0_1px_3px_rgba(0,0,0,0.45)]">
+      <Card className="rounded-md shadow-card">
         <CardContent className="p-0">
           <table className="w-full text-sm">
             <thead>
@@ -243,25 +243,25 @@ const HRAccountsPage = () => {
                 <th className="text-left px-4 py-3 font-medium text-muted-foreground">Name</th>
                 <th className="text-left px-4 py-3 font-medium text-muted-foreground">Email</th>
                 <th className="text-left px-4 py-3 font-medium text-muted-foreground">Site</th>
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Status</th>
+                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Statut</th>
                 <th className="text-left px-4 py-3 font-medium text-muted-foreground">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {loading && <tr><td colSpan={5} className="px-4 py-6 text-center text-muted-foreground">Loading...</td></tr>}
-              {!loading && filtered.length === 0 && <tr><td colSpan={5} className="px-4 py-6 text-center text-muted-foreground">No HR accounts found.</td></tr>}
+              {loading && <tr><td colSpan={5} className="px-4 py-6 text-center text-muted-foreground">Chargement...</td></tr>}
+              {!loading && filtered.length === 0 && <tr><td colSpan={5} className="px-4 py-6 text-center text-muted-foreground">Aucun compte RH trouve.</td></tr>}
               {filtered.map((a, i) => (
-                <tr key={a.id} className={`border-b hover:bg-s2 ${i % 2 === 0 ? '' : 'bg-s2/50'}`}>
+                <tr key={a.id} className={`border-b hover:bg-card2 ${i % 2 === 0 ? '' : 'bg-card2/50'}`}>
                   <td className="px-4 py-3 font-medium">{a.name}</td>
                   <td className="px-4 py-3 text-muted-foreground">{a.email}</td>
                   <td className="px-4 py-3">
-                    <Badge variant="outline" className={`text-xs ${a.site === 'bouarada' ? 'bg-bou/10 text-bou border-bou/25' : 'bg-zag/10 text-zag border-zag/25'}`}>
+                    <Badge variant="outline" className={`text-xs ${a.site === 'bouarada' ? 'bg-boul text-primary border-[var(--bou-b)]' : 'bg-zagl text-ok border-[var(--zag-b)]'}`}>
                       {a.site || '—'}
                     </Badge>
                   </td>
                   <td className="px-4 py-3">
                     <Badge className={`text-xs ${(a.isActive !== false && !a.deletedAt && !String(a.email || '').startsWith('deleted_')) ? 'bg-ok/14 text-ok' : 'bg-err/14 text-err'}`}>
-                      {(a.isActive !== false && !a.deletedAt && !String(a.email || '').startsWith('deleted_')) ? 'Active' : 'Inactive'}
+                      {(a.isActive !== false && !a.deletedAt && !String(a.email || '').startsWith('deleted_')) ? 'Actif' : 'Inactif'}
                     </Badge>
                   </td>
                   <td className="px-4 py-3">
@@ -298,11 +298,11 @@ const HRAccountsPage = () => {
       {/* Create Modal */}
       <Dialog open={createOpen} onOpenChange={handleCreateOpenChange}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Create HR Account</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>Creer un compte RH</DialogTitle></DialogHeader>
           <div className="space-y-3">
-            <div><Label>Full Name</Label><Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></div>
+            <div><Label>Nom complet</Label><Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></div>
             <div><Label>Email</Label><Input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} /></div>
-            <div><Label>Password</Label><Input type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} /><p className="text-[10px] text-muted-foreground mt-1">Min 8 chars, 1 digit</p></div>
+            <div><Label>Mot de passe</Label><Input type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} /><p className="text-[10px] text-muted-foreground mt-1">8 caracteres min, 1 chiffre</p></div>
             <div>
               <Label>Site</Label>
               <Select value={form.site} onValueChange={v => setForm({ ...form, site: v })}>
@@ -314,17 +314,17 @@ const HRAccountsPage = () => {
               </Select>
             </div>
           </div>
-          <DialogFooter><Button onClick={handleCreate} disabled={creatingAccount} className="bg-primary">{creatingAccount ? 'Creating...' : 'Create'}</Button></DialogFooter>
+          <DialogFooter><Button onClick={handleCreate} disabled={creatingAccount} className="bg-primary">{creatingAccount ? 'Creation...' : 'Creer'}</Button></DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Edit Modal */}
       <Dialog open={editOpen} onOpenChange={handleEditOpenChange}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Edit HR Account</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>Modifier le compte RH</DialogTitle></DialogHeader>
           <div className="space-y-3">
             <div><Label>Email</Label><Input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} /></div>
-            <div><Label>Full Name</Label><Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></div>
+            <div><Label>Nom complet</Label><Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></div>
             <div>
               <Label>Site</Label>
               <Select value={form.site} onValueChange={v => setForm({ ...form, site: v })}>
@@ -336,16 +336,16 @@ const HRAccountsPage = () => {
               </Select>
             </div>
           </div>
-          <DialogFooter><Button onClick={handleEdit} disabled={updatingAccount} className="bg-primary">{updatingAccount ? 'Saving...' : 'Save'}</Button></DialogFooter>
+          <DialogFooter><Button onClick={handleEdit} disabled={updatingAccount} className="bg-primary">{updatingAccount ? 'Enregistrement...' : 'Enregistrer'}</Button></DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Reset Password Modal */}
       <Dialog open={resetOpen} onOpenChange={handleResetOpenChange}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Reset Password — {selected?.name}</DialogTitle></DialogHeader>
-          <div><Label>New Password</Label><Input type="password" value={resetPw} onChange={e => setResetPw(e.target.value)} /></div>
-          <DialogFooter><Button onClick={handleReset} disabled={resettingPassword} className="bg-primary">{resettingPassword ? 'Resetting...' : 'Reset'}</Button></DialogFooter>
+          <DialogHeader><DialogTitle>Reinitialiser le mot de passe — {selected?.name}</DialogTitle></DialogHeader>
+          <div><Label>Nouveau mot de passe</Label><Input type="password" value={resetPw} onChange={e => setResetPw(e.target.value)} /></div>
+          <DialogFooter><Button onClick={handleReset} disabled={resettingPassword} className="bg-primary">{resettingPassword ? 'Reinitialisation...' : 'Reinitialiser'}</Button></DialogFooter>
         </DialogContent>
       </Dialog>
 
@@ -369,7 +369,7 @@ const HRAccountsPage = () => {
             <AlertDialogCancel onClick={() => setPendingDeactivate(null)}>Annuler</AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmDeactivate}
-              className="bg-red-600 hover:bg-red-700"
+              className="bg-err hover:bg-err/90"
             >
               Désactiver
             </AlertDialogAction>

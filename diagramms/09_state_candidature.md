@@ -38,13 +38,15 @@ stateDiagram-v2
         end note
     }
 
-    EnExamen --> EntretienPlanifie : RH deplace ou selectionne statut puis planifie
+    EnExamen --> EntretienPlanifie : RH met statut interview puis planifie
+    EnExamen --> Acceptee : RH met statut accepted
     EnExamen --> Refusee : RH rejette
 
     state EntretienPlanifie {
         [*] --> DateFixee
         note right of DateFixee
-            POST /api/interviews cree
+            POST /api/interviews cree ou met a jour l'entretien
+            API met application.status a interview
             Socket.io interview:scheduled vers candidat
             Socket.io interview:scheduled vers room site RH
             Email avec fichier ics calendrier
@@ -52,25 +54,35 @@ stateDiagram-v2
         end note
     }
 
-    EntretienPlanifie --> Absente : RH marque No Show
-    Absente --> EntretienPlanifie : Reprogrammation
+    EntretienPlanifie --> ResultatEntretien : RH enregistre outcome
+    state ResultatEntretien {
+        [*] --> Observe
+        Observe --> Pass : outcome pass
+        Observe --> Fail : outcome fail
+        Observe --> NoShow : outcome no_show
+        note right of Observe
+            Outcome enregistre sur la table interviews
+            Le statut candidature ne change pas automatiquement
+        end note
+    }
+    ResultatEntretien --> EntretienPlanifie : Reprogrammation possible
 
-    EntretienPlanifie --> Acceptee : outcome pass
-    EntretienPlanifie --> Refusee : outcome fail
+    EntretienPlanifie --> Acceptee : RH met statut accepted
+    EntretienPlanifie --> Refusee : RH met statut rejected
 
     state Acceptee {
-        [*] --> Confetti
-        Confetti --> BanniereVerte
-        note right of BanniereVerte
-            Felicitations votre candidature a ete retenue
+        [*] --> Terminee
+        note right of Terminee
+            Notification en base + event status:changed
+            Toast candidat "candidature acceptee"
         end note
     }
 
     state Refusee {
-        [*] --> BanniereGrise
-        note right of BanniereGrise
-            Message bienveillant
-            Merci de votre interet nous conservons votre profil
+        [*] --> Terminee
+        note right of Terminee
+            Notification en base + event status:changed
+            Toast candidat "candidature non retenue"
         end note
     }
 

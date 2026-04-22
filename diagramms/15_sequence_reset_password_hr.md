@@ -1,5 +1,5 @@
 # Diagramme de Sequence — Reset Mot de Passe RH (Admin-Managed)
-# Le RH ne change plus son mot de passe depuis ses parametres.
+# Le dashboard RH ne propose pas d'ecran self-service pour le mot de passe.
 
 ```mermaid
 sequenceDiagram
@@ -32,11 +32,10 @@ sequenceDiagram
         AdminUI-->>Admin: Toast erreur
     else OK
         API->>DB: update passwordHash
-        API->>DB: deleteAllRefreshTokens(userId)
         DB-->>API: OK
         API-->>AdminUI: 200 Password reset
         AdminUI-->>Admin: Toast succes
     end
 
-    Note over RH, API: Les sessions existantes RH sont invalidees, reconnexion requise
+    Note over RH, API: Les sessions existantes ne sont pas explicitement revoquees dans ce flow
 ```

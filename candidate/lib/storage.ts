@@ -1,6 +1,6 @@
 /**
- * Production-Ready Storage Service
- * Handles localStorage with error handling, validation, and fallbacks
+ * Service de stockage prêt pour la production
+ * Gère localStorage avec gestion d'erreurs, validation et repli
  */
 
 const STORAGE_KEYS = {
@@ -12,7 +12,7 @@ const STORAGE_KEYS = {
 
 class StorageService {
   /**
-   * Safely get item from localStorage
+   * Récupère une valeur localStorage de manière sûre
    */
   getItem<T>(key: string, defaultValue: T | null = null): T | null {
     if (typeof window === 'undefined') return defaultValue;
@@ -21,21 +21,21 @@ class StorageService {
       const item = localStorage.getItem(key);
       if (!item) return defaultValue;
       
-      // Try to parse as JSON
+      // Tente un parsing JSON
       try {
         return JSON.parse(item) as T;
       } catch {
-        // Return as string if not JSON
+        // Retourne en chaîne si ce n'est pas du JSON
         return item as unknown as T;
       }
     } catch (error) {
-      console.error(`Error reading from localStorage (${key}):`, error);
+      console.error(`Erreur de lecture localStorage (${key}) :`, error);
       return defaultValue;
     }
   }
 
   /**
-   * Safely set item in localStorage
+   * Enregistre une valeur localStorage de manière sûre
    */
   setItem(key: string, value: any): boolean {
     if (typeof window === 'undefined') return false;
@@ -45,14 +45,14 @@ class StorageService {
       localStorage.setItem(key, stringValue);
       return true;
     } catch (error) {
-      console.error(`Error writing to localStorage (${key}):`, error);
+      console.error(`Erreur d'écriture localStorage (${key}) :`, error);
       
-      // Check if quota exceeded
+      // Vérifie si le quota est dépassé
       if (error instanceof DOMException && error.name === 'QuotaExceededError') {
-        console.warn('localStorage quota exceeded. Clearing old data...');
+        console.warn('Quota localStorage dépassé. Nettoyage des anciennes données...');
         this.clearOldData();
         
-        // Try again
+        // Réessaie après nettoyage
         try {
           const stringValue = typeof value === 'string' ? value : JSON.stringify(value);
           localStorage.setItem(key, stringValue);
@@ -67,7 +67,7 @@ class StorageService {
   }
 
   /**
-   * Remove item from localStorage
+   * Supprime une valeur localStorage
    */
   removeItem(key: string): void {
     if (typeof window === 'undefined') return;
@@ -75,12 +75,12 @@ class StorageService {
     try {
       localStorage.removeItem(key);
     } catch (error) {
-      console.error(`Error removing from localStorage (${key}):`, error);
+      console.error(`Erreur de suppression localStorage (${key}) :`, error);
     }
   }
 
   /**
-   * Clear all app data
+   * Efface toutes les données de l'application
    */
   clear(): void {
     if (typeof window === 'undefined') return;
@@ -88,22 +88,22 @@ class StorageService {
     try {
       localStorage.clear();
     } catch (error) {
-      console.error('Error clearing localStorage:', error);
+      console.error('Erreur lors du nettoyage de localStorage :', error);
     }
   }
 
   /**
-   * Clear old/unused data to free up space
+   * Supprime les anciennes données inutilisées pour libérer de l'espace
    */
   private clearOldData(): void {
-    // Remove legacy keys
+    // Supprime les anciennes clés
     this.removeItem(STORAGE_KEYS.LEGACY_CV_DRAFT);
     
-    // Could add more cleanup logic here
+    // Peut accueillir d'autres règles de nettoyage
   }
 
   /**
-   * Get storage size in bytes
+   * Retourne la taille du stockage en octets
    */
   getStorageSize(): number {
     if (typeof window === 'undefined') return 0;
@@ -116,13 +116,13 @@ class StorageService {
         }
       }
     } catch (error) {
-      console.error('Error calculating storage size:', error);
+      console.error('Erreur lors du calcul de la taille du stockage :', error);
     }
     return total;
   }
 
   /**
-   * Check if storage is available
+   * Vérifie si le stockage est disponible
    */
   isAvailable(): boolean {
     if (typeof window === 'undefined') return false;

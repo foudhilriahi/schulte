@@ -33,7 +33,7 @@ const CandidatesPage = () => {
       setApplications(res.data.map((a: any) => ({
         ...a,
         id: a.id,
-        name: a.candidate?.name || 'Unknown',
+        name: a.candidate?.name || 'Inconnu',
         phone: a.candidate?.phone || '',
         email: a.candidate?.email || '',
         cvUrl: a.cvUrl || '',
@@ -55,7 +55,7 @@ const CandidatesPage = () => {
       setError(null)
     }).catch(() => {
       setError('Impossible de charger les candidats.')
-      toast.error('Failed to load candidates')
+      toast.error('Echec du chargement des candidats')
     }).finally(() => setLoading(false))
   }, [])
 
@@ -79,7 +79,7 @@ const CandidatesPage = () => {
         </div>
       )}
 
-      <Card className="rounded-md shadow-[0_1px_3px_rgba(0,0,0,0.45)]">
+      <Card className="rounded-md shadow-card">
         <CardHeader>
           <div className="flex items-center justify-between gap-3">
             <CardTitle className="text-base">Tous les candidats</CardTitle>
@@ -92,7 +92,7 @@ const CandidatesPage = () => {
           <div className="overflow-x-auto">
             <div className="min-w-[1080px]">
               <div
-                className="grid gap-3 border-b border-border px-4 py-3 text-xs font-medium text-muted-foreground"
+                className="grid gap-3 border-b border-border px-4 py-3 text-xs font-medium text-ink3"
                 style={{ gridTemplateColumns: tableColumns }}
               >
                 <span>Nom</span>
@@ -123,8 +123,8 @@ const CandidatesPage = () => {
                           key={c.id}
                           type="button"
                           onClick={() => setSelected(c)}
-                          className={`absolute left-0 w-full border-b border-border px-4 py-3 text-left transition-colors hover:bg-muted/50 ${
-                            virtualRow.index % 2 === 0 ? 'bg-card' : 'bg-muted/20'
+                          className={`absolute left-0 w-full border-b border-border px-4 py-3 text-left transition-colors hover:bg-card2 ${
+                            virtualRow.index % 2 === 0 ? 'bg-card' : 'bg-page'
                           }`}
                           style={{
                             transform: `translateY(${virtualRow.start}px)`,
@@ -136,29 +136,29 @@ const CandidatesPage = () => {
                             style={{ gridTemplateColumns: tableColumns }}
                           >
                             <div className="min-w-0">
-                              <p className="truncate font-medium">{c.name}</p>
+                              <p className="truncate font-medium text-ink">{c.name}</p>
                             </div>
-                            <p className="truncate text-muted-foreground">{c.jobTitle}</p>
+                            <p className="truncate text-ink3">{c.jobTitle}</p>
                             <div>
-                              <Badge variant="outline" className="text-xs capitalize">{c.city}</Badge>
+                              <Badge variant="outline" className={`text-xs capitalize ${c.city === 'Bouarada' ? 'bg-boul border-[var(--bou-b)] text-primary' : 'bg-zagl border-[var(--zag-b)] text-ok'}`}>{c.city}</Badge>
                             </div>
                             <div>
-                              <Badge variant="outline" className="text-xs">{c.contractType}</Badge>
+                              <Badge variant="outline" className="text-xs bg-card2 text-ink3 border-border">{c.contractType}</Badge>
                             </div>
                             <div>
                               <span className={`inline-flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold ${
-                                c.aiScore >= 80 ? 'bg-ok/14 text-ok' :
-                                c.aiScore >= 60 ? 'bg-warn/14 text-warn' :
-                                'bg-err/14 text-err'
+                                c.aiScore >= 75 ? 'bg-okl text-ok' :
+                                c.aiScore >= 40 ? 'bg-warnl text-warn' :
+                                'bg-errl text-err'
                               }`}>{c.aiScore}</span>
                             </div>
                             <div className="flex gap-0.5">
                               {[1,2,3,4,5].map(s => (
-                                <Star key={s} className={`h-3.5 w-3.5 ${s <= c.starRating ? 'fill-amber-400 text-amber-400' : 'text-border'}`} />
+                                <Star key={s} className={`h-3.5 w-3.5 ${s <= c.starRating ? 'fill-violet text-violet' : 'text-ink4'}`} />
                               ))}
                             </div>
                             <div>
-                              <Badge variant="secondary" className="text-xs">{statusLabels[c.status] || c.status}</Badge>
+                              <Badge variant="secondary" className={`text-xs ${c.status === 'accepted' ? 'bg-okl text-ok border-[var(--ok-b)]' : c.status === 'interview' ? 'bg-boul text-primary border-[var(--bou-b)]' : c.status === 'reviewing' ? 'bg-warnl text-warn border-[var(--warn-b)]' : c.status === 'rejected' ? 'bg-errl text-err border-[var(--err-b)]' : 'bg-card2 text-ink3 border-border'}`}>{statusLabels[c.status] || c.status}</Badge>
                             </div>
                           </div>
                         </button>

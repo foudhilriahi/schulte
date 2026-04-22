@@ -1,0 +1,6 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 1, "column": 0}, "map": {"version":3,"sources":["turbopack:///[project]/app/plusjakartasans_e0da854b.module.css"],"sourcesContent":["@font-face {\n    font-family: 'plusJakartaSans';\n    src: url('@vercel/turbopack-next/internal/font/local/font?{%22path%22:%22./fonts/NotoSans-Regular.ttf%22,%22preload%22:true,%22has_size_adjust%22:true}') format('truetype');\n    font-display: swap;\n    font-weight: 400;font-style: normal;\n}\n@font-face {\n    font-family: 'plusJakartaSans';\n    src: url('@vercel/turbopack-next/internal/font/local/font?{%22path%22:%22./fonts/NotoSans-Bold.ttf%22,%22preload%22:true,%22has_size_adjust%22:true}') format('truetype');\n    font-display: swap;\n    font-weight: 700;font-style: normal;\n}\n\n@font-face {\n    font-family: 'plusJakartaSans Fallback';\n    src: local(\"Arial\");\n    ascent-override: 100.41%;\ndescent-override: 27.52%;\nline-gap-override: 0.00%;\nsize-adjust: 106.47%;\n\n}\n\n.className {\n    font-family: 'plusJakartaSans', 'plusJakartaSans Fallback';\n    \n}\n.variable {\n    --font-plus-jakarta-sans: 'plusJakartaSans', 'plusJakartaSans Fallback';\n}\n\n"],"names":[],"mappings":"AAAA;;;;;;;;AAMA;;;;;;;;AAOA;;;;;;;;;AAUA;;;;AAIA"}}]
+}

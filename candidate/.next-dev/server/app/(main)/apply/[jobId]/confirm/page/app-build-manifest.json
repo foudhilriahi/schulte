@@ -1,0 +1,28 @@
+{
+  "pages": {
+    "/(main)/apply/[jobId]/confirm/page": [
+      "static/chunks/app_603d800a._.css",
+      "static/chunks/node_modules_b6f5c7f7._.js",
+      "static/chunks/_0827c449._.js",
+      "static/chunks/app_layout_tsx_0a548d63._.js",
+      "static/chunks/node_modules_next_dist_client_components_builtin_global-error_18bfde4f.js",
+      "static/chunks/components_SocketListener_tsx_c4d595a8._.js",
+      "static/chunks/node_modules_0724d482._.js",
+      "static/chunks/_21a07ae3._.js",
+      "static/chunks/app_(main)_layout_tsx_18bfde4f._.js",
+      "static/chunks/lib_cv-generator_ts_a931c1da._.js",
+      "static/chunks/_fd8aa862._.js",
+      "static/chunks/node_modules_4c0a74f7._.js",
+      "static/chunks/app_(main)_apply_[jobId]_confirm_page_tsx_f78e1d11._.js",
+      "static/chunks/[turbopack]_browser_dev_hmr-client_hmr-client_ts_57d40746._.js",
+      "static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js",
+      "static/chunks/node_modules_next_dist_compiled_next-devtools_index_a9cb0712.js",
+      "static/chunks/node_modules_next_dist_compiled_5150ccfd._.js",
+      "static/chunks/node_modules_next_dist_client_cf1d9188._.js",
+      "static/chunks/node_modules_next_dist_b0daae9a._.js",
+      "static/chunks/node_modules_@swc_helpers_cjs_b3dc30d6._.js",
+      "static/chunks/_a0ff3932._.js",
+      "static/chunks/turbopack-_cdba956c._.js"
+    ]
+  }
+}

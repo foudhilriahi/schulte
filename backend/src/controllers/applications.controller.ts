@@ -26,7 +26,7 @@ export class ApplicationsController {
       res.json(apps);
     } catch (err: any) {
       logger.error("Get my applications error:", err);
-      res.status(500).json({ error: "Failed to fetch applications" });
+      res.status(500).json({ error: "Echec de la recuperation des candidatures" });
     }
   }
 
@@ -35,14 +35,14 @@ export class ApplicationsController {
     try {
       const site = req.user!.site;
       if (!site) {
-        res.status(400).json({ error: "HR user must have a site assigned" });
+        res.status(400).json({ error: "L'utilisateur RH doit etre associe a un site" });
         return;
       }
       const apps = await ApplicationRepository.findAllBySite(site);
       res.json(apps);
     } catch (err: any) {
       logger.error("Get applications by site error:", err);
-      res.status(500).json({ error: "Failed to fetch applications" });
+      res.status(500).json({ error: "Echec de la recuperation des candidatures" });
     }
   }
 
@@ -51,13 +51,13 @@ export class ApplicationsController {
     try {
       const app = await ApplicationRepository.findById(req.params.id as string);
       if (!app) {
-        res.status(404).json({ error: "Application not found" });
+        res.status(404).json({ error: "Candidature introuvable" });
         return;
       }
       res.json(app);
     } catch (err: any) {
       logger.error("Get application error:", err);
-      res.status(500).json({ error: "Failed to fetch application" });
+      res.status(500).json({ error: "Echec de la recuperation de la candidature" });
     }
   }
 
@@ -69,19 +69,19 @@ export class ApplicationsController {
 
       const offer = await OfferRepository.findById(offerId);
       if (!offer || offer.status !== "open") {
-        res.status(400).json({ error: "Offer is closed or not found" });
+        res.status(400).json({ error: "L'offre est fermee ou introuvable" });
         return;
       }
 
       const existing = await ApplicationRepository.checkDuplicate(candidateId, offerId);
       if (existing) {
-        res.status(409).json({ error: "You have already applied to this offer" });
+        res.status(409).json({ error: "Vous avez deja postule a cette offre" });
         return;
       }
 
       const selectedCV = await CandidateCVRepository.findByIdForCandidate(candidateId, cvId);
       if (!selectedCV) {
-        res.status(404).json({ error: "Selected CV not found" });
+        res.status(404).json({ error: "CV selectionne introuvable" });
         return;
       }
 
@@ -91,7 +91,7 @@ export class ApplicationsController {
       const cvText = selectedCV.cvText || "";
 
       if (!cvText || cvText.trim().length < 10) {
-        res.status(400).json({ error: "Selected CV has no usable text snapshot" });
+        res.status(400).json({ error: "Le CV selectionne ne contient pas de texte exploitable" });
         return;
       }
 
@@ -159,7 +159,7 @@ export class ApplicationsController {
       res.status(201).json(application);
     } catch (err: any) {
       logger.error("Submit application from saved CV error:", err);
-      res.status(500).json({ error: "Failed to submit application from selected CV" });
+      res.status(500).json({ error: "Echec de l'envoi de la candidature depuis le CV selectionne" });
     }
   }
 
@@ -172,7 +172,7 @@ export class ApplicationsController {
 
       if (!normalizedStatus) {
         res.status(400).json({
-          error: "Invalid application status",
+          error: "Statut de candidature invalide",
           allowed: ["new", "reviewing", "interview", "accepted", "rejected"],
         });
         return;
@@ -203,7 +203,7 @@ export class ApplicationsController {
       res.json(app);
     } catch (err: any) {
       logger.error("Update application status error:", err);
-      res.status(500).json({ error: "Failed to update application status" });
+      res.status(500).json({ error: "Echec de la mise a jour du statut de candidature" });
     }
   }
 
@@ -235,7 +235,7 @@ export class ApplicationsController {
       logger.error("Bulk update status error:", err);
       res
         .status(500)
-        .json({ error: "Failed to bulk update application statuses" });
+        .json({ error: "Echec de la mise a jour en lot des statuts de candidature" });
     }
   }
 
@@ -250,7 +250,7 @@ export class ApplicationsController {
       res.json(app);
     } catch (err: any) {
       logger.error("Update notes error:", err);
-      res.status(500).json({ error: "Failed to update notes" });
+      res.status(500).json({ error: "Echec de la mise a jour des notes" });
     }
   }
 
@@ -265,7 +265,7 @@ export class ApplicationsController {
       res.json(app);
     } catch (err: any) {
       logger.error("Update rating error:", err);
-      res.status(500).json({ error: "Failed to update rating" });
+      res.status(500).json({ error: "Echec de la mise a jour de la note" });
     }
   }
 
@@ -280,7 +280,7 @@ export class ApplicationsController {
       res.json(app);
     } catch (err: any) {
       logger.error("Update tags error:", err);
-      res.status(500).json({ error: "Failed to update tags" });
+      res.status(500).json({ error: "Echec de la mise a jour des etiquettes" });
     }
   }
 
@@ -290,12 +290,12 @@ export class ApplicationsController {
       const { aiScore, aiAnalysis } = req.body;
 
       if (typeof aiScore !== "number" || Number.isNaN(aiScore)) {
-        res.status(400).json({ error: "aiScore must be a valid number" });
+        res.status(400).json({ error: "aiScore doit etre un nombre valide" });
         return;
       }
 
       if (aiAnalysis === undefined || aiAnalysis === null) {
-        res.status(400).json({ error: "aiAnalysis is required" });
+        res.status(400).json({ error: "aiAnalysis est requis" });
         return;
       }
 
@@ -310,7 +310,7 @@ export class ApplicationsController {
       res.json(updated);
     } catch (err: any) {
       logger.error("Save merged analysis error:", err);
-      res.status(500).json({ error: "Failed to save analysis" });
+      res.status(500).json({ error: "Echec de l'enregistrement de l'analyse" });
     }
   }
 
@@ -320,7 +320,7 @@ export class ApplicationsController {
     try {
       const app = await ApplicationRepository.findById(req.params.id as string);
       if (!app) {
-        res.status(404).json({ error: "Application not found" });
+        res.status(404).json({ error: "Candidature introuvable" });
         return;
       }
 
@@ -333,7 +333,7 @@ export class ApplicationsController {
       if (!cvText || cvText.length < 30) {
         logger.error(`❌ Insufficient CV text: ${cvText?.length || 0} characters`);
         res.status(400).json({
-          error: "No immutable CV snapshot available for analysis.",
+          error: "Aucun instantane immuable de CV n'est disponible pour l'analyse.",
           debug: {
             cvTextLength: cvText?.length || 0,
             hasSnapshot: !!app.cvTextSnapshot,
@@ -402,7 +402,7 @@ export class ApplicationsController {
       const status = err.status || 503;
       res
         .status(status)
-        .json({ error: err.message || "AI analysis unavailable" });
+        .json({ error: err.message || "Analyse IA indisponible" });
     }
   }
 }

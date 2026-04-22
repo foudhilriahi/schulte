@@ -21,19 +21,15 @@ sequenceDiagram
     RH->>Modal: Clique Confirmer
 
     Modal->>API: POST /api/interviews avec applicationId scheduledAt location notes
-    API->>API: Validation date superieure a maintenant
+    API->>API: Validation format scheduledAt (date parseable)
 
-    alt Date dans le passe
-        API-->>Modal: 400 Date invalide
+    alt Format invalide
+        API-->>Modal: 400 Format de date invalide
         Modal-->>RH: Erreur sous le champ date
-    else Date valide
-        API->>DB: applicationRepo.updateStatus vers interview
-        API->>Emitter: emit application.statusChanged
-        Emitter->>Socket: emit status:changed vers candidate
-        Socket-->>PWA: Stepper mis a jour Entretien planifie
-
-        API->>DB: interviewRepo.create
-        DB-->>API: Entretien cree
+    else Format valide
+        API->>DB: interview upsert (create ou update) par applicationId
+        API->>DB: update application.status = interview
+        Note over API, Emitter: Ce endpoint n'emet pas application.statusChanged
         API->>Emitter: emit interview.scheduled
 
         par Notifications entretien
@@ -66,24 +62,20 @@ sequenceDiagram
 
     alt Resultat Pass
         Drawer->>API: PATCH /api/interviews/:id/outcome avec pass
-        API->>DB: updateOutcome pass
-        API->>DB: applicationRepo.updateStatus accepted
-        API->>Emitter: emit application.statusChanged accepted
-        Emitter->>Socket: emit status:changed vers candidate
-        Socket-->>PWA: Animation confetti et banniere Félicitations
+        API->>DB: interviewRepo.markOutcome(pass)
+        API-->>Drawer: 200 Outcome enregistre
 
     else Resultat Fail
         Drawer->>API: PATCH /api/interviews/:id/outcome avec fail
-        API->>DB: updateOutcome fail
-        API->>DB: applicationRepo.updateStatus rejected
-        API->>Emitter: emit application.statusChanged rejected
-        Emitter->>Socket: emit status:changed vers candidate
-        Socket-->>PWA: Banniere bienveillante Merci de votre interet
+        API->>DB: interviewRepo.markOutcome(fail)
+        API-->>Drawer: 200 Outcome enregistre
 
     else No Show
         Drawer->>API: PATCH /api/interviews/:id/outcome avec no_show
-        API->>DB: updateOutcome no_show
-        Note over API: Statut candidature inchange reste interview
-        API-->>Drawer: Tag Absent et suggestion reprogrammation
+        API->>DB: interviewRepo.markOutcome(no_show)
+        API-->>Drawer: 200 Outcome enregistre
     end
+
+    Note over RH, API: Le passage en accepted/rejected se fait via PATCH /api/applications/:id/status
+    Note over RH, PWA: Le candidat recoit status:changed seulement quand ce statut candidature est modifie
 ```

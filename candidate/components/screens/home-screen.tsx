@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Image from 'next/image'
-import { useRouter } from 'next/navigation'
+import { useRouterWithLoader } from '@/hooks/use-router-with-loader'
 import { JobCard } from '@/components/job-card'
 import { JobCardSkeleton } from '@/components/job-card-skeleton'
 import { FilterChips, type FilterType } from '@/components/filter-chips'
@@ -11,7 +11,7 @@ import { useMyApplications } from '@/hooks/useApplications'
 import { useAuthStore } from '@/store/auth'
 
 export function HomeScreen() {
-  const router = useRouter()
+  const router = useRouterWithLoader()
   const { isAuthenticated } = useAuthStore()
   const { data: jobs = [], isLoading: loading } = useOffers()
   
@@ -45,11 +45,12 @@ export function HomeScreen() {
               alt="Schulte & Co"
               width={140}
               height={40}
+              priority
               className="h-8 w-auto"
             />
-            <span className="text-xs text-muted-foreground font-medium">Tunisia Jobs</span>
+            <span className="text-xs text-muted-foreground font-medium">Offres Tunisie</span>
           </div>
-          <h1 className="text-lg font-semibold text-foreground mb-3">Find Your Next Role</h1>
+          <h1 className="text-lg font-semibold text-foreground mb-3">Trouvez votre prochain poste</h1>
           <FilterChips activeFilter={activeFilter} onFilterChange={setActiveFilter} />
         </div>
       </header>
@@ -75,7 +76,7 @@ export function HomeScreen() {
             ))
           ) : (
             <div className="text-center py-12">
-              <p className="text-muted-foreground">No jobs found for this filter.</p>
+              <p className="text-muted-foreground">Aucune offre ne correspond a ce filtre.</p>
             </div>
           )}
         </div>

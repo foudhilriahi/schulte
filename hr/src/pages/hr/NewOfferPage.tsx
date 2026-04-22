@@ -170,7 +170,7 @@ const NewOfferPage = () => {
               </h1>
               {selectedTemplate && (
                 <div className="flex items-center gap-2 mt-1">
-                  <Sparkles className="h-4 w-4 text-warning" />
+                  <Sparkles className="h-4 w-4 text-warn" />
                   <span className="text-sm text-muted-foreground">
                     Basée sur le modèle: {selectedTemplate.titleFr}
                   </span>
@@ -362,7 +362,7 @@ const NewOfferPage = () => {
             <Button type="button" variant="outline" onClick={() => navigate('/offers')}>
               Annuler
             </Button>
-            <Button type="submit" disabled={loading} className="bg-primary hover:bg-acch">
+            <Button type="submit" disabled={loading} className="bg-primary hover:bg-violeth">
               {loading ? 'Création...' : 'Créer l\'offre'}
             </Button>
           </div>

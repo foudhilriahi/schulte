@@ -21,7 +21,7 @@ export function authenticate(req: Request, res: Response, next: NextFunction): v
   const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
 
   if (!token) {
-    res.status(401).json({ error: 'Access token required' });
+    res.status(401).json({ error: 'Jeton d\'acces requis' });
     return;
   }
 
@@ -30,6 +30,6 @@ export function authenticate(req: Request, res: Response, next: NextFunction): v
     req.user = payload;
     next();
   } catch {
-    res.status(401).json({ error: 'Invalid or expired access token' });
+    res.status(401).json({ error: 'Jeton d\'acces invalide ou expire' });
   }
 }

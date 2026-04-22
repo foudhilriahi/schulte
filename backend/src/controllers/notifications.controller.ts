@@ -18,7 +18,7 @@ export class NotificationsController {
       res.json(notifications);
     } catch (err: any) {
       logger.error("Get notifications error:", err);
-      res.status(500).json({ error: "Failed to fetch notifications" });
+      res.status(500).json({ error: "Echec de la recuperation des notifications" });
     }
   }
 
@@ -29,7 +29,7 @@ export class NotificationsController {
       res.json({ count });
     } catch (err: any) {
       logger.error("Get unread count error:", err);
-      res.status(500).json({ error: "Failed to fetch unread count" });
+      res.status(500).json({ error: "Echec de la recuperation du nombre de non lus" });
     }
   }
 
@@ -40,7 +40,7 @@ export class NotificationsController {
       res.json({ success: true, count });
     } catch (err: any) {
       logger.error("Mark all read error:", err);
-      res.status(500).json({ error: "Failed to mark notifications as read" });
+      res.status(500).json({ error: "Echec du marquage des notifications comme lues" });
     }
   }
 
@@ -52,13 +52,13 @@ export class NotificationsController {
         req.user!.userId,
       );
       if (!updatedCount) {
-        res.status(404).json({ error: 'Notification not found' });
+        res.status(404).json({ error: 'Notification introuvable' });
         return;
       }
       res.json({ success: true });
     } catch (err: any) {
       logger.error("Mark one read error:", err);
-      res.status(500).json({ error: "Failed to mark notification as read" });
+      res.status(500).json({ error: "Echec du marquage de la notification comme lue" });
     }
   }
 
@@ -70,13 +70,13 @@ export class NotificationsController {
         req.user!.userId,
       );
       if (!result.count) {
-        res.status(404).json({ error: 'Notification not found' });
+        res.status(404).json({ error: 'Notification introuvable' });
         return;
       }
       res.json({ success: true });
     } catch (err: any) {
       logger.error("Delete notification error:", err);
-      res.status(500).json({ error: "Failed to delete notification" });
+      res.status(500).json({ error: "Echec de la suppression de la notification" });
     }
   }
 
@@ -87,7 +87,7 @@ export class NotificationsController {
       res.json({ success: true, count: result.count });
     } catch (err: any) {
       logger.error('Clear notifications error:', err);
-      res.status(500).json({ error: 'Failed to clear notifications' });
+      res.status(500).json({ error: 'Echec de la suppression des notifications' });
     }
   }
 }

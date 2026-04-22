@@ -10,7 +10,7 @@ export class ProfileController {
       const userId = req.user!.userId;
       const user = await UserRepository.findById(userId);
       if (!user) {
-        res.status(404).json({ error: 'User not found' });
+        res.status(404).json({ error: 'Utilisateur introuvable' });
         return;
       }
 
@@ -23,7 +23,7 @@ export class ProfileController {
       });
     } catch (err: any) {
       logger.error('Get profile error:', err);
-      res.status(500).json({ error: 'Failed to fetch profile' });
+      res.status(500).json({ error: 'Echec de la recuperation du profil' });
     }
   }
 
@@ -35,7 +35,7 @@ export class ProfileController {
 
       const user = await UserRepository.findById(userId);
       if (!user) {
-        res.status(404).json({ error: 'User not found' });
+        res.status(404).json({ error: 'Utilisateur introuvable' });
         return;
       }
 
@@ -51,7 +51,7 @@ export class ProfileController {
       });
     } catch (err: any) {
       logger.error('Update profile error:', err);
-      res.status(500).json({ error: 'Failed to update profile' });
+      res.status(500).json({ error: 'Echec de la mise a jour du profil' });
     }
   }
 
@@ -62,13 +62,13 @@ export class ProfileController {
       const userId = req.user!.userId;
 
       if (currentPassword === newPassword) {
-        res.status(400).json({ error: 'New password must be different from current password' });
+        res.status(400).json({ error: 'Le nouveau mot de passe doit etre different de l\'ancien' });
         return;
       }
 
       const user = await UserRepository.findById(userId);
       if (!user) {
-        res.status(404).json({ error: 'User not found' });
+        res.status(404).json({ error: 'Utilisateur introuvable' });
         return;
       }
 
@@ -85,10 +85,10 @@ export class ProfileController {
       await UserRepository.deleteAllRefreshTokens(userId);
 
       logger.info(`Password updated for user: ${userId}`);
-      res.json({ message: 'Password updated successfully' });
+      res.json({ message: 'Mot de passe mis a jour avec succes' });
     } catch (err: any) {
       logger.error('Update password error:', err);
-      res.status(500).json({ error: 'Failed to update password' });
+      res.status(500).json({ error: 'Echec de la mise a jour du mot de passe' });
     }
   }
 }

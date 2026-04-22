@@ -30,7 +30,7 @@ const statusConfig: Record<
 > = {
   scheduled: {
     label: "Planifié",
-    className: "bg-bou/14 text-bou border-bou/28",
+    className: "bg-boul text-primary border-[var(--bou-b)]",
     icon: CalendarClock,
   },
   pass: {
@@ -45,7 +45,7 @@ const statusConfig: Record<
   },
   no_show: {
     label: "Absent",
-    className: "bg-s3 text-muted-foreground border-border",
+    className: "bg-card2 text-muted-foreground border-border",
     icon: UserX,
   },
 };
@@ -160,7 +160,7 @@ const InterviewsPage = () => {
           {
             label: "Planifiés",
             count: scheduled.length,
-            color: "bg-bou/12 text-bou border-bou/25",
+            color: "bg-boul text-primary border-[var(--bou-b)]",
           },
           {
             label: "Retenus",
@@ -175,7 +175,7 @@ const InterviewsPage = () => {
           {
             label: "Absents",
             count: interviews.filter((i) => i.status === "no_show").length,
-            color: "bg-s3 text-muted-foreground border-border",
+            color: "bg-card2 text-muted-foreground border-border",
           },
         ].map((s) => (
           <div
@@ -324,7 +324,7 @@ const InterviewCard = ({ interview, onRecordOutcome }: InterviewCardProps) => {
   };
 
   return (
-    <Card className="rounded-md shadow-[0_1px_3px_rgba(0,0,0,0.45)] transition-shadow hover:shadow-[0_4px_16px_rgba(0,0,0,0.32)]">
+    <Card className="rounded-md shadow-card transition-shadow hover:shadow-hover">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
@@ -390,7 +390,7 @@ const InterviewCard = ({ interview, onRecordOutcome }: InterviewCardProps) => {
         {onRecordOutcome && (
           <Button
             size="sm"
-            className="mt-1 w-full gap-1.5 bg-primary text-xs text-primary-foreground hover:bg-acch"
+            className="mt-1 w-full gap-1.5 bg-primary text-xs text-primary-foreground hover:bg-violeth"
             onClick={onRecordOutcome}
           >
             <CheckCircle className="h-3.5 w-3.5" />

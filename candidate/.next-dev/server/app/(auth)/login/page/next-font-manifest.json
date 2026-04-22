@@ -1,0 +1,11 @@
+{
+  "pages": {},
+  "app": {
+    "[project]/app/(auth)/login/page": [
+      "static/media/NotoSans_Regular-s.p.60036e66.ttf",
+      "static/media/NotoSans_Bold-s.p.b8715417.ttf"
+    ]
+  },
+  "appUsingSizeAdjust": true,
+  "pagesUsingSizeAdjust": false
+}

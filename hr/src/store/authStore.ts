@@ -44,7 +44,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     
     // Validate role - only HR and ADMIN allowed
     if (data.user.role !== 'HR' && data.user.role !== 'ADMIN') {
-      throw new Error('Access denied. This app is for HR and Admin users only.')
+      throw new Error('Acces refuse. Cette application est reservee aux utilisateurs RH et administrateurs.')
     }
     
     authSession.setAccessToken(data.accessToken)

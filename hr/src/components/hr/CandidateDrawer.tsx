@@ -14,6 +14,7 @@ import {
   normalizeStoredDualAnalysis,
   type DualAnalysisResult,
 } from "@/lib/dual-ai-analysis";
+import { recommendationToFrench } from "@/lib/recommendation-labels";
 
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:4000/api";
 
@@ -52,16 +53,16 @@ const CandidateDrawer = ({
     setRating(candidate.starRating || 0);
     setAnalysis(normalizeStoredDualAnalysis(candidate.aiAnalysis));
     setSelectedStatus(candidate.status || "review");
-  }, [candidate?.id, open]);
+  }, [candidate, open]);
 
   if (!open || !candidate) return null;
 
   const saveNotes = async () => {
     try {
       await api.patch(`/applications/${candidate.id}/notes`, { notes });
-      toast.success("Notes saved.");
+      toast.success("Notes enregistrees.");
     } catch {
-      toast.error("Error saving notes");
+      toast.error("Erreur lors de l'enregistrement des notes");
     }
   };
 
@@ -69,9 +70,9 @@ const CandidateDrawer = ({
     setRating(r);
     try {
       await api.patch(`/applications/${candidate.id}/rating`, { rating: r });
-      toast.success("Rating saved.");
+      toast.success("Notation enregistree.");
     } catch {
-      toast.error("Error saving rating");
+      toast.error("Erreur lors de l'enregistrement de la note");
     }
   };
 
@@ -83,10 +84,10 @@ const CandidateDrawer = ({
       await api.patch(`/applications/${candidate.id}/status`, {
         status: statusToBackend[selectedStatus] ?? selectedStatus,
       });
-      toast.success("Statut mis à jour.");
+      toast.success("Statut mis a jour.");
       onQuickStatusChange?.(candidate, selectedStatus as any);
     } catch {
-      toast.error("Erreur lors de la mise à jour du statut");
+      toast.error("Erreur lors de la mise a jour du statut");
     } finally {
       setStatusSaving(false);
     }
@@ -102,19 +103,19 @@ const CandidateDrawer = ({
         requiredSkills: candidate.requiredSkills || [],
         experienceYears: candidate.experienceYears || 0,
         description: candidate.description || "",
-      });
+      }, candidate.aiAnalysis);
 
       await persistDualAnalysis(candidate.id, dualResult);
       setAnalysis(dualResult);
 
       if (dualResult.providers.length === 1) {
-        toast.success(`Dual analysis complete (single provider succeeded: ${dualResult.providers[0].name})`);
+        toast.success(`Analyse double terminee (un seul fournisseur reussi: ${dualResult.providers[0].name})`);
       } else {
-        toast.success("Dual analysis complete and saved.");
+        toast.success("Analyse double terminee et enregistree.");
       }
     } catch (error: any) {
       console.error("Dual AI analysis error:", error);
-      const errorMsg = error?.response?.data?.error || error?.message || "Dual AI analysis unavailable";
+      const errorMsg = error?.response?.data?.error || error?.message || "Analyse IA double indisponible";
       toast.error(errorMsg);
     } finally {
       setAnalysing(false);
@@ -126,10 +127,10 @@ const CandidateDrawer = ({
   return (
     <>
       {/* Overlay */}
-      <div className="fixed inset-0 bg-black/20 z-40" onClick={onClose} />
+      <div className="fixed inset-0 bg-ink/20 z-40" onClick={onClose} />
 
       {/* Drawer */}
-      <div className="fixed right-0 top-0 z-50 h-screen w-full max-w-[860px] bg-card border-l border-border shadow-[0_8px_28px_rgba(0,0,0,0.65)] overflow-y-auto animate-in slide-in-from-right duration-300">
+      <div className="fixed right-0 top-0 z-50 h-screen w-full max-w-[860px] bg-card border-l border-border shadow-hover overflow-y-auto animate-in slide-in-from-right duration-300">
         <div className="flex items-center justify-between p-4 border-b">
           <h2 className="text-lg font-bold">{candidate.name}</h2>
           <Button variant="ghost" size="sm" onClick={onClose}>
@@ -143,7 +144,7 @@ const CandidateDrawer = ({
             {/* Identity */}
             <section>
               <h3 className="text-sm font-semibold text-foreground mb-2">
-                Identity
+                Identite
               </h3>
               <div className="space-y-1.5 text-sm">
                 <p className="flex items-center gap-2">
@@ -169,7 +170,7 @@ const CandidateDrawer = ({
             {candidate.skills?.length > 0 && (
               <section>
                 <h3 className="text-sm font-semibold text-foreground mb-2">
-                  Skills
+                  Competences
                 </h3>
                 <div className="flex flex-wrap gap-1.5">
                   {candidate.skills.map((s: string) => (
@@ -184,18 +185,18 @@ const CandidateDrawer = ({
             {/* HR Actions */}
             <section>
               <h3 className="text-sm font-semibold text-foreground mb-2">
-                HR Actions
+                Actions RH
               </h3>
               <div className="space-y-3">
                 <div>
                   <p className="text-xs text-muted-foreground mb-1">
-                    Star Rating
+                    Note en etoiles
                   </p>
                   <div className="flex gap-1">
                     {[1, 2, 3, 4, 5].map((s) => (
                       <Star
                         key={s}
-                        className={`h-5 w-5 cursor-pointer transition-colors ${s <= rating ? "fill-amber-400 text-amber-400" : "text-slate-300 hover:text-amber-300"}`}
+                        className={`h-5 w-5 cursor-pointer transition-colors ${s <= rating ? "fill-warn text-warn" : "text-muted-foreground hover:text-warn"}`}
                         onClick={() => saveRating(s)}
                       />
                     ))}
@@ -212,10 +213,10 @@ const CandidateDrawer = ({
                   Planifier un entretien
                 </Button>
 
-                <div className="space-y-2 rounded-md border border-input bg-s2 p-3">
+                <div className="space-y-2 rounded-md border border-input bg-card2 p-3">
                   <p className="text-xs font-semibold text-foreground">Changer le statut</p>
                   <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-                    <SelectTrigger className="h-10 bg-s1">
+                    <SelectTrigger className="h-10 bg-card">
                       <SelectValue placeholder="Sélectionnez un statut" />
                     </SelectTrigger>
                     <SelectContent>
@@ -228,24 +229,24 @@ const CandidateDrawer = ({
                   </Select>
                   <Button
                     variant="outline"
-                    className="w-full bg-s1"
+                    className="w-full bg-card"
                     onClick={saveStatus}
                     disabled={statusSaving || selectedStatus === candidate.status}
                   >
-                    {statusSaving ? "Mise à jour..." : "Appliquer le statut"}
+                    {statusSaving ? "Mise a jour..." : "Appliquer le statut"}
                   </Button>
                 </div>
 
                 <div>
                   <p className="text-xs text-muted-foreground mb-1">
-                    Notes privées
+                    Notes privees
                   </p>
                   <Textarea
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
                     onBlur={saveNotes}
                     className="min-h-[80px] text-sm"
-                    placeholder="Write notes..."
+                    placeholder="Ecrire des notes..."
                   />
                 </div>
               </div>
@@ -254,7 +255,7 @@ const CandidateDrawer = ({
             {/* Dual AI Analysis */}
             <section>
               <h3 className="text-sm font-semibold text-foreground mb-2">
-                Dual AI Analysis
+                Analyse IA double
               </h3>
               {!analysis ? (
                 <Button
@@ -265,12 +266,12 @@ const CandidateDrawer = ({
                   {analysing ? (
                     <>
                       <Bot className="h-4 w-4 animate-pulse" />
-                      Analysing in parallel...
+                      Analyse en parallele...
                     </>
                   ) : (
                     <>
                       <Zap className="h-4 w-4" />
-                      Run Dual Analysis (Puter + Gemini)
+                      Lancer l'analyse double (Puter + Gemini)
                     </>
                   )}
                 </Button>
@@ -297,15 +298,15 @@ const CandidateDrawer = ({
                             : analysis.mergedRecommendation === "Interview"
                               ? "bg-warn/14 text-warn"
                             : analysis.mergedRecommendation === "Request More Info"
-                              ? "bg-bou/14 text-bou"
+                              ? "bg-boul text-primary"
                               : "bg-err/14 text-err"
                         }`}
                       >
-                        {analysis.mergedRecommendation}
+                          {recommendationToFrench(analysis.mergedRecommendation)}
                       </Badge>
                       {confidenceLevel ? (
                         <Badge variant="outline" className="text-xs">
-                          Confidence: {confidenceLevel}
+                          Confiance : {confidenceLevel}
                         </Badge>
                       ) : null}
                     </div>
@@ -313,30 +314,30 @@ const CandidateDrawer = ({
 
                   {analysis.providers.length > 1 && (analysis.agreement ? (
                     <div className="rounded-lg border border-ok/30 bg-ok/10 p-3 text-xs text-ok">
-                      Both AI providers reached the same recommendation.
+                      Les deux IA ont abouti a la meme recommandation.
                     </div>
                   ) : (
                     <div className="rounded-lg border border-warn/30 bg-warn/10 p-3 text-xs text-warn">
-                      <p className="font-semibold mb-1">The two assessments disagree.</p>
+                      <p className="font-semibold mb-1">Les deux evaluations divergent.</p>
                       <p>{analysis.disagreementNote}</p>
-                      <p className="mt-1">Read both reasoning sections and make your own judgment.</p>
+                      <p className="mt-1">Lisez les deux justifications et tranchez vous-meme.</p>
                     </div>
                   ))}
 
                   <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                     {analysis.providers.map((provider) => (
-                      <div key={provider.name} className="rounded-lg border border-border bg-s2 p-3">
+                      <div key={provider.name} className="rounded-lg border border-border bg-card2 p-3">
                         <div className="flex items-center justify-between mb-2">
                           <p className="text-xs font-semibold text-foreground">{provider.name}</p>
                           <Badge variant="outline" className="text-xs">
-                            {provider.score}/100 • {provider.recommendation}
+                            {provider.score}/100 • {recommendationToFrench(provider.recommendation)}
                           </Badge>
                         </div>
                         <p className="text-xs leading-relaxed text-muted-foreground">{provider.reasoning}</p>
 
                         <details className="mt-3">
                           <summary className="cursor-pointer text-xs font-semibold text-foreground/85">
-                            Show thinking
+                            Afficher le raisonnement
                           </summary>
                           <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{provider.thinking}</p>
                         </details>
@@ -345,8 +346,8 @@ const CandidateDrawer = ({
                   </div>
 
                   {analysis.mergedTips.length > 0 && (
-                    <div className="rounded-lg border border-border bg-s2 p-3">
-                      <p className="mb-1 text-xs font-semibold text-foreground">Merged candidate tips</p>
+                    <div className="rounded-lg border border-border bg-card2 p-3">
+                      <p className="mb-1 text-xs font-semibold text-foreground">Conseils fusionnes pour le candidat</p>
                       <ul className="space-y-1 text-xs text-muted-foreground">
                         {analysis.mergedTips.map((tip, i) => (
                           <li key={i}>• {tip}</li>
@@ -356,7 +357,7 @@ const CandidateDrawer = ({
                   )}
 
                   <p className="text-[10px] text-muted-foreground">
-                    AI is a suggestion. The final decision is yours.
+                    L'IA est une aide. La decision finale vous appartient.
                   </p>
                   <Button
                     variant="outline"
@@ -365,7 +366,7 @@ const CandidateDrawer = ({
                     disabled={analysing}
                     className="text-xs"
                   >
-                    {analysing ? "Re-analysing..." : "Re-analyse with both providers"}
+                    {analysing ? "Nouvelle analyse..." : "Relancer l'analyse avec les deux fournisseurs"}
                   </Button>
                 </div>
               )}
@@ -375,12 +376,12 @@ const CandidateDrawer = ({
           {/* Right Panel — CV */}
           <div className="space-y-4">
             <h3 className="text-sm font-semibold text-foreground">
-              CV / Application Data
+              CV / Donnees de candidature
             </h3>
             {candidate.cvUrl ? (
-              <div className="border rounded-xl overflow-hidden bg-s2 min-h-[400px] flex items-center justify-center">
+              <div className="border rounded-xl overflow-hidden bg-card2 min-h-[400px] flex items-center justify-center">
                 <div className="text-center space-y-3 p-6">
-                  <p className="text-sm text-muted-foreground">PDF uploaded</p>
+                  <p className="text-sm text-muted-foreground">PDF televerse</p>
                   <Button 
                     variant="outline" 
                     onClick={async () => {
@@ -402,26 +403,26 @@ const CandidateDrawer = ({
                         window.URL.revokeObjectURL(url)
                       } catch (err) {
                         console.error('Download error:', err)
-                        alert('Failed to download CV')
+                        alert('Echec du telechargement du CV')
                       }
                     }}
                   >
-                    View / Download PDF
+                    Voir / Telecharger le PDF
                   </Button>
                 </div>
               </div>
             ) : candidate.formData ? (
               <div className="space-y-3 text-sm">
-                <div className="rounded-lg bg-s2 p-3">
-                  <p className="text-xs font-semibold mb-1">Personal</p>
+                <div className="rounded-lg bg-card2 p-3">
+                  <p className="text-xs font-semibold mb-1">Personnel</p>
                   <p>
                     {candidate.formData.personal?.name} —{" "}
                     {candidate.formData.personal?.city}
                   </p>
                 </div>
                 {candidate.formData.education?.length > 0 && (
-                  <div className="rounded-lg bg-s2 p-3">
-                    <p className="text-xs font-semibold mb-1">Education</p>
+                  <div className="rounded-lg bg-card2 p-3">
+                    <p className="text-xs font-semibold mb-1">Formation</p>
                     {candidate.formData.education.map((e: any, i: number) => (
                       <p key={i}>
                         {e.degree} — {e.institution} ({e.year})
@@ -430,18 +431,18 @@ const CandidateDrawer = ({
                   </div>
                 )}
                 {candidate.formData.experience?.length > 0 && (
-                  <div className="rounded-lg bg-s2 p-3">
+                  <div className="rounded-lg bg-card2 p-3">
                     <p className="text-xs font-semibold mb-1">Experience</p>
                     {candidate.formData.experience.map((e: any, i: number) => (
                       <p key={i}>
-                        {e.title} at {e.company}
+                        {e.title} chez {e.company}
                       </p>
                     ))}
                   </div>
                 )}
                 {candidate.formData.skills?.length > 0 && (
-                  <div className="rounded-lg bg-s2 p-3">
-                    <p className="text-xs font-semibold mb-1">Skills</p>
+                  <div className="rounded-lg bg-card2 p-3">
+                    <p className="text-xs font-semibold mb-1">Competences</p>
                     <div className="flex flex-wrap gap-1">
                       {candidate.formData.skills.map((s: string) => (
                         <Badge
@@ -457,9 +458,9 @@ const CandidateDrawer = ({
                 )}
               </div>
             ) : (
-              <div className="flex h-[200px] items-center justify-center rounded-xl bg-s2">
+              <div className="flex h-[200px] items-center justify-center rounded-xl bg-card2">
                 <p className="text-sm text-muted-foreground">
-                  No CV/form data available
+                  Aucune donnee CV/formulaire disponible
                 </p>
               </div>
             )}

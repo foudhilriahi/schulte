@@ -22,45 +22,45 @@ const AdminSettingsPage = () => {
 
   const handleProfile = async () => {
     const nextName = name.trim()
-    if (nextName.length < 2) { toast.error('Display name must be at least 2 characters'); return }
-    if (nextName === (user?.name || '')) { toast.info('No changes to save'); return }
+    if (nextName.length < 2) { toast.error('Le nom affiché doit contenir au moins 2 caractères'); return }
+    if (nextName === (user?.name || '')) { toast.info('Aucun changement à enregistrer'); return }
 
     setSavingProfile(true)
     try {
       const { data } = await api.patch('/profile', { name: nextName })
       updateUser({ name: data.name })
       setName(data.name)
-      toast.success('Profile updated.')
+      toast.success('Profil mis à jour.')
     } catch (err: any) {
       const details = err.response?.data?.details
       if (Array.isArray(details) && details.length > 0) {
         toast.error(details[0])
         return
       }
-      toast.error(err.response?.data?.error || 'Error updating profile')
+      toast.error(err.response?.data?.error || 'Erreur lors de la mise à jour du profil')
     } finally {
       setSavingProfile(false)
     }
   }
 
   const handlePassword = async () => {
-    if (!currentPw.trim()) { toast.error('Current password is required'); return }
-    if (newPw.length < 8 || !/\d/.test(newPw)) { toast.error('New password must be at least 8 characters and contain 1 number'); return }
-    if (newPw === currentPw) { toast.error('New password must be different from current password'); return }
-    if (newPw !== confirmPw) { toast.error('Passwords do not match'); return }
+    if (!currentPw.trim()) { toast.error('Le mot de passe actuel est requis'); return }
+    if (newPw.length < 8 || !/\d/.test(newPw)) { toast.error('Le nouveau mot de passe doit contenir au moins 8 caracteres et 1 chiffre'); return }
+    if (newPw === currentPw) { toast.error('Le nouveau mot de passe doit etre different de l\'actuel'); return }
+    if (newPw !== confirmPw) { toast.error('Les mots de passe ne correspondent pas'); return }
     setSaving(true)
     try {
       await api.patch('/profile/password', { currentPassword: currentPw, newPassword: newPw })
-      toast.success('Password updated.')
+      toast.success('Mot de passe mis a jour.')
       setCurrentPw(''); setNewPw(''); setConfirmPw('')
     } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Error updating password')
+      toast.error(err.response?.data?.error || 'Erreur lors de la mise a jour du mot de passe')
     } finally { setSaving(false) }
   }
 
   const handleBroadcast = async () => {
     const message = broadcastMsg.trim()
-    if (message.length < 3) { toast.error('Message must be at least 3 characters'); return }
+    if (message.length < 3) { toast.error('Le message doit contenir au moins 3 caracteres'); return }
 
     setSendingBroadcast(true)
     try {
@@ -68,7 +68,7 @@ const AdminSettingsPage = () => {
       if (broadcastSite !== 'all') payload.site = broadcastSite
 
       const { data } = await api.post('/admin/broadcast-hr', payload)
-      toast.success(data?.message || 'Broadcast sent')
+      toast.success(data?.message || 'Diffusion envoyee')
       setBroadcastMsg('')
     } catch (err: any) {
       const details = err.response?.data?.details
@@ -76,49 +76,49 @@ const AdminSettingsPage = () => {
         toast.error(details[0])
         return
       }
-      toast.error(err.response?.data?.error || 'Failed to send broadcast')
+      toast.error(err.response?.data?.error || 'Echec de l\'envoi de la diffusion')
     } finally {
       setSendingBroadcast(false)
     }
   }
 
   return (
-    <DashboardLayout title="Admin Settings">
+    <DashboardLayout title="Parametres admin">
       <div className="max-w-lg space-y-6">
-        <Card className="rounded-md shadow-[0_1px_3px_rgba(0,0,0,0.45)]">
-          <CardHeader><CardTitle className="text-base">Profile</CardTitle></CardHeader>
+        <Card className="rounded-md shadow-card">
+          <CardHeader><CardTitle className="text-base">Profil</CardTitle></CardHeader>
           <CardContent className="space-y-3">
-            <div><Label>Display Name</Label><Input value={name} onChange={e => setName(e.target.value)} /></div>
-            <div><Label>Email</Label><p className="text-sm text-muted-foreground">{user?.email} (read-only)</p></div>
+            <div><Label>Nom affiche</Label><Input value={name} onChange={e => setName(e.target.value)} /></div>
+            <div><Label>Email</Label><p className="text-sm text-muted-foreground">{user?.email} (lecture seule)</p></div>
             <Button onClick={handleProfile} disabled={savingProfile} className="bg-primary">
-              {savingProfile ? 'Saving...' : 'Save Profile'}
+              {savingProfile ? 'Enregistrement...' : 'Enregistrer le profil'}
             </Button>
           </CardContent>
         </Card>
 
-        <Card className="rounded-md shadow-[0_1px_3px_rgba(0,0,0,0.45)]">
-          <CardHeader><CardTitle className="text-base">Change Password</CardTitle></CardHeader>
+        <Card className="rounded-md shadow-card">
+          <CardHeader><CardTitle className="text-base">Changer le mot de passe</CardTitle></CardHeader>
           <CardContent className="space-y-3">
-            <div><Label>Current Password</Label><Input type="password" value={currentPw} onChange={e => setCurrentPw(e.target.value)} /></div>
-            <div><Label>New Password</Label><Input type="password" value={newPw} onChange={e => setNewPw(e.target.value)} /><p className="text-[10px] text-muted-foreground mt-1">Min 8 chars, 1 digit</p></div>
-            <div><Label>Confirm Password</Label><Input type="password" value={confirmPw} onChange={e => setConfirmPw(e.target.value)} /></div>
-            <Button onClick={handlePassword} disabled={saving} className="bg-primary">{saving ? 'Saving...' : 'Update Password'}</Button>
+            <div><Label>Mot de passe actuel</Label><Input type="password" value={currentPw} onChange={e => setCurrentPw(e.target.value)} /></div>
+            <div><Label>Nouveau mot de passe</Label><Input type="password" value={newPw} onChange={e => setNewPw(e.target.value)} /><p className="text-[10px] text-muted-foreground mt-1">8 caracteres minimum, 1 chiffre</p></div>
+            <div><Label>Confirmer le mot de passe</Label><Input type="password" value={confirmPw} onChange={e => setConfirmPw(e.target.value)} /></div>
+            <Button onClick={handlePassword} disabled={saving} className="bg-primary">{saving ? 'Enregistrement...' : 'Mettre a jour le mot de passe'}</Button>
           </CardContent>
         </Card>
 
-        <Card className="rounded-md shadow-[0_1px_3px_rgba(0,0,0,0.45)]">
-          <CardHeader><CardTitle className="text-base">Mini Messagerie (Admin to HR)</CardTitle></CardHeader>
+        <Card className="rounded-md shadow-card">
+          <CardHeader><CardTitle className="text-base">Mini messagerie (admin vers RH)</CardTitle></CardHeader>
           <CardContent className="space-y-3">
             <div>
               <Label>Audience</Label>
               <select
                 value={broadcastSite}
                 onChange={e => setBroadcastSite(e.target.value as 'all' | 'Bouarada' | 'Zaghouan')}
-                className="h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-[0_1px_3px_rgba(0,0,0,0.45)]"
+                className="h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-card"
               >
-                <option value="all">All HR sites</option>
-                <option value="Bouarada">Bouarada only</option>
-                <option value="Zaghouan">Zaghouan only</option>
+                <option value="all">Tous les sites RH</option>
+                <option value="Bouarada">Bouarada uniquement</option>
+                <option value="Zaghouan">Zaghouan uniquement</option>
               </select>
             </div>
             <div>
@@ -126,11 +126,11 @@ const AdminSettingsPage = () => {
               <Input
                 value={broadcastMsg}
                 onChange={e => setBroadcastMsg(e.target.value)}
-                placeholder="Write a short message to HR teams"
+                placeholder="Ecrire un court message aux equipes RH"
               />
             </div>
             <Button onClick={handleBroadcast} disabled={sendingBroadcast} className="bg-primary">
-              {sendingBroadcast ? 'Sending...' : 'Send Broadcast'}
+              {sendingBroadcast ? 'Envoi...' : 'Envoyer la diffusion'}
             </Button>
           </CardContent>
         </Card>

@@ -106,7 +106,7 @@ erDiagram
         uuid id PK
         uuid user_id FK
         string type "info success warning"
-        json payload
+        json payload "contient contexte (applicationId offerId templateId etc)"
         boolean email_sent
         timestamp read_at "null si non lu"
         timestamp created_at
@@ -123,7 +123,4 @@ erDiagram
     JOB_OFFERS ||--o{ APPLICATIONS : "recoit"
     CANDIDATE_CV ||--o{ APPLICATIONS : "source CV selectionne"
     APPLICATIONS ||--o| INTERVIEWS : "donne lieu a"
-    APPLICATIONS ||--o{ NOTIFICATIONS : "genere selon evenements"
-    OFFER_TEMPLATES ||--o{ NOTIFICATIONS : "peut generer via admin updates"
-    JOB_OFFERS ||--o{ NOTIFICATIONS : "peut generer via offer lifecycle"
 ```

@@ -29,7 +29,7 @@ export class AdminController {
       res.json(accounts);
     } catch (err: any) {
       logger.error('Get HR accounts error:', err);
-      res.status(500).json({ error: 'Failed to fetch HR accounts' });
+      res.status(500).json({ error: 'Echec de la recuperation des comptes RH' });
     }
   }
 
@@ -41,7 +41,7 @@ export class AdminController {
 
       const existing = await UserRepository.findByEmail(normalizedEmail);
       if (existing) {
-        res.status(409).json({ error: 'Email already in use' });
+        res.status(409).json({ error: 'E-mail deja utilise' });
         return;
       }
 
@@ -54,7 +54,7 @@ export class AdminController {
         } else if (siteStr === 'zaghouan') {
           normalizedSite = 'Zaghouan';
         } else {
-          res.status(400).json({ error: 'Invalid site. Must be Bouarada or Zaghouan' });
+          res.status(400).json({ error: 'Site invalide. Valeurs autorisees : Bouarada ou Zaghouan' });
           return;
         }
       }
@@ -84,7 +84,7 @@ export class AdminController {
       });
     } catch (err: any) {
       logger.error('Create HR account error:', err);
-      res.status(500).json({ error: 'Failed to create HR account' });
+      res.status(500).json({ error: 'Echec de la creation du compte RH' });
     }
   }
 
@@ -98,7 +98,7 @@ export class AdminController {
         const normalizedEmail = String(req.body.email).trim().toLowerCase();
         const existing = await UserRepository.findByEmail(normalizedEmail);
         if (existing && existing.id !== id) {
-          res.status(409).json({ error: 'Email already in use' });
+          res.status(409).json({ error: 'E-mail deja utilise' });
           return;
         }
         updates.email = normalizedEmail;
@@ -116,7 +116,7 @@ export class AdminController {
         } else if (siteStr === 'zaghouan') {
           updates.site = 'Zaghouan';
         } else {
-          res.status(400).json({ error: 'Invalid site. Must be Bouarada or Zaghouan' });
+          res.status(400).json({ error: 'Site invalide. Valeurs autorisees : Bouarada ou Zaghouan' });
           return;
         }
       }
@@ -139,7 +139,7 @@ export class AdminController {
       });
     } catch (err: any) {
       logger.error('Update HR account error:', err);
-      res.status(500).json({ error: 'Failed to update HR account' });
+      res.status(500).json({ error: 'Echec de la mise a jour du compte RH' });
     }
   }
 
@@ -149,18 +149,18 @@ export class AdminController {
       const id = req.params.id as string;
 
       if (id === req.user!.userId) {
-        res.status(400).json({ error: 'You cannot deactivate your own account.' });
+        res.status(400).json({ error: 'Vous ne pouvez pas desactiver votre propre compte.' });
         return;
       }
 
       const target = await UserRepository.findById(id);
       if (!target || target.role !== 'HR') {
-        res.status(404).json({ error: 'HR account not found' });
+        res.status(404).json({ error: 'Compte RH introuvable' });
         return;
       }
 
       if (target.isActive === false || target.deletedAt) {
-        res.status(400).json({ error: 'Account is already deactivated' });
+        res.status(400).json({ error: 'Le compte est deja desactive' });
         return;
       }
 
@@ -179,10 +179,10 @@ export class AdminController {
       logger.info(`Admin deactivated HR account: ${id}`);
       SocketService.emitToAdmin('admin:hr-account:changed', { action: 'deleted', userId: id });
       SocketService.emitToAdmin('admin:overview:updated', { reason: 'hr-account-deleted' });
-      res.json({ message: 'HR account deactivated' });
+      res.json({ message: 'Compte RH desactive' });
     } catch (err: any) {
       logger.error('Delete HR account error:', err);
-      res.status(500).json({ error: 'Failed to deactivate HR account' });
+      res.status(500).json({ error: 'Echec de la desactivation du compte RH' });
     }
   }
 
@@ -197,7 +197,7 @@ export class AdminController {
       res.json(templates);
     } catch (err: any) {
       logger.error('Get templates error:', err);
-      res.status(500).json({ error: 'Failed to fetch templates' });
+      res.status(500).json({ error: 'Echec de la recuperation des templates' });
     }
   }
 
@@ -222,8 +222,8 @@ export class AdminController {
       SocketService.emitToAdmin('template:updated', template);
       SocketService.emitToAllHR('template:updated', template);
       await AdminController.notifyActiveHR({
-        title: 'Template added',
-        message: `A new template was added: ${template.titleFr}`,
+        title: 'Template ajoute',
+        message: `Un nouveau template a ete ajoute : ${template.titleFr}`,
         category: 'template',
         action: 'created',
         templateId: template.id,
@@ -231,7 +231,7 @@ export class AdminController {
       res.status(201).json(template);
     } catch (err: any) {
       logger.error('Create template error:', err);
-      res.status(500).json({ error: err?.message || 'Failed to create template' });
+      res.status(500).json({ error: err?.message || 'Echec de la creation du template' });
     }
   }
 
@@ -255,8 +255,8 @@ export class AdminController {
       SocketService.emitToAdmin('template:updated', template);
       SocketService.emitToAllHR('template:updated', template);
       await AdminController.notifyActiveHR({
-        title: 'Template updated',
-        message: `Template updated: ${template.titleFr}`,
+        title: 'Template mis a jour',
+        message: `Template mis a jour : ${template.titleFr}`,
         category: 'template',
         action: 'updated',
         templateId: template.id,
@@ -265,10 +265,10 @@ export class AdminController {
     } catch (err: any) {
       logger.error('Update template error:', err);
       if (err?.code === 'P2025') {
-        res.status(404).json({ error: 'Template not found' });
+        res.status(404).json({ error: 'Template introuvable' });
         return;
       }
-      res.status(500).json({ error: err?.message || 'Failed to update template' });
+      res.status(500).json({ error: err?.message || 'Echec de la mise a jour du template' });
     }
   }
 
@@ -290,14 +290,14 @@ export class AdminController {
       
       if (coreTemplateIds.includes(id)) {
         res.status(403).json({ 
-          error: 'Cannot deactivate core template. Core templates are protected and must always be available.' 
+          error: 'Impossible de desactiver un template de base. Les templates de base sont proteges et doivent toujours rester disponibles.' 
         });
         return;
       }
 
       const existing = await TemplateRepository.findById(id);
       if (!existing) {
-        res.status(404).json({ error: 'Template not found' });
+        res.status(404).json({ error: 'Template introuvable' });
         return;
       }
 
@@ -311,16 +311,16 @@ export class AdminController {
       SocketService.emitToAdmin('template:updated', template);
       SocketService.emitToAllHR('template:updated', template);
       await AdminController.notifyActiveHR({
-        title: `Template ${nextIsActive ? 'activated' : 'deactivated'}`,
-        message: `Template ${template.titleFr} is now ${nextIsActive ? 'active' : 'inactive'}`,
+        title: `Template ${nextIsActive ? 'active' : 'desactive'}`,
+        message: `Le template ${template.titleFr} est maintenant ${nextIsActive ? 'actif' : 'inactif'}`,
         category: 'template',
         action: nextIsActive ? 'activated' : 'deactivated',
         templateId: template.id,
       });
-      res.json({ message: `Template ${nextIsActive ? 'activated' : 'deactivated'}`, template });
+      res.json({ message: `Template ${nextIsActive ? 'active' : 'desactive'}`, template });
     } catch (err: any) {
       logger.error('Delete template error:', err);
-      res.status(500).json({ error: 'Failed to change template status' });
+      res.status(500).json({ error: 'Echec du changement de statut du template' });
     }
   }
 
@@ -332,12 +332,12 @@ export class AdminController {
 
       const hrIds = await UserRepository.findActiveHRIds(site as any);
       if (hrIds.length === 0) {
-        res.status(200).json({ message: 'No active HR recipients for this audience', sent: 0 });
+        res.status(200).json({ message: 'Aucun destinataire RH actif pour cette audience', sent: 0 });
         return;
       }
 
       const payload = {
-        title: 'Message from Admin',
+        title: 'Message de l\'administration',
         message,
         category: 'broadcast',
         site: site || 'all',
@@ -357,10 +357,10 @@ export class AdminController {
       });
 
       logger.info(`Admin broadcast sent to ${hrIds.length} HR users (site=${site || 'all'})`);
-      res.status(201).json({ message: 'Broadcast sent', sent: hrIds.length });
+      res.status(201).json({ message: 'Diffusion envoyee', sent: hrIds.length });
     } catch (err: any) {
       logger.error('Broadcast to HR error:', err);
-      res.status(500).json({ error: 'Failed to send broadcast' });
+      res.status(500).json({ error: 'Echec de l\'envoi de la diffusion' });
     }
   }
 
@@ -468,7 +468,7 @@ export class AdminController {
       });
     } catch (err: any) {
       logger.error('Admin overview error:', err);
-      res.status(500).json({ error: 'Failed to fetch overview' });
+      res.status(500).json({ error: 'Echec de la recuperation de la vue d\'ensemble' });
     }
   }
 
@@ -479,7 +479,7 @@ export class AdminController {
       const userSite = req.user!.site;
       
       if (!userSite) {
-        res.status(400).json({ error: 'HR user must have a site assigned' });
+        res.status(400).json({ error: 'L\'utilisateur RH doit etre associe a un site' });
         return;
       }
       
@@ -594,7 +594,7 @@ export class AdminController {
       });
     } catch (err: any) {
       logger.error('HR overview error:', err);
-      res.status(500).json({ error: 'Failed to fetch HR overview' });
+      res.status(500).json({ error: 'Echec de la recuperation de la vue d\'ensemble RH' });
     }
   }
 }

@@ -16,13 +16,14 @@ class SocketService {
       console.log('✅ Socket already connected or connecting');
       return;
     }
-    
-    this.isConnecting = true;
-    
-    // Disconnect old socket if exists
-    if (this.socket) {
-      this.socket.disconnect();
+
+    if (this.socket && !this.socket.connected) {
+      this.socket.auth = { token };
+      this.socket.connect();
+      return;
     }
+
+    this.isConnecting = true;
     
     console.log('🔄 Connecting to WebSocket...', URL);
     
@@ -35,7 +36,6 @@ class SocketService {
       reconnectionDelayMax: 10000,
       reconnectionAttempts: this.maxReconnectAttempts,
       timeout: 20000,
-      forceNew: true, // Force new connection
     });
 
     this.socket.on('connect', () => {

@@ -28,7 +28,7 @@ export class OffersController {
       res.json(offers);
     } catch (err: any) {
       logger.error('Get offers error:', err);
-      res.status(500).json({ error: 'Failed to fetch offers' });
+      res.status(500).json({ error: 'Echec de la recuperation des offres' });
     }
   }
 
@@ -37,7 +37,7 @@ export class OffersController {
     try {
       const userSite = req.user!.site;
       if (!userSite) {
-        res.status(400).json({ error: 'HR user must have a site assigned' });
+        res.status(400).json({ error: 'L\'utilisateur RH doit etre associe a un site' });
         return;
       }
 
@@ -110,7 +110,7 @@ export class OffersController {
       res.json(enhancedOffers);
     } catch (err: any) {
       logger.error('Get HR offers error:', err);
-      res.status(500).json({ error: 'Failed to fetch HR offers' });
+      res.status(500).json({ error: 'Echec de la recuperation des offres RH' });
     }
   }
 
@@ -135,7 +135,7 @@ export class OffersController {
       });
       
       if (!offer) {
-        res.status(404).json({ error: 'Offer not found' });
+        res.status(404).json({ error: 'Offre introuvable' });
         return;
       }
       
@@ -164,7 +164,7 @@ export class OffersController {
       });
     } catch (err: any) {
       logger.error('Get offer error:', err);
-      res.status(500).json({ error: 'Failed to fetch offer' });
+      res.status(500).json({ error: 'Echec de la recuperation de l\'offre' });
     }
   }
 
@@ -187,7 +187,7 @@ export class OffersController {
       } = req.body;
 
       if (req.user?.role === 'HR' && !templateId) {
-        res.status(400).json({ error: 'HR must create offers from an active template.' });
+        res.status(400).json({ error: 'Les RH doivent creer les offres a partir d\'un template actif.' });
         return;
       }
 
@@ -195,7 +195,7 @@ export class OffersController {
         const prisma = (await import('../config/prisma')).default;
         const template = await prisma.offerTemplate.findUnique({ where: { id: templateId as string } });
         if (!template || !template.isActive || !!template.deletedAt) {
-          res.status(400).json({ error: 'Selected template is invalid or inactive.' });
+          res.status(400).json({ error: 'Le template selectionne est invalide ou inactif.' });
           return;
         }
       }
@@ -225,8 +225,8 @@ export class OffersController {
 
       const adminIds = await UserRepository.findActiveAdminIds();
       await OffersController.notifyUsers(adminIds, {
-        title: 'New offer published',
-        message: `${offer.title} was created for ${offer.site}`,
+        title: 'Nouvelle offre publiee',
+        message: `${offer.title} a ete creee pour ${offer.site}`,
         category: 'offer',
         action: 'created',
         offerId: offer.id,
@@ -235,8 +235,8 @@ export class OffersController {
 
       const hrIds = await UserRepository.findActiveHRIds(offer.site as any, req.user!.userId);
       await OffersController.notifyUsers(hrIds, {
-        title: 'Offer published',
-        message: `${offer.title} is now available in your site offers`,
+        title: 'Offre publiee',
+        message: `${offer.title} est maintenant disponible sur votre site`,
         category: 'offer',
         action: 'created',
         offerId: offer.id,
@@ -246,7 +246,7 @@ export class OffersController {
       res.status(201).json(offer);
     } catch (err: any) {
       logger.error('Create offer error:', err);
-      res.status(500).json({ error: 'Failed to create offer' });
+      res.status(500).json({ error: 'Echec de la creation de l\'offre' });
     }
   }
 
@@ -267,8 +267,8 @@ export class OffersController {
 
       const adminIds = await UserRepository.findActiveAdminIds();
       await OffersController.notifyUsers(adminIds, {
-        title: 'Offer updated',
-        message: `${offer.title} was updated (${offer.status})`,
+        title: 'Offre mise a jour',
+        message: `${offer.title} a ete mise a jour (${offer.status})`,
         category: 'offer',
         action: 'updated',
         offerId: offer.id,
@@ -277,8 +277,8 @@ export class OffersController {
 
       const hrIds = await UserRepository.findActiveHRIds(offer.site as any, req.user!.userId);
       await OffersController.notifyUsers(hrIds, {
-        title: 'Offer updated',
-        message: `${offer.title} changed status to ${offer.status}`,
+        title: 'Offre mise a jour',
+        message: `${offer.title} a change de statut vers ${offer.status}`,
         category: 'offer',
         action: 'updated',
         offerId: offer.id,
@@ -288,7 +288,7 @@ export class OffersController {
       res.json(offer);
     } catch (err: any) {
       logger.error('Update offer error:', err);
-      res.status(500).json({ error: 'Failed to update offer' });
+      res.status(500).json({ error: 'Echec de la mise a jour de l\'offre' });
     }
   }
 
@@ -305,8 +305,8 @@ export class OffersController {
 
       const adminIds = await UserRepository.findActiveAdminIds();
       await OffersController.notifyUsers(adminIds, {
-        title: 'Offer deleted',
-        message: `Offer ${id} was deleted`,
+        title: 'Offre supprimee',
+        message: `L'offre ${id} a ete supprimee`,
         category: 'offer',
         action: 'deleted',
         offerId: id,
@@ -315,8 +315,8 @@ export class OffersController {
       if (existing?.site) {
         const hrIds = await UserRepository.findActiveHRIds(existing.site as any, req.user!.userId);
         await OffersController.notifyUsers(hrIds, {
-          title: 'Offer deleted',
-          message: `${existing.title} was removed from ${existing.site}`,
+          title: 'Offre supprimee',
+          message: `${existing.title} a ete retiree du site ${existing.site}`,
           category: 'offer',
           action: 'deleted',
           offerId: id,
@@ -324,10 +324,10 @@ export class OffersController {
         }, 'warning');
       }
 
-      res.json({ message: 'Offer deleted' });
+      res.json({ message: 'Offre supprimee' });
     } catch (err: any) {
       logger.error('Delete offer error:', err);
-      res.status(500).json({ error: 'Failed to delete offer' });
+      res.status(500).json({ error: 'Echec de la suppression de l\'offre' });
     }
   }
 }

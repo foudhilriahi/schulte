@@ -1,40 +1,41 @@
 'use client';
 
-import { useState } from 'react';
+import { FormEvent, useState } from 'react';
 import Link from 'next/link';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { toast } from 'sonner';
-import { ArrowLeft, Mail, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Mail } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { api } from '@/lib/axios';
 
-const forgotPasswordSchema = z.object({
-  email: z.string().email('Adresse email invalide'),
-});
-
-type ForgotPasswordFormValues = z.infer<typeof forgotPasswordSchema>;
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function ForgotPasswordPage() {
+  const [email, setEmail] = useState('');
+  const [error, setError] = useState('');
+  const [submitError, setSubmitError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
-  const { register, handleSubmit, formState: { errors }, getValues } = useForm<ForgotPasswordFormValues>({
-    resolver: zodResolver(forgotPasswordSchema),
-  });
+  const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setSubmitError('');
 
-  const onSubmit = async (data: ForgotPasswordFormValues) => {
+    const normalizedEmail = email.trim();
+    if (!EMAIL_REGEX.test(normalizedEmail)) {
+      setError('Adresse email invalide');
+      return;
+    }
+
+    setError('');
+
     try {
       setIsLoading(true);
-      await api.post('/auth/forgot-password', data);
+      await api.post('/auth/forgot-password', { email: normalizedEmail });
       setIsSuccess(true);
-      toast.success('Email de réinitialisation envoyé !');
     } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Erreur lors de l\'envoi de l\'email');
+      setSubmitError(err.response?.data?.error || "Erreur lors de l'envoi de l'email");
     } finally {
       setIsLoading(false);
     }
@@ -44,13 +45,13 @@ export default function ForgotPasswordPage() {
     return (
       <div className="flex flex-col gap-6 w-full animate-in fade-in duration-200">
         <div className="flex flex-col items-center text-center">
-          <div className="w-16 h-16 bg-success/15 text-success rounded-full flex items-center justify-center mb-4 border border-success/30">
+          <div className="w-16 h-16 bg-okl text-ok rounded-full flex items-center justify-center mb-4 border border-[var(--ok-b)]">
             <CheckCircle2 className="h-8 w-8" />
           </div>
-          <h1 className="text-2xl font-semibold tracking-tight">Email envoyé !</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Email envoye !</h1>
           <p className="text-sm text-muted-foreground mt-2 max-w-md">
-            Si l'adresse <strong>{getValues('email')}</strong> est associée à un compte, 
-            vous recevrez un lien de réinitialisation dans quelques minutes.
+            Si l&apos;adresse <strong>{email}</strong> est associee a un compte,
+            vous recevrez un lien de reinitialisation dans quelques minutes.
           </p>
         </div>
 
@@ -59,10 +60,10 @@ export default function ForgotPasswordPage() {
             <div className="flex items-start gap-3">
               <Mail className="h-5 w-5 text-primary mt-0.5" />
               <div className="flex-1">
-                <h3 className="text-sm font-semibold text-foreground">Vérifiez votre boîte email</h3>
+                <h3 className="text-sm font-semibold text-foreground">Verifiez votre boite email</h3>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Le lien de réinitialisation est valide pendant 15 minutes. 
-                  Pensez à vérifier vos spams si vous ne le trouvez pas.
+                  Le lien de reinitialisation est valide pendant 15 minutes.
+                  Pensez a verifier vos spams si vous ne le trouvez pas.
                 </p>
               </div>
             </div>
@@ -71,7 +72,7 @@ export default function ForgotPasswordPage() {
           <Button asChild variant="outline" className="w-full">
             <Link href="/login">
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Retour à la connexion
+              Retour a la connexion
             </Link>
           </Button>
         </div>
@@ -82,29 +83,36 @@ export default function ForgotPasswordPage() {
   return (
     <div className="flex flex-col gap-6 w-full animate-in fade-in duration-200">
       <div className="flex flex-col items-center text-center">
-        <h1 className="text-2xl font-semibold tracking-tight">Mot de passe oublié ?</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Mot de passe oublie ?</h1>
         <p className="text-sm text-muted-foreground mt-2">
-          Entrez votre adresse email pour recevoir un lien de réinitialisation
+          Entrez votre adresse email pour recevoir un lien de reinitialisation
         </p>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={onSubmit} className="space-y-4">
         <div className="space-y-2 relative">
           <Label htmlFor="email">Adresse email</Label>
-          <Input 
-            id="email" 
-            placeholder="nom@exemple.com" 
-            type="email" 
+          <Input
+            id="email"
+            placeholder="nom@exemple.com"
+            type="email"
             autoCapitalize="none"
             autoComplete="email"
             autoCorrect="off"
-            className={`bg-background transition-shadow duration-300 focus-visible:ring-primary/50 ${errors.email ? 'border-destructive focus-visible:ring-destructive/50' : ''}`}
-            {...register('email')} 
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            className={`bg-background transition-shadow duration-300 focus-visible:ring-primary/50 ${error ? 'border-err focus-visible:ring-destructive/50' : ''}`}
           />
-          {errors.email && (
-            <span className="text-xs text-destructive absolute -bottom-5 left-0">{errors.email.message}</span>
+          {error && (
+            <span className="text-xs text-err absolute -bottom-5 left-0">{error}</span>
           )}
         </div>
+
+        {submitError && (
+          <div className="rounded-md border border-[var(--err-b)] bg-errl px-3 py-2 text-sm text-err">
+            {submitError}
+          </div>
+        )}
 
         <Button type="submit" className="w-full mt-6" disabled={isLoading}>
           {isLoading ? (
@@ -115,7 +123,7 @@ export default function ForgotPasswordPage() {
           ) : (
             <>
               <Mail className="h-4 w-4 mr-2" />
-              Envoyer le lien de réinitialisation
+              Envoyer le lien de reinitialisation
             </>
           )}
         </Button>

@@ -50,26 +50,26 @@ const ApplicationTimeline = ({ application }: ApplicationTimelineProps) => {
             {/* Vertical line */}
             <div className="flex flex-col items-center">
               <div
-                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
+                className={`flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full border-2 ${
                   isCompleted
-                    ? "bg-success text-success-foreground"
+                    ? "bg-violet border-violet text-white"
                     : isCurrent
-                    ? "bg-primary text-primary-foreground"
-                    : "border-2 border-border bg-card"
+                    ? "bg-card border-violet animate-npulse"
+                    : "border-border2 bg-card2"
                 }`}
               >
                 {isCompleted ? (
-                  <Check className="h-4 w-4" />
+                  <Check className="h-3 w-3" />
                 ) : isCurrent ? (
-                  <div className="h-2.5 w-2.5 rounded-full bg-primary-foreground animate-pulse-dot" />
+                  <div className="h-2.5 w-2.5 rounded-full bg-violet" />
                 ) : (
-                  <div className="h-2.5 w-2.5 rounded-full bg-muted" />
+                  <div className="h-2.5 w-2.5 rounded-full bg-border" />
                 )}
               </div>
               {index < steps.length - 1 && (
                 <div
-                  className={`w-0.5 flex-1 min-h-[24px] ${
-                    isCompleted ? "bg-success" : "bg-border"
+                  className={`w-0.5 flex-1 min-h-[24px] rounded-sm ${
+                    isCompleted ? "bg-violet" : "bg-border"
                   }`}
                 />
               )}
@@ -79,13 +79,13 @@ const ApplicationTimeline = ({ application }: ApplicationTimelineProps) => {
             <div className="pb-6 pt-1">
               <p
                 className={`text-sm font-semibold ${
-                  isPending ? "text-muted-foreground" : "text-card-foreground"
+                  isPending ? "text-ink4 font-normal" : "text-ink"
                 }`}
               >
                 {step.label}
               </p>
               {date && (
-                <p className="mt-0.5 text-xs text-muted-foreground">
+                <p className="mt-0.5 text-[10px] text-ink4 font-mono">
                   {new Date(date).toLocaleDateString("fr-TN")}
                 </p>
               )}
@@ -96,23 +96,23 @@ const ApplicationTimeline = ({ application }: ApplicationTimelineProps) => {
                   onClick={() => setInterviewExpanded(!interviewExpanded)}
                   className="mt-2 w-full text-left"
                 >
-                  <div className="rounded-xl border border-border bg-accent/50 p-3 transition-all">
-                    <div className="flex items-center gap-2 text-sm font-medium text-card-foreground">
-                      <Clock className="h-4 w-4 text-primary" />
+                  <div className="rounded-md border-[1.5px] border-[var(--violet-b)] bg-violetl p-3 transition-all">
+                    <div className="flex items-center gap-2 text-sm font-semibold text-ink">
+                      <Clock className="h-4 w-4 text-violet" />
                       <span>{application.interviewTime}</span>
-                      <span className="ml-auto rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
+                      <span className="ml-auto rounded-full border border-[var(--violet-b)] bg-violetl px-2 py-0.5 text-xs font-semibold text-violet">
                         {getCountdown()}
                       </span>
                     </div>
                     {interviewExpanded && (
-                      <div className="mt-3 space-y-2 animate-slide-in-right">
-                        <div className="flex items-start gap-2 text-xs text-muted-foreground">
-                          <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                      <div className="mt-3 space-y-2">
+                        <div className="flex items-start gap-2 text-xs text-ink2">
+                          <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-violet" />
                           <span>{application.interviewLocation}</span>
                         </div>
                         {application.prepNotes && (
-                          <div className="flex items-start gap-2 text-xs text-muted-foreground">
-                            <FileText className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                          <div className="flex items-start gap-2 text-xs text-ink2">
+                            <FileText className="mt-0.5 h-3.5 w-3.5 shrink-0 text-violet" />
                             <span>{application.prepNotes}</span>
                           </div>
                         )}

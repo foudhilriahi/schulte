@@ -5,19 +5,19 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '@/lib/utils'
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-[13px] font-semibold tracking-[0.01em] transition-colors duration-150 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-[13px] font-bold tracking-[0.01em] transition-[transform,background-color,border-color,box-shadow,color] duration-150 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-primary focus-visible:ring-[3px] focus-visible:ring-[var(--violet-l)]",
   {
     variants: {
       variant: {
-        default: 'bg-primary text-primary-foreground hover:bg-acch active:scale-[0.97]',
+        default: 'bg-primary text-primary-foreground shadow-[0_4px_16px_rgba(91,79,232,0.30)] hover:-translate-y-px hover:bg-[var(--violet-h)] hover:shadow-[0_6px_20px_rgba(91,79,232,0.38)] active:scale-[0.96]',
         destructive:
-          'bg-destructive/15 border border-destructive/30 text-destructive hover:bg-destructive/25 active:scale-[0.97]',
+          'bg-errl border-[1.5px] border-[var(--err-b)] text-err hover:bg-errl active:scale-[0.96]',
         outline:
-          'border border-input bg-transparent text-foreground hover:bg-accent/60 hover:text-foreground active:scale-[0.97]',
+          'border-[1.5px] border-border bg-card text-ink2 hover:border-border2 hover:bg-card2 active:scale-[0.96]',
         secondary:
-          'bg-secondary text-secondary-foreground hover:bg-secondary/80',
+          'border-[1.5px] border-border bg-card text-ink2 hover:border-border2 hover:bg-card2 active:scale-[0.96]',
         ghost:
-          'bg-secondary border border-input text-secondary-foreground hover:bg-s4 hover:text-foreground active:scale-[0.97]',
+          'bg-transparent text-ink3 hover:bg-card2 hover:text-ink active:scale-[0.96]',
         link: 'text-primary underline-offset-4 hover:underline',
       },
       size: {

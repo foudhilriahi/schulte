@@ -97,9 +97,8 @@ classDiagram
     class Notification {
         +String id
         +String userId
-        +String applicationId
         +String type
-        +String payload
+        +Json payload
         +Boolean emailSent
         +DateTime readAt
         +DateTime createdAt
@@ -119,7 +118,7 @@ classDiagram
         +findByEmail(email) User
         +findByPhone(phone) User
         +create(data) User
-        +updateEmail(id, email) User
+        +update(id, data) User
     }
 
     class OfferRepository {
@@ -127,19 +126,23 @@ classDiagram
         +findAll(filters) JobOffer
         +findById(id) JobOffer
         +create(data) JobOffer
-        +updateStatus(id, status) JobOffer
-        +softDelete(id) void
+        +update(id, data) JobOffer
+        +delete(id) JobOffer
     }
 
     class ApplicationRepository {
         <<Repository>>
-        +findAll(filters) Application
+        +findByCandidate(candidateId) Application
+        +findByOffer(offerId) Application
+        +findAllBySite(site) Application
         +findById(id) Application
-        +findWithDetails(id) Application
         +create(data) Application
         +updateStatus(id, status) Application
+        +updateNotes(id, notes) Application
+        +updateRating(id, rating) Application
+        +updateTags(id, tags) Application
         +saveAIResult(id, result) Application
-        +bulkUpdateStatus(ids, status) void
+        +checkDuplicate(candidateId, offerId) Application
     }
 
     class CandidateCVRepository {
@@ -153,28 +156,33 @@ classDiagram
 
     class InterviewRepository {
         <<Repository>>
-        +create(data) Interview
-        +findWithApplication(id) Interview
-        +findUpcomingUnreminded(from, to) Interview
-        +updateOutcome(id, outcome) Interview
-        +markReminderSent(id) void
+        +findById(id) Interview
+        +findByApplication(applicationId) Interview
+        +findTomorrow() Interview
+        +markOutcome(id, outcome) Interview
     }
 
     class NotificationRepository {
         <<Repository>>
         +create(data) Notification
-        +findByUser(userId) Notification
-        +markAllRead(userId) void
-        +markEmailSent(appId, status) void
+        +createManyForUsers(data) Notification
+        +findByUser(userId, limit) Notification
+        +markAllRead(userId) Number
+        +markOneRead(id, userId) Number
+        +countUnread(userId) Number
+        +deleteOne(id, userId) Number
+        +deleteAllByUser(userId) Number
     }
 
     class AuthService {
         <<Service>>
-        +generateTokens(user) String
+        +hashPassword(password) String
+        +comparePassword(password, hash) Boolean
+        +generateAccessToken(payload) String
+        +generateRefreshToken() String
         +hashToken(raw) String
-        +saveRefreshToken(userId, raw) void
         +setRefreshCookie(res, raw) void
-        +sanitizeUser(user) User
+        +clearRefreshCookie(res) void
     }
 
     class AIService {
@@ -207,6 +215,7 @@ classDiagram
         <<Observer>>
         +onStatusChanged(application, status) void
         +onInterviewScheduled(application, interview) void
+        +onInterviewReminder(interview) void
     }
 
     class EmailService {
@@ -244,7 +253,6 @@ classDiagram
     JobOffer "1" --> "*" Application : recoit
     CandidateCV "1" --> "*" Application : alimente candidature
     Application "1" --> "0..1" Interview : donne lieu a
-    Application "1" --> "*" Notification : genere
 
     AIService <|-- GeminiStrategy : implements
     AIService <|-- PuterStrategy : implements

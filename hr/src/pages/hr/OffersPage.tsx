@@ -9,11 +9,11 @@ import { toast } from 'sonner'
 import { useNavigate } from 'react-router-dom'
 import TemplateSelector from '@/components/hr/TemplateSelector'
 
-const statusMap: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' }> = {
-  open: { label: 'Actif', variant: 'default' },
-  active: { label: 'Actif', variant: 'default' },
-  paused: { label: 'En pause', variant: 'secondary' },
-  closed: { label: 'Fermée', variant: 'destructive' },
+const statusMap: Record<string, { label: string; className: string }> = {
+  open: { label: 'Actif', className: 'bg-okl text-ok border-[var(--ok-b)]' },
+  active: { label: 'Actif', className: 'bg-okl text-ok border-[var(--ok-b)]' },
+  paused: { label: 'En pause', className: 'bg-warnl text-warn border-[var(--warn-b)]' },
+  closed: { label: 'Fermée', className: 'bg-errl text-err border-[var(--err-b)]' },
 }
 
 const OffersPage = () => {
@@ -26,7 +26,7 @@ const OffersPage = () => {
     try {
       const { data } = await api.get('/offers/hr/my-offers')
       setOffers(data)
-    } catch { toast.error('Failed to load offers') }
+    } catch { toast.error('Echec du chargement des offres') }
     finally { setLoading(false) }
   }
 
@@ -35,9 +35,9 @@ const OffersPage = () => {
   const handleStatusChange = async (id: string, status: string) => {
     try {
       await api.patch(`/offers/${id}`, { status })
-      toast.success('Offer status updated.')
+      toast.success('Statut de l\'offre mis a jour.')
       fetchOffers()
-    } catch { toast.error('Error updating offer') }
+    } catch { toast.error('Erreur lors de la mise a jour de l\'offre') }
   }
 
   const handleTemplateSelect = (template: any) => {
@@ -52,7 +52,7 @@ const OffersPage = () => {
     <DashboardLayout title="Offres">
       <div className="flex items-center justify-between mb-4">
         <p className="text-sm text-muted-foreground">{offers.length} offre(s)</p>
-        <Button onClick={() => setShowTemplateSelector(true)} className="gap-2 bg-primary hover:bg-acch">
+        <Button onClick={() => setShowTemplateSelector(true)} className="gap-2">
           <Plus className="h-4 w-4" /> Nouvelle Offre
         </Button>
       </div>
@@ -66,24 +66,24 @@ const OffersPage = () => {
           const hasStats = (stats?.totalApplications ?? 0) > 0
           
           return (
-            <Card key={offer.id} className="rounded-md shadow-[0_1px_3px_rgba(0,0,0,0.45)]">
+            <Card key={offer.id} className="rounded-md shadow-card">
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-base">{offer.title}</CardTitle>
-                  <Badge variant={s.variant} className="text-xs">{s.label}</Badge>
+                  <Badge className={`text-xs ${s.className}`}>{s.label}</Badge>
                 </div>
               </CardHeader>
               <CardContent className="space-y-2.5">
                 <div className="flex items-center gap-4 text-sm text-muted-foreground">
                   <span className="flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{offer.site}</span>
-                  <Badge variant="outline" className="text-xs">{offer.contractType}</Badge>
+                  <Badge variant="outline" className="text-xs bg-card2 text-ink3 border-border">{offer.contractType}</Badge>
                 </div>
                 
                 {/* Application Stats */}
                 <div className="pt-2 border-t border-border space-y-2">
                   <div className="flex items-center justify-between text-xs">
                     <span className="flex items-center gap-1 text-muted-foreground">
-                      <Users className="h-3.5 w-3.5" />Total Applications:
+                      <Users className="h-3.5 w-3.5" />Total candidatures :
                     </span>
                     <span className="font-semibold">{stats.totalApplications || 0}</span>
                   </div>
@@ -91,7 +91,7 @@ const OffersPage = () => {
                   {hasStats && (
                     <>
                       <div className="flex items-center justify-between text-xs">
-                        <span className="text-muted-foreground">AI Analyzed:</span>
+                        <span className="text-muted-foreground">Analyse IA :</span>
                         <span className="font-medium text-ok">
                           {stats.applicationsWithAI || 0} ({stats.averageAIScore ? `${stats.averageAIScore}%` : 'N/A'})
                         </span>
@@ -99,19 +99,19 @@ const OffersPage = () => {
                       
                       <div className="grid grid-cols-2 gap-2 text-xs pt-1">
                         <div className="flex justify-between">
-                          <span className="text-warn">Reviewing:</span>
+                          <span className="text-warn">En examen :</span>
                           <span className="font-medium">{stats.statusBreakdown?.reviewing || 0}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-bou">Interview:</span>
+                          <span className="text-primary">Entretien :</span>
                           <span className="font-medium">{stats.statusBreakdown?.interview || 0}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-ok">Accepted:</span>
+                          <span className="text-ok">Acceptées :</span>
                           <span className="font-medium">{stats.statusBreakdown?.accepted || 0}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-err">Rejected:</span>
+                          <span className="text-err">Rejetees :</span>
                           <span className="font-medium">{stats.statusBreakdown?.rejected || 0}</span>
                         </div>
                       </div>
@@ -120,14 +120,14 @@ const OffersPage = () => {
                 </div>
                 
                 <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t border-border">
-                  <span className="flex items-center gap-1"><Calendar className="h-3.5 w-3.5" />Deadline: {offer.deadline ? new Date(offer.deadline).toLocaleDateString('fr-TN') : '—'}</span>
-                  <span>{offer.seats || 1} seat(s)</span>
+                  <span className="flex items-center gap-1"><Calendar className="h-3.5 w-3.5" />Date limite : {offer.deadline ? new Date(offer.deadline).toLocaleDateString('fr-TN') : '—'}</span>
+                  <span>{offer.seats || 1} poste(s)</span>
                 </div>
                 
                 <div className="flex gap-2 pt-1">
                   {offer.status === 'open' && (
                     <Button variant="outline" size="sm" className="text-xs gap-1" onClick={() => handleStatusChange(offer.id, 'paused')}>
-                      <Pause className="h-3 w-3" /> Pause
+                      <Pause className="h-3 w-3" /> Mettre en pause
                     </Button>
                   )}
                   {offer.status === 'paused' && (
@@ -136,7 +136,7 @@ const OffersPage = () => {
                     </Button>
                   )}
                   {offer.status !== 'closed' && (
-                    <Button variant="outline" size="sm" className="text-xs gap-1 border-err/40 text-err hover:bg-err/12" onClick={() => handleStatusChange(offer.id, 'closed')}>
+                    <Button variant="outline" size="sm" className="text-xs gap-1 border-err/40 text-err hover:bg-errl" onClick={() => handleStatusChange(offer.id, 'closed')}>
                       <XIcon className="h-3 w-3" /> Fermer
                     </Button>
                   )}

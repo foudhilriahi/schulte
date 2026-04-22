@@ -35,9 +35,11 @@ sequenceDiagram
 
     Drawer->>Backend: PATCH /api/applications/:id/analysis avec payload merge
     Backend->>DB: Persiste aiAnalysis/aiScore fusionnes
-    Backend->>Socket: emit application:analysed vers RH site
-    Backend->>Socket: emit ai:analysis_complete vers candidat
-    Socket-->>PWA: Tips IA publies (score reserve RH)
+    Note over Backend, Socket: Ce PATCH persiste uniquement le merge (pas d'emit socket direct)
+
+    Note over Backend, Socket: Les emits IA candidats/RH proviennent de:
+    Note over Backend, Socket: - POST /api/applications/:id/analyse => application:manual_analysis + ai:analysis_updated
+    Note over Backend, Socket: - analyse async creation candidature => application:analysed + ai:analysis_complete
 
     Drawer-->>RH: Vue fusionnee + raisonnement par fournisseur
 ```

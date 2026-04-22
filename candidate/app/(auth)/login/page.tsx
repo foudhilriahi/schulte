@@ -1,51 +1,77 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { FormEvent, useState } from 'react';
 import Link from 'next/link';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { PwaInstallHint } from '@/components/pwa-install-hint';
 import { api } from '@/lib/axios';
 import { useAuthStore } from '@/store/auth';
+import { useRouterWithLoader } from '@/hooks/use-router-with-loader';
 
-const loginSchema = z.object({
-  email: z.string().email('Adresse email invalide'),
-  password: z.string().min(6, 'Mot de passe requis'),
-});
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-type LoginFormValues = z.infer<typeof loginSchema>;
+type LoginValues = {
+  email: string;
+  password: string;
+};
+
+type LoginErrors = Partial<Record<keyof LoginValues, string>>;
+
+const initialValues: LoginValues = {
+  email: '',
+  password: '',
+};
+
+function validate(values: LoginValues): LoginErrors {
+  const errors: LoginErrors = {};
+
+  if (!EMAIL_REGEX.test(values.email.trim())) {
+    errors.email = 'Adresse email invalide';
+  }
+
+  if (values.password.length < 6) {
+    errors.password = 'Mot de passe requis';
+  }
+
+  return errors;
+}
 
 export default function LoginPage() {
-  const router = useRouter();
+  const router = useRouterWithLoader();
   const { login } = useAuthStore();
+  const [values, setValues] = useState<LoginValues>(initialValues);
+  const [errors, setErrors] = useState<LoginErrors>({});
+  const [submitError, setSubmitError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const { register, handleSubmit, formState: { errors } } = useForm<LoginFormValues>({
-    resolver: zodResolver(loginSchema),
-  });
+  const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const nextErrors = validate(values);
+    setErrors(nextErrors);
+    setSubmitError('');
 
-  const onSubmit = async (data: LoginFormValues) => {
+    if (Object.keys(nextErrors).length > 0) return;
+
     try {
       setIsLoading(true);
-      const res = await api.post('/auth/login', data);
-      
+      const res = await api.post('/auth/login', {
+        email: values.email.trim(),
+        password: values.password,
+      });
+
       const { user, accessToken } = res.data;
       if (user.role !== 'CANDIDATE') {
-        toast.error('Accès refusé. Cette application est réservée aux candidats.');
+        setSubmitError('Acces refuse. Cette application est reservee aux candidats.');
         return;
       }
 
       login(user, accessToken);
-      toast.success('Connexion réussie !');
       router.push('/');
     } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Erreur de connexion');
+      setSubmitError(err.response?.data?.error || 'Erreur de connexion');
     } finally {
       setIsLoading(false);
     }
@@ -56,25 +82,26 @@ export default function LoginPage() {
       <div className="flex flex-col items-center text-center">
         <h1 className="text-2xl font-semibold tracking-tight">Bon retour</h1>
         <p className="text-sm text-muted-foreground mt-2">
-          Entrez vos identifiants pour accéder à votre espace candidat
+          Entrez vos identifiants pour acceder a votre espace candidat
         </p>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={onSubmit} className="space-y-4">
         <div className="space-y-2 relative">
           <Label htmlFor="email">Email</Label>
-          <Input 
-            id="email" 
-            placeholder="nom@exemple.com" 
-            type="email" 
+          <Input
+            id="email"
+            placeholder="nom@exemple.com"
+            type="email"
             autoCapitalize="none"
             autoComplete="email"
             autoCorrect="off"
-            className={`bg-background transition-shadow duration-300 focus-visible:ring-primary/50 ${errors.email ? 'border-destructive focus-visible:ring-destructive/50' : ''}`}
-            {...register('email')} 
+            value={values.email}
+            onChange={(event) => setValues((prev) => ({ ...prev, email: event.target.value }))}
+            className={`bg-background transition-shadow duration-300 focus-visible:ring-primary/50 ${errors.email ? 'border-err focus-visible:ring-destructive/50' : ''}`}
           />
           {errors.email && (
-            <span className="text-xs text-destructive absolute -bottom-5 left-0">{errors.email.message}</span>
+            <span className="text-xs text-err absolute -bottom-5 left-0">{errors.email}</span>
           )}
         </div>
 
@@ -82,20 +109,27 @@ export default function LoginPage() {
           <div className="flex items-center justify-between">
             <Label htmlFor="password">Mot de passe</Label>
             <Link href="/forgot-password" className="text-xs font-medium text-primary hover:underline">
-              Mot de passe oublié ?
+              Mot de passe oublie ?
             </Link>
           </div>
-          <Input 
-            id="password" 
+          <Input
+            id="password"
             type="password"
             autoComplete="current-password"
-            className={`bg-background transition-shadow duration-300 focus-visible:ring-primary/50 ${errors.password ? 'border-destructive focus-visible:ring-destructive/50' : ''}`}
-            {...register('password')} 
+            value={values.password}
+            onChange={(event) => setValues((prev) => ({ ...prev, password: event.target.value }))}
+            className={`bg-background transition-shadow duration-300 focus-visible:ring-primary/50 ${errors.password ? 'border-err focus-visible:ring-destructive/50' : ''}`}
           />
           {errors.password && (
-            <span className="text-xs text-destructive absolute -bottom-5 left-0">{errors.password.message}</span>
+            <span className="text-xs text-err absolute -bottom-5 left-0">{errors.password}</span>
           )}
         </div>
+
+        {submitError && (
+          <div className="rounded-md border border-[var(--err-b)] bg-errl px-3 py-2 text-sm text-err">
+            {submitError}
+          </div>
+        )}
 
         <Button type="submit" className="w-full mt-6" disabled={isLoading}>
           {isLoading ? (
@@ -108,6 +142,8 @@ export default function LoginPage() {
           )}
         </Button>
       </form>
+
+      <PwaInstallHint />
 
       <div className="text-center text-sm text-muted-foreground">
         Pas encore de compte ?{' '}

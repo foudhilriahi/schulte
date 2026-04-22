@@ -13,20 +13,20 @@ router.get('/:filename', authenticate, (req, res) => {
     
     // Validate filename to prevent path traversal
     if (!filename || filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
-      return res.status(400).json({ error: 'Invalid filename' });
+      return res.status(400).json({ error: 'Nom de fichier invalide' });
     }
 
     const filePath = path.join(__dirname, '../../uploads', filename);
     
     // Check if file exists
     if (!fs.existsSync(filePath)) {
-      return res.status(404).json({ error: 'File not found' });
+      return res.status(404).json({ error: 'Fichier introuvable' });
     }
 
     // Get file stats
     const stats = fs.statSync(filePath);
     if (!stats.isFile()) {
-      return res.status(404).json({ error: 'File not found' });
+      return res.status(404).json({ error: 'Fichier introuvable' });
     }
 
     // Set appropriate headers
@@ -54,7 +54,7 @@ router.get('/:filename', authenticate, (req, res) => {
     
   } catch (error) {
     logger.error('File serving error:', error);
-    res.status(500).json({ error: 'Failed to serve file' });
+    res.status(500).json({ error: 'Echec du service du fichier' });
   }
 });
 

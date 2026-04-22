@@ -16,24 +16,34 @@ flowchart TD
     G -->|Non| Z
     G -->|Oui| F
 
-    F --> H[PATCH /api/applications/:id/status]
-    H --> I[Backend normalizeStatus]
-    I --> J{Valeur recue}
+    F --> H{toStatus = interview ?}
 
-    J -->|review| K[Converti en reviewing]
-    J -->|new/reviewing/interview/accepted/rejected| L[Conserve tel quel]
-    J -->|autre| M[Retour 400 statut invalide]
+    H -->|Oui| I[Ouvre ScheduleInterviewModal et stocke pendingSchedule]
+    I --> J{Modal completee ?}
+    J -->|Non| K[Rollback visuel vers fromStatus]
+    K --> Z
+    J -->|Oui| L[POST /api/interviews puis PATCH status interview]
+    L --> M[fetchApplications + toast succes]
+    M --> Z
 
-    K --> N[Update DB + emit events]
-    L --> N
+    H -->|Non| N[PATCH /api/applications/:id/status]
+    N --> O[Backend normalizeStatus]
+    O --> P{Valeur recue}
 
-    N --> O[Socket status:changed + notifications]
-    O --> P[UI RH met a jour colonne localement]
-    O --> Q[PWA candidat met a jour timeline]
-    P --> R[Toast succes]
-    Q --> R
+    P -->|review| Q[Converti en reviewing]
+    P -->|new/reviewing/interview/accepted/rejected| R[Conserve tel quel]
+    P -->|autre| S[Retour 400 statut invalide]
 
-    M --> S[UI affiche erreur et rollback visuel]
-    S --> Z
-    R --> Z[Fin]
+    Q --> T[Update DB + emit application.statusChanged]
+    R --> T
+
+    T --> U[Socket status:changed + notifications]
+    U --> V[UI RH met a jour colonne]
+    U --> W[PWA candidat met a jour timeline]
+    V --> X[Toast succes]
+    W --> X
+    X --> Z
+
+    S --> Y[UI affiche erreur et rollback visuel]
+    Y --> Z
 ```

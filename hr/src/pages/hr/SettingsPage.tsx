@@ -9,7 +9,7 @@ const SettingsPage = () => {
   return (
     <DashboardLayout title="Paramètres">
       <div className="max-w-2xl space-y-6">
-        <Card className="rounded-md shadow-[0_1px_3px_rgba(0,0,0,0.45)]">
+        <Card className="rounded-md shadow-card">
           <CardHeader><CardTitle className="text-base">Profil RH</CardTitle></CardHeader>
           <CardContent className="space-y-3">
             <div className="flex items-center justify-between py-2 border-b border-border">
@@ -27,7 +27,7 @@ const SettingsPage = () => {
           </CardContent>
         </Card>
 
-        <Card className="rounded-md shadow-[0_1px_3px_rgba(0,0,0,0.45)]">
+        <Card className="rounded-md shadow-card">
           <CardHeader><CardTitle className="text-base">Site d'affectation</CardTitle></CardHeader>
           <CardContent>
             <p className="text-sm capitalize font-medium">{user?.site || '—'}</p>

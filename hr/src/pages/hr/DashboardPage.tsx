@@ -22,11 +22,11 @@ import {
 } from "recharts";
 
 const statusBadge: Record<string, { label: string; className: string }> = {
-  new: { label: "Nouveau", className: "bg-s3 text-foreground" },
-  reviewing: { label: "En examen", className: "bg-warn/14 text-warn" },
-  interview: { label: "Entretien", className: "bg-bou/14 text-bou" },
-  accepted: { label: "Accepté", className: "bg-ok/14 text-ok" },
-  rejected: { label: "Rejeté", className: "bg-err/14 text-err" },
+  new: { label: "Nouveau", className: "bg-card2 text-ink3 border-border" },
+  reviewing: { label: "En examen", className: "bg-warnl text-warn border-[var(--warn-b)]" },
+  interview: { label: "Entretien", className: "bg-boul text-primary border-[var(--bou-b)]" },
+  accepted: { label: "Accepté", className: "bg-okl text-ok border-[var(--ok-b)]" },
+  rejected: { label: "Rejeté", className: "bg-errl text-err border-[var(--err-b)]" },
 };
 
 const DashboardPage = () => {
@@ -84,36 +84,36 @@ const DashboardPage = () => {
     {
       name: "Nouvelles",
       value: stats.applicationsByStatus.find((s: any) => s.status === "new")?.count || 0,
-      color: "hsl(var(--bouarada))",
+      color: "var(--bouarada)",
     },
     {
       name: "En examen",
       value: stats.applicationsByStatus.find((s: any) => s.status === "reviewing")?.count || 0,
-      color: "hsl(var(--warning))",
+      color: "var(--warning)",
     },
     {
       name: "Entretien",
       value: stats.applicationsByStatus.find((s: any) => s.status === "interview")?.count || 0,
-      color: "hsl(var(--bouarada))",
+      color: "var(--bouarada)",
     },
     {
       name: "Acceptées",
       value: stats.applicationsByStatus.find((s: any) => s.status === "accepted")?.count || 0,
-      color: "hsl(var(--success))",
+      color: "var(--success)",
     },
     {
       name: "Rejetées",
       value: stats.applicationsByStatus.find((s: any) => s.status === "rejected")?.count || 0,
-      color: "hsl(var(--destructive))",
+      color: "var(--destructive)",
     },
   ];
 
   return (
-    <DashboardLayout title="Dashboard">
+    <DashboardLayout title="Tableau de bord">
       {/* ── KPI Row ────────────────────────────────────────────────────── */}
       <div className="mb-4">
-        <h2 className="text-lg font-semibold text-foreground">
-          Site: <span className="text-bou">{stats.site}</span>
+          <h2 className="text-lg font-semibold text-ink">
+          Site: <span className="text-primary">{stats.site}</span>
         </h2>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -132,7 +132,7 @@ const DashboardPage = () => {
           label="Candidatures ce mois"
           value={stats.applicationsMonth}
           icon={Users}
-          iconColor="text-bou"
+          iconColor="text-primary"
         />
         <StatCard
           label="Entretiens cette semaine"
@@ -145,7 +145,7 @@ const DashboardPage = () => {
       {/* ── 3-col grid ─────────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Card 1 — Recent applications */}
-        <Card className="rounded-md shadow-[0_1px_3px_rgba(0,0,0,0.45)]">
+        <Card className="rounded-md shadow-card">
           <CardHeader>
             <CardTitle className="text-base">Candidatures récentes</CardTitle>
           </CardHeader>
@@ -159,18 +159,18 @@ const DashboardPage = () => {
               {recentApps.map((a: any, i: number) => {
                 const badge = statusBadge[a.status] ?? {
                   label: a.status,
-                  className: "bg-s3 text-foreground",
+                  className: "bg-card2 text-foreground",
                 };
                 return (
                   <div
                     key={a.id}
-                    className={`flex items-center justify-between px-6 py-3 ${i % 2 === 0 ? "bg-card" : "bg-muted/30"}`}
+                    className={`flex items-center justify-between px-6 py-3 ${i % 2 === 0 ? "bg-card" : "bg-page"}`}
                   >
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-card-foreground">
+                      <p className="text-sm font-medium text-ink">
                         {a.candidateName || "Candidat"}
                       </p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs text-ink3">
                         {a.offerTitle || ""} • {a.contractType || ""}
                       </p>
                     </div>
@@ -185,7 +185,7 @@ const DashboardPage = () => {
         </Card>
 
         {/* Card 2 — Upcoming interviews */}
-        <Card className="rounded-md shadow-[0_1px_3px_rgba(0,0,0,0.45)]">
+        <Card className="rounded-md shadow-card">
           <CardHeader>
             <CardTitle className="text-base">Prochains entretiens</CardTitle>
           </CardHeader>
@@ -213,20 +213,20 @@ const DashboardPage = () => {
                 return (
                   <div
                     key={interview.id}
-                    className={`flex items-center justify-between px-6 py-3 ${i % 2 === 0 ? "bg-card" : "bg-muted/30"}`}
+                    className={`flex items-center justify-between px-6 py-3 ${i % 2 === 0 ? "bg-card" : "bg-page"}`}
                   >
                     <div>
-                      <p className="text-sm font-medium text-card-foreground">
+                      <p className="text-sm font-medium text-ink">
                         {interview.application?.candidate?.name || "Candidat"}
                       </p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs text-ink3">
                         {interview.application?.offer?.title || ""} —{" "}
                         {dateLabel}
                         {timeLabel ? ` à ${timeLabel}` : ""}
                         {interview.location ? ` • ${interview.location}` : ""}
                       </p>
                     </div>
-                    <Badge className="text-xs bg-bou/14 text-bou">
+                    <Badge className="text-xs bg-boul text-primary border-[var(--bou-b)]">
                       Planifié
                     </Badge>
                   </div>
@@ -237,7 +237,7 @@ const DashboardPage = () => {
         </Card>
 
         {/* Card 3 — Application status chart */}
-        <Card className="rounded-md shadow-[0_1px_3px_rgba(0,0,0,0.45)]">
+        <Card className="rounded-md shadow-card">
           <CardHeader>
             <CardTitle className="text-base">
               Répartition des candidatures
@@ -259,8 +259,8 @@ const DashboardPage = () => {
                   >
                     <XAxis dataKey="name" tick={{ fontSize: 11 }} />
                     <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
-                    <Tooltip
-                      contentStyle={{ fontSize: 12, borderRadius: 8 }}
+                      <Tooltip
+                        contentStyle={{ fontSize: 12, borderRadius: 8 }}
                       formatter={(value: number) => [value, "Candidatures"]}
                     />
                     <Bar dataKey="value" radius={[4, 4, 0, 0]}>

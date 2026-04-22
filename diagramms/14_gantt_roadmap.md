@@ -20,7 +20,7 @@ gantt
     Upload PDF Multer UUID pdf-parse             :done, m2t1, 2025-03-03, 5d
     CV Builder multi-etapes validation renforcee :done, m2t2, 2025-03-08, 5d
     Generateur CV jsPDF Moderne et Classique     :done, m2t3, 2025-03-13, 4d
-    Kanban glisser-deposer dnd-kit               :done, m2t4, 2025-03-17, 5d
+    Kanban glisser-deposer @hello-pangea/dnd     :done, m2t4, 2025-03-17, 5d
     Drawer candidat visionneuse PDF              :done, m2t5, 2025-03-22, 4d
     IA dual provider + prompt partage + merge    :done, m2t6, 2025-03-26, 3d
     Observer Socket.io + email par statut        :done, m2t7, 2025-03-29, 1d
@@ -31,7 +31,7 @@ gantt
     Frise chronologique animee Framer Motion     :done, m3t3, 2025-04-07, 4d
     PWA Service Worker + manifest installable    :done, m3t4, 2025-04-11, 3d
     Extraction email depuis CV regex             :done, m3t5, 2025-04-14, 2d
-    Actions Kanban en masse BulkActionBar        :done, m3t6, 2025-04-16, 3d
+    Endpoint backend bulk-status candidatures     :done, m3t6, 2025-04-16, 3d
     Logging winston evenements securite          :done, m3t7, 2025-04-19, 2d
     Socket.io template:updated dashboards RH     :done, m3t8, 2025-04-21, 2d
 

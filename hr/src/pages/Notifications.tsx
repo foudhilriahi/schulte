@@ -30,9 +30,9 @@ const Notifications = () => {
                 <div
                   className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${
                     n.type === "success"
-                      ? "bg-success/10 text-success"
+                      ? "bg-okl text-ok"
                       : n.type === "warning"
-                      ? "bg-warning/10 text-warning"
+                      ? "bg-warnl text-warn"
                       : "bg-primary/10 text-primary"
                   }`}
                 >

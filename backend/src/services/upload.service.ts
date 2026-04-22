@@ -29,7 +29,7 @@ const fileFilter = (
   if (file.mimetype === "application/pdf") {
     cb(null, true);
   } else {
-    cb(new Error("Only PDF files are accepted"));
+    cb(new Error("Seuls les fichiers PDF sont acceptes"));
   }
 };
 

@@ -60,7 +60,7 @@ const KanbanBoard = () => {
         const apps = res.data.map((a: any) => ({
           ...a,
           id: a.id,
-          name: a.candidate?.name || "Unknown",
+          name: a.candidate?.name || "Inconnu",
           phone: a.candidate?.phone || "",
           email: a.candidate?.email || "",
           appliedDate: a.appliedAt || a.createdAt,
@@ -83,7 +83,7 @@ const KanbanBoard = () => {
         setApplications(apps);
       })
       .catch(() => {
-        toast.error("Failed to load applications");
+        toast.error("Echec du chargement des candidatures");
       });
   }, []);
 

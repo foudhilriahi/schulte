@@ -33,9 +33,9 @@ export function ApplicationsScreen({ onSelectApplication }: ApplicationsScreenPr
     <div className="flex flex-col min-h-screen pb-20">
       <header className="sticky top-0 bg-background/95 backdrop-blur-sm border-b border-border z-40 safe-area-pt">
         <div className="px-4 py-4">
-          <h1 className="text-xl font-semibold text-foreground">My Applications</h1>
+          <h1 className="text-xl font-semibold text-foreground">Mes candidatures</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Track your job applications
+            Suivez l'avancement de vos candidatures
           </p>
         </div>
       </header>
@@ -58,9 +58,9 @@ export function ApplicationsScreen({ onSelectApplication }: ApplicationsScreenPr
             ))
           ) : (
             <div className="text-center py-12">
-              <p className="text-muted-foreground">No applications yet.</p>
+              <p className="text-muted-foreground">Aucune candidature pour le moment.</p>
               <p className="text-sm text-muted-foreground mt-1">
-                Browse jobs and apply to get started!
+                Parcourez les offres et postulez pour commencer.
               </p>
             </div>
           )}

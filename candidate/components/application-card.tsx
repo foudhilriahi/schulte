@@ -11,30 +11,30 @@ interface ApplicationCardProps {
 }
 
 const statusLabels: Record<string, string> = {
-  new: 'Applied',
-  reviewing: 'Under Review',
-  interview: 'Interview',
-  accepted: 'Accepted',
-  rejected: 'Rejected'
+  new: 'Candidature envoyee',
+  reviewing: 'En examen',
+  interview: 'Entretien',
+  accepted: 'Acceptee',
+  rejected: 'Rejetee'
 }
 
 const statusColors: Record<string, string> = {
-  new: 'bg-secondary text-muted-foreground border-input',
-  reviewing: 'bg-warning/10 text-warning border-warning/30',
-  interview: 'bg-primary/15 text-primary border-primary/30',
-  accepted: 'bg-success/10 text-success border-success/30',
-  rejected: 'bg-destructive/10 text-destructive border-destructive/30'
+  new: 'bg-card2 text-ink3 border-border',
+  reviewing: 'bg-warnl text-warn border-[var(--warn-b)]',
+  interview: 'bg-violetl text-violet border-[var(--violet-b)]',
+  accepted: 'bg-okl text-ok border-[var(--ok-b)]',
+  rejected: 'bg-errl text-err border-[var(--err-b)]'
 }
 
 export function ApplicationCard({ application, onClick }: ApplicationCardProps) {
   const city = application.offer?.site || 'Zaghouan';
   const cityColor = city === 'Bouarada'
-    ? 'bg-bou/10 border-bou/25 text-bou'
-    : 'bg-zag/10 border-zag/25 text-zag'
+    ? 'bg-boul border-[var(--bou-b)] text-primary'
+    : 'bg-zagl border-[var(--zag-b)] text-ok'
 
   return (
     <Card 
-      className="cursor-pointer transition-colors touch-manipulation hover:bg-s2 hover:border-primary/40"
+      className="cursor-pointer transition-[transform,border-color,box-shadow] duration-200 ease-[cubic-bezier(.34,1.56,.64,1)] touch-manipulation hover:-translate-y-[2px] hover:border-[var(--border2)] hover:shadow-hover"
       onClick={onClick}
     >
       <CardContent className="p-4">
@@ -43,17 +43,17 @@ export function ApplicationCard({ application, onClick }: ApplicationCardProps) 
             <div className="flex items-center gap-2 mb-2 flex-wrap">
               <Badge className={cityColor}>{city}</Badge>
               <Badge variant="secondary" className={statusColors[application.status] || statusColors.new}>
-                {statusLabels[application.status] || 'Unknown'}
+                {statusLabels[application.status] || 'Inconnu'}
               </Badge>
             </div>
-            <h3 className="font-semibold text-base text-foreground line-clamp-1">
-              {application.offer?.title || 'Unknown Job'}
+            <h3 className="font-bold text-[13px] tracking-[-0.01em] text-ink line-clamp-1">
+              {application.offer?.title || 'Offre inconnue'}
             </h3>
-            <p className="text-xs text-muted-foreground mt-1">
-              Applied {new Date(application.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+            <p className="text-[10px] font-mono text-ink4 mt-1">
+              Candidature envoyee le {new Date(application.createdAt).toLocaleDateString('fr-TN', { day: 'numeric', month: 'short', year: 'numeric' })}
             </p>
           </div>
-          <ChevronRight className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+          <ChevronRight className="h-5 w-5 text-ink4 flex-shrink-0" />
         </div>
       </CardContent>
     </Card>

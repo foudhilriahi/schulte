@@ -127,7 +127,7 @@ const ApplyForm = () => {
           ) : (
             <button
               onClick={submit}
-              className="touch-target flex flex-1 items-center justify-center gap-2 rounded-md bg-success py-3 text-sm font-semibold text-success-foreground transition-colors hover:bg-success/90"
+              className="touch-target flex flex-1 items-center justify-center gap-2 rounded-md bg-ok py-3 text-sm font-semibold text-white transition-colors hover:bg-okl"
             >
               <Send className="h-4 w-4" />
               Envoyer

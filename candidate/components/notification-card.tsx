@@ -41,13 +41,13 @@ export function NotificationCard({
       ? "text-ok"
       : notification.type === "warning"
         ? "text-warn"
-        : "text-bou";
+        : "text-violet";
 
   return (
     <Card
       className={cn(
         "cursor-pointer active:scale-[0.98] transition-all touch-manipulation",
-        !notification.read && "border-l-4 border-l-bou bg-bou/10",
+        !notification.read && "border-l-4 border-l-violet bg-violetl",
       )}
       onClick={onClick}
     >

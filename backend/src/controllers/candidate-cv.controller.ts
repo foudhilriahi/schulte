@@ -58,24 +58,24 @@ const isValidString = (value: unknown, minLength = 1, maxLength = 200) => {
 const validateGeneratedCvData = (formData: any): string | null => {
   const personal = formData?.personal;
 
-  if (!personal || typeof personal !== "object") return "Personal details are required";
-  if (!isValidString(personal.name, 2, 80) || !namePattern.test(personal.name.trim())) return "Enter a valid full name";
-  if (!isValidString(personal.email, 5, 120) || !emailPattern.test(personal.email.trim())) return "Enter a valid email address";
-  if (!isValidString(personal.phone, 8, 20) || !phonePattern.test(personal.phone.trim())) return "Enter a valid phone number";
-  if (!isValidString(personal.city, 1, 80) || !tunisianCities.has(personal.city.trim())) return "Select a real Tunisian city";
+  if (!personal || typeof personal !== "object") return "Les informations personnelles sont requises";
+  if (!isValidString(personal.name, 2, 80) || !namePattern.test(personal.name.trim())) return "Entrez un nom complet valide";
+  if (!isValidString(personal.email, 5, 120) || !emailPattern.test(personal.email.trim())) return "Entrez une adresse e-mail valide";
+  if (!isValidString(personal.phone, 8, 20) || !phonePattern.test(personal.phone.trim())) return "Entrez un numero de telephone valide";
+  if (!isValidString(personal.city, 1, 80) || !tunisianCities.has(personal.city.trim())) return "Selectionnez une ville tunisienne valide";
 
-  if (!Array.isArray(formData?.education) || formData.education.length === 0) return "Add at least one education entry";
+  if (!Array.isArray(formData?.education) || formData.education.length === 0) return "Ajoutez au moins une formation";
   for (const education of formData.education) {
-    if (!education || typeof education !== "object") return "Education entries are invalid";
-    if (!isValidString(education.degree, 1, 60) || !degreeOptions.has(education.degree.trim())) return "Select a valid degree";
-    if (!isValidString(education.field, 2, 80)) return "Education field is required";
-    if (!isValidString(education.institution, 2, 120)) return "Institution is required";
-    if (!isValidString(education.year, 4, 4) || !/^\d{4}$/.test(education.year.trim())) return "Use a 4-digit year";
+    if (!education || typeof education !== "object") return "Les informations de formation sont invalides";
+    if (!isValidString(education.degree, 1, 60) || !degreeOptions.has(education.degree.trim())) return "Selectionnez un diplome valide";
+    if (!isValidString(education.field, 2, 80)) return "Le domaine d'etudes est requis";
+    if (!isValidString(education.institution, 2, 120)) return "L'etablissement est requis";
+    if (!isValidString(education.year, 4, 4) || !/^\d{4}$/.test(education.year.trim())) return "Utilisez une annee sur 4 chiffres";
   }
 
-  if (!Array.isArray(formData?.skills) || formData.skills.length === 0) return "Add at least one skill";
+  if (!Array.isArray(formData?.skills) || formData.skills.length === 0) return "Ajoutez au moins une competence";
 
-  if (formData?.coverNote !== undefined && typeof formData.coverNote !== "string") return "Cover note must be a string";
+  if (formData?.coverNote !== undefined && typeof formData.coverNote !== "string") return "La note de motivation doit etre une chaine de caracteres";
 
   return null;
 };
@@ -88,7 +88,7 @@ export class CandidateCVController {
       res.json(cvs);
     } catch (err) {
       logger.error("Get candidate CVs error:", err);
-      res.status(500).json({ error: "Failed to fetch CVs" });
+      res.status(500).json({ error: "Echec de la recuperation des CV" });
     }
   }
 
@@ -98,7 +98,7 @@ export class CandidateCVController {
       const file = req.file;
 
       if (!file) {
-        res.status(400).json({ error: "CV file is required" });
+        res.status(400).json({ error: "Le fichier CV est requis" });
         return;
       }
 
@@ -107,7 +107,7 @@ export class CandidateCVController {
 
       if (!cvText || cvText.trim().length < 50) {
         res.status(400).json({
-          error: "Uploaded PDF text is too short. Please upload a text-based PDF or use CV builder.",
+          error: "Le texte du PDF televerse est trop court. Televersez un PDF textuel ou utilisez le generateur de CV.",
         });
         return;
       }
@@ -125,7 +125,7 @@ export class CandidateCVController {
       res.status(201).json(cv);
     } catch (err) {
       logger.error("Upload candidate CV error:", err);
-      res.status(500).json({ error: "Failed to upload CV" });
+      res.status(500).json({ error: "Echec du televersement du CV" });
     }
   }
 
@@ -135,7 +135,7 @@ export class CandidateCVController {
       const { name, formData, template, isDefault } = req.body;
 
       if (!formData || typeof formData !== "object") {
-        res.status(400).json({ error: "formData is required" });
+        res.status(400).json({ error: "formData est requis" });
         return;
       }
 
@@ -159,7 +159,7 @@ export class CandidateCVController {
       res.status(201).json(cv);
     } catch (err) {
       logger.error("Create generated candidate CV error:", err);
-      res.status(500).json({ error: "Failed to create generated CV" });
+      res.status(500).json({ error: "Echec de la creation du CV genere" });
     }
   }
 
@@ -170,14 +170,14 @@ export class CandidateCVController {
       const cv = await CandidateCVRepository.setDefault(candidateId, cvId);
 
       if (!cv) {
-        res.status(404).json({ error: "CV not found" });
+        res.status(404).json({ error: "CV introuvable" });
         return;
       }
 
       res.json(cv);
     } catch (err) {
       logger.error("Set default CV error:", err);
-      res.status(500).json({ error: "Failed to set default CV" });
+      res.status(500).json({ error: "Echec de la definition du CV par defaut" });
     }
   }
 
@@ -188,14 +188,14 @@ export class CandidateCVController {
       const removed = await CandidateCVRepository.delete(candidateId, cvId);
 
       if (!removed) {
-        res.status(404).json({ error: "CV not found" });
+        res.status(404).json({ error: "CV introuvable" });
         return;
       }
 
       res.status(204).send();
     } catch (err) {
       logger.error("Delete CV error:", err);
-      res.status(500).json({ error: "Failed to delete CV" });
+      res.status(500).json({ error: "Echec de la suppression du CV" });
     }
   }
 }

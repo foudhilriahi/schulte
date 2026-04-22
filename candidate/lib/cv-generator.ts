@@ -1,6 +1,5 @@
-import { jsPDF } from 'jspdf'
-
-export const generateCV = (data: any, template: 'modern' | 'classic') => {
+export const generateCV = async (data: any, template: 'modern' | 'classic') => {
+  const { jsPDF } = await import('jspdf')
   const doc = new jsPDF()
   
   // Basic properties
@@ -17,7 +16,7 @@ export const generateCV = (data: any, template: 'modern' | 'classic') => {
     doc.setTextColor(255, 255, 255)
     doc.setFontSize(24)
     doc.setFont("helvetica", "bold")
-    doc.text(data.personal?.name || 'Your Name', 20, 20)
+    doc.text(data.personal?.name || 'Votre nom', 20, 20)
     
     doc.setFontSize(10)
     doc.setFont("helvetica", "normal")
@@ -39,7 +38,7 @@ export const generateCV = (data: any, template: 'modern' | 'classic') => {
 
     // Experience
     if (data.experience && data.experience.length > 0) {
-      addSectionTitle('Experience')
+      addSectionTitle('Experience professionnelle')
       data.experience.forEach((exp: any) => {
         if (!exp.title) return
         doc.setFontSize(11)
@@ -59,7 +58,7 @@ export const generateCV = (data: any, template: 'modern' | 'classic') => {
 
     // Education
     if (data.education && data.education.length > 0) {
-      addSectionTitle('Education')
+      addSectionTitle('Formation')
       data.education.forEach((edu: any) => {
         if (!edu.degree) return
         doc.setFontSize(11)
@@ -79,7 +78,7 @@ export const generateCV = (data: any, template: 'modern' | 'classic') => {
     
     // Skills
     if (data.skills && data.skills.length > 0) {
-      addSectionTitle('Skills')
+      addSectionTitle('Competences')
       doc.setFontSize(10)
       doc.setFont("helvetica", "normal")
       doc.text(data.skills.join('  •  '), 20, y, { maxWidth: pageWidth - 40 })
@@ -91,7 +90,7 @@ export const generateCV = (data: any, template: 'modern' | 'classic') => {
     doc.setTextColor(0, 0, 0)
     doc.setFontSize(22)
     doc.setFont("times", "bold")
-    doc.text(data.personal?.name || 'Your Name', pageWidth / 2, y, { align: 'center' })
+    doc.text(data.personal?.name || 'Votre nom', pageWidth / 2, y, { align: 'center' })
     
     y += 8
     doc.setFontSize(11)
@@ -111,7 +110,7 @@ export const generateCV = (data: any, template: 'modern' | 'classic') => {
 
     // Experience
     if (data.experience && data.experience.length > 0) {
-      addClassicSection('Professional Experience')
+      addClassicSection('Experience professionnelle')
       data.experience.forEach((exp: any) => {
         if (!exp.title) return
         doc.setFontSize(12)
@@ -129,7 +128,7 @@ export const generateCV = (data: any, template: 'modern' | 'classic') => {
 
     // Education
     if (data.education && data.education.length > 0) {
-      addClassicSection('Education')
+      addClassicSection('Formation')
       data.education.forEach((edu: any) => {
         if (!edu.degree) return
         doc.setFontSize(12)
@@ -147,7 +146,7 @@ export const generateCV = (data: any, template: 'modern' | 'classic') => {
     
     // Skills
     if (data.skills && data.skills.length > 0) {
-      addClassicSection('Technical Skills')
+      addClassicSection('Competences techniques')
       doc.setFontSize(11)
       doc.setFont("times", "normal")
       doc.text(data.skills.join(', '), 20, y, { maxWidth: pageWidth - 40 })

@@ -44,11 +44,11 @@ sequenceDiagram
     Admin->>AdminUI: Saisit nouveau mot de passe
     AdminUI->>API: PATCH /api/admin/hr-accounts/:id { password }
     API->>API: validate password policy
-    API->>DB: Update passwordHash + revoke refreshTokens user
+    API->>DB: Update passwordHash
     DB-->>API: OK
     API-->>AdminUI: 200 Password reset
     AdminUI-->>Admin: Toast Password reset
-    Note over HR: RH doit se reconnecter avec le nouveau mot de passe
+    Note over HR: Les sessions existantes ne sont pas explicitement revoquees dans ce flow
 
     Note over Admin, HR: Gestion des Templates
 

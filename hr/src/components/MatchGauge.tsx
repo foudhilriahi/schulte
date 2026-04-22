@@ -4,17 +4,18 @@ interface MatchGaugeProps {
 }
 
 const MatchGauge = ({ score, size = 44 }: MatchGaugeProps) => {
-  const radius = 18;
+  const strokeWidth = size >= 72 ? 5 : 3.5;
+  const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (score / 100) * circumference;
   const center = size / 2;
 
   const color =
     score >= 75
-      ? "hsl(var(--success))"
-      : score >= 50
-      ? "hsl(var(--warning))"
-      : "hsl(var(--destructive))";
+      ? "var(--ok)"
+      : score >= 40
+      ? "var(--violet)"
+      : "var(--err)";
 
   return (
     <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
@@ -24,8 +25,8 @@ const MatchGauge = ({ score, size = 44 }: MatchGaugeProps) => {
           cy={center}
           r={radius}
           fill="none"
-          stroke="hsl(var(--muted))"
-          strokeWidth={3}
+          stroke="var(--violet-l)"
+          strokeWidth={strokeWidth}
         />
         <circle
           cx={center}
@@ -33,15 +34,14 @@ const MatchGauge = ({ score, size = 44 }: MatchGaugeProps) => {
           r={radius}
           fill="none"
           stroke={color}
-          strokeWidth={3}
+          strokeWidth={strokeWidth}
           strokeLinecap="round"
           strokeDasharray={circumference}
           strokeDashoffset={offset}
-          className="animate-gauge"
-          style={{ "--gauge-offset": offset } as React.CSSProperties}
+          style={{ transition: 'stroke-dashoffset 600ms ease-out 50ms' }}
         />
       </svg>
-      <span className="absolute text-[10px] font-bold text-foreground">{score}%</span>
+      <span className="absolute text-[10px] font-mono font-medium" style={{ color }}>{score}</span>
     </div>
   );
 };
