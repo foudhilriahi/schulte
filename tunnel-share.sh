@@ -91,7 +91,7 @@ get_tunnel_url() {
     
     while [ $elapsed -lt $timeout ]; do
         # cloudflared prints the URL in its logs
-        local url=$(grep -oP 'https://[a-z0-9-]+\.trycloudflare\.com' "$logfile" 2>/dev/null | head -1)
+        local url=$(grep -oE 'https://[a-z0-9-]+\.trycloudflare\.com' "$logfile" 2>/dev/null | head -1)
         if [ -n "$url" ]; then
             echo "$url"
             return 0
@@ -146,13 +146,17 @@ echo ""
 echo -e "${YELLOW}▸ Updating backend CORS (.env)...${NC}"
 
 # Backup original .env
-cp "$SCRIPT_DIR/backend/.env" "$SCRIPT_DIR/backend/.env.local-backup"
+if [ -f "$SCRIPT_DIR/backend/.env" ]; then
+  cp "$SCRIPT_DIR/backend/.env" "$SCRIPT_DIR/backend/.env.local-backup"
+fi
 
 # Update the URLs in backend .env (no quotes — dotenv includes them literally)
-sed -i "s|^CLIENT_URL=.*|CLIENT_URL=$CANDIDATE_URL|" "$SCRIPT_DIR/backend/.env"
-sed -i "s|^CANDIDATE_URL=.*|CANDIDATE_URL=$CANDIDATE_URL|" "$SCRIPT_DIR/backend/.env"
-sed -i "s|^ADMIN_URL=.*|ADMIN_URL=$HR_URL|" "$SCRIPT_DIR/backend/.env"
-sed -i "s|^HR_URL=.*|HR_URL=$HR_URL|" "$SCRIPT_DIR/backend/.env"
+if [ -f "$SCRIPT_DIR/backend/.env" ]; then
+  sed "s|^CLIENT_URL=.*|CLIENT_URL=$CANDIDATE_URL|" "$SCRIPT_DIR/backend/.env" > "$SCRIPT_DIR/backend/.env.tmp" && mv "$SCRIPT_DIR/backend/.env.tmp" "$SCRIPT_DIR/backend/.env"
+  sed "s|^CANDIDATE_URL=.*|CANDIDATE_URL=$CANDIDATE_URL|" "$SCRIPT_DIR/backend/.env" > "$SCRIPT_DIR/backend/.env.tmp" && mv "$SCRIPT_DIR/backend/.env.tmp" "$SCRIPT_DIR/backend/.env"
+  sed "s|^ADMIN_URL=.*|ADMIN_URL=$HR_URL|" "$SCRIPT_DIR/backend/.env" > "$SCRIPT_DIR/backend/.env.tmp" && mv "$SCRIPT_DIR/backend/.env.tmp" "$SCRIPT_DIR/backend/.env"
+  sed "s|^HR_URL=.*|HR_URL=$HR_URL|" "$SCRIPT_DIR/backend/.env" > "$SCRIPT_DIR/backend/.env.tmp" && mv "$SCRIPT_DIR/backend/.env.tmp" "$SCRIPT_DIR/backend/.env"
+fi
 
 echo -e "  ${GREEN}✓${NC} backend/.env updated (backup → .env.local-backup)"
 
@@ -206,7 +210,7 @@ echo -e "  ${CYAN}$BACKEND_URL/api/health${NC}"
 echo ""
 echo -e "${BLUE}═══════════════════════════════════════════════════════${NC}"
 echo -e "  ${YELLOW}Login credentials:${NC}"
-echo -e "  Admin: foudhilriahi@gmail.com / admin123"
+echo -e "  (Connectez-vous avec un compte administrateur valide)"
 echo -e "${BLUE}═══════════════════════════════════════════════════════${NC}"
 echo ""
 echo -e "${YELLOW}Tunnels are running in background. PIDs:${NC}"

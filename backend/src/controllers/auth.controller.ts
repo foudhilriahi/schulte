@@ -25,8 +25,8 @@ export class AuthController {
 
       const passwordHash = await AuthService.hashPassword(password);
 
-      // Generate 6-digit verification code
-      const verifyCode = Math.floor(100000 + Math.random() * 900000).toString();
+      // Generate 6-digit verification code securely
+      const verifyCode = crypto.randomInt(100000, 1000000).toString();
       const verifyTokenHash = crypto.createHash('sha256').update(verifyCode).digest('hex');
       const verifyTokenExpiry = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
 
@@ -341,10 +341,17 @@ export class AuthController {
         verifyTokenExpiry: null,
       });
 
+      // Verify user is active before auto-login
+      if (user.isActive === false || user.deletedAt) {
+        res.status(403).json({ error: 'Compte inactif ou supprime' });
+        return;
+      }
+
       // Auto-login: issue tokens
       const accessToken = AuthService.generateAccessToken({
         userId: user.id,
         role: user.role,
+        site: user.site,
       });
 
       const refreshToken = AuthService.generateRefreshToken();
@@ -390,17 +397,17 @@ export class AuthController {
         return;
       }
 
-      // Cooldown check: if token was sent less than 60s ago, reject
+      // Cooldown check: if token was sent less than 60s ago, silently succeed to prevent timing/status leaks
       if (user.verifyTokenExpiry) {
         const tokenAge = Date.now() - (user.verifyTokenExpiry.getTime() - 15 * 60 * 1000);
         if (tokenAge < 60 * 1000) {
-          res.status(429).json({ error: 'Veuillez patienter 60 secondes avant de renvoyer un code.' });
+          res.json({ message: 'Si l\'adresse existe et n\'est pas encore verifiee, un nouveau code a ete envoye.' });
           return;
         }
       }
 
-      // Generate new code
-      const verifyCode = Math.floor(100000 + Math.random() * 900000).toString();
+      // Generate new secure code
+      const verifyCode = crypto.randomInt(100000, 1000000).toString();
       const verifyTokenHash = crypto.createHash('sha256').update(verifyCode).digest('hex');
       const verifyTokenExpiry = new Date(Date.now() + 15 * 60 * 1000);
 

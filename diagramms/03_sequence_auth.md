@@ -56,7 +56,7 @@ sequenceDiagram
         alt Email/telephone deja utilise
             Backend-->>Frontend: 409 Conflit compte existant
         else Nouveau candidat
-            Backend->>Backend: hash password, genere verifyToken (6 chiffres)
+            Backend->>Backend: hash password, genere verifyTokenHash (6 chiffres, exp 1h)
             Backend->>DB: Cree utilisateur (role CANDIDATE, emailVerified: false)
             Backend->>EmailService: Envoie email avec le code a 6 chiffres
             Backend-->>Frontend: 201 Created (sans token)
@@ -68,10 +68,14 @@ sequenceDiagram
 
     Candidat->>Frontend: Saisit code a 6 chiffres
     Frontend->>Backend: POST /api/auth/verify-email
-    Backend->>DB: Cherche token valide et non expire
-    alt Token invalide ou expire
-        Backend-->>Frontend: 400 Invalid or expired code
-    else Token valide
+    Backend->>Backend: Rate Limit (5 req / 15 min)
+    alt Rate Limit depasse
+        Backend-->>Frontend: 429 Trop de tentatives
+    else OK
+        Backend->>DB: Cherche token valide et non expire
+        alt Token invalide ou expire
+            Backend-->>Frontend: 400 Invalid or expired code
+        else Token valide
         Backend->>DB: Met a jour emailVerified = true, efface token
         Backend->>Backend: Genere JWT 15min + refreshToken aleatoire
         Backend->>Cookie: setRefreshCookie httpOnly 30 jours
@@ -87,6 +91,26 @@ sequenceDiagram
     alt emailVerified == false
         Backend-->>Frontend: 403 EMAIL_NOT_VERIFIED
         Frontend-->>Candidat: Redirection vers /verify-email
+    else Authentification reussie
+        Backend->>Backend: Genere JWT 15min + refreshToken
+        Backend->>Cookie: setRefreshCookie httpOnly 30 jours
+        Backend-->>Frontend: 200 avec accessToken et user
+        Frontend-->>Candidat: Redirection espace candidat
+    end
+
+    Note over Candidat, Backend: Renvoyer code de verification
+
+    Candidat->>Frontend: Clique "Renvoyer le code"
+    Frontend->>Backend: POST /api/auth/resend-verification
+    Backend->>Backend: Verifie si utilisateur existe (silencieux)
+    Backend->>Backend: Limiteur 3 req / heure
+    alt Rate Limit depasse
+        Backend-->>Frontend: 200 OK (Dissimulation du status 429)
+    else OK
+        Backend->>Backend: Genere nouveau verifyTokenHash (exp 1h)
+        Backend->>DB: Met a jour l'utilisateur
+        Backend->>EmailService: Renvoie email
+        Backend-->>Frontend: 200 OK
     end
 
     Note over Frontend, Cookie: Rotation du refresh token

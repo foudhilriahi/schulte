@@ -13,7 +13,7 @@ sequenceDiagram
 
     Note over C, DB: Protection contre les attaques DDoS et Injections
     C->>M: Requête (ex: POST /api/auth/login)
-    M->>M: Rate Limiter (ex: 100 req / 15 mins)
+    M->>M: Rate Limiter (Auth: 5 req / 15 mins, API: 100 req / 15 mins)
     M->>M: Validation Zod (Filtrage des inputs, Regex stricte)
     
     alt Limite dépassée ou Input invalide
@@ -32,15 +32,15 @@ sequenceDiagram
     Note right of C: Le cookie HttpOnly empêche le vol<br/>de session par JavaScript (Faille XSS).
 
     Note over C, DB: Authentification et Révocation Immédiate
-    C->>A: Requête Sécurisée + Header Bearer JWT
+    C->>A: Requête Sécurisée + Header Bearer JWT + Anti-CSRF Token
     A->>A: jwt.verify() (Vérification signature & expiration)
     
-    alt Token Invalide
-        A-->>C: 401 Unauthorized
-    else Rôle HR ou ADMIN détecté
-        A->>DB: check isActive (Révocation Immédiate)
-        alt isActive == false
-            A-->>C: 403 Account Deactivated
+    alt Token Invalide ou CSRF Manquant
+        A-->>C: 401 Unauthorized / 403 Forbidden
+    else Token Valide
+        A->>DB: check isActive (Révocation Immédiate pour tout compte)
+        alt isActive == false ou deletedAt NOT NULL
+            A-->>C: 403 Account Deactivated / Deleted
         end
     end
     

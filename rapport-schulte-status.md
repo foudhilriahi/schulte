@@ -116,20 +116,20 @@ RefreshTokens: id, userId, tokenHash (SHA-256), expiresAt
 - Cached in DB; not re-analyzed unless HR manually re-runs
 
 ### Tech Stack Versions (EXACT):
-- **Frontend (all 3 apps)**: Next.js 14, React 19, TypeScript 5.7-5.8, Tailwind 4.x, shadcn/ui, Zustand, TanStack Query v5, React Hook Form + Zod, Axios, Socket.io-client, Framer Motion, jsPDF, next-pwa, dnd-kit, Recharts
-- **Backend**: Node.js 20.x LTS, Express 5.x, Prisma 6.x, PostgreSQL 16.x, Socket.io 4.x, Multer 2.x + pdf-parse, Nodemailer 8.x, node-cron, bcryptjs, jsonwebtoken, Helmet, express-rate-limit, Joi, winston, uuid
-- **Ports**: Candidate PWA (3000), Admin (3001), HR Dashboard (3002), Backend API (4000)
+- **Frontend (all 3 apps)**: Next.js 14, React 18, TypeScript 5.x, TailwindCSS 3.x, shadcn/ui, Zustand, TanStack Query v5, React Hook Form + Zod, Axios, Socket.io-client, Framer Motion, jsPDF, next-pwa, dnd-kit, Recharts
+- **Backend**: Node.js 20.x LTS, Express 5.x, Prisma 6.x, PostgreSQL 16.x, Socket.io 4.x, Multer 2.x + pdf-parse, Nodemailer 8.x, node-cron, bcrypt, jsonwebtoken, Helmet, express-rate-limit, Joi, winston, uuid
+- **Ports**: Candidate PWA (3000), HR/Admin Dashboard (8080), Backend API (4000)
 
 ### Security (OWASP Top 10):
 - RBAC + Site Ownership: `requireRole` + `requireSiteOwnership` on every mutation
-- JWT in httpOnly cookies (XSS-safe), refresh tokens hashed SHA-256
-- Prisma parameterized queries (injection-safe)
-- Multer UUID rename (path traversal prevented)
-- Rate limiting: 5 auth attempts per IP per 15min → 429
-- Helmet CSP/HSTS/X-Frame headers
-- Joi server-side HTML stripping (XSS prevention)
-- PDF viewer in iframe (sandboxed)
-- Bcrypt cost=12 (strong password hashing)
+- Auth Tokens: Secured JWT tokens using secure HttpOnly attributes (if supported) or strict local/session storage with rotation.
+- SQL Injection protection via Prisma ORM parameterized queries
+- File upload sanitization: UUID rename + extension whitelist to prevent path traversal
+- Rate limiting: Adaptive limits per IP for authentication routes (e.g. 5 attempts/15min)
+- Security Headers: Helmet CSP/HSTS/X-Frame-Options
+- Data Sanitization: Server-side HTML stripping via Joi (XSS prevention)
+- Embedded files: PDF viewer strictly sandboxed in iframe
+- Password hashing: using industry-standard bcrypt algorithm with dynamic salt rounds
 
 ---
 

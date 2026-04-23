@@ -60,7 +60,9 @@ export function ApplicationDetailScreen({ application, onBack }: ApplicationDeta
             {application.offer?.title || 'Candidature'}
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Candidature envoyee le {new Date(application.appliedAt).toLocaleDateString('fr-TN', { day: 'numeric', month: 'short', year: 'numeric' })}
+            Candidature envoyée le {application.appliedAt && !isNaN(new Date(application.appliedAt).getTime())
+              ? new Date(application.appliedAt).toLocaleDateString('fr-TN', { day: 'numeric', month: 'short', year: 'numeric' })
+              : 'Date non disponible'}
           </p>
         </div>
 

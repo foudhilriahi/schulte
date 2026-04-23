@@ -38,6 +38,7 @@ const TemplatesPage = () => {
   const [selected, setSelected] = useState<any>(null)
   const [permanentDeleteOpen, setPermanentDeleteOpen] = useState(false)
   const [pendingPermanentDelete, setPendingPermanentDelete] = useState<any | null>(null)
+  const [isDeletingPermanent, setIsDeletingPermanent] = useState(false)
 
   const [form, setForm] = useState({
     titleFr: '',
@@ -162,6 +163,7 @@ const TemplatesPage = () => {
 
   const confirmPermanentDelete = async () => {
     if (!pendingPermanentDelete) return
+    setIsDeletingPermanent(true)
     try {
       await api.delete(`/admin/templates/${pendingPermanentDelete.id}/permanent`)
       toast.success('Modèle supprimé définitivement.')
@@ -170,6 +172,8 @@ const TemplatesPage = () => {
       fetchTemplates()
     } catch (err: any) {
       toast.error(err?.response?.data?.error || 'Erreur lors de la suppression définitive')
+    } finally {
+      setIsDeletingPermanent(false)
     }
   }
 
@@ -360,8 +364,9 @@ const TemplatesPage = () => {
             <AlertDialogAction
               onClick={confirmPermanentDelete}
               className="bg-err hover:bg-err/90"
+              disabled={isDeletingPermanent}
             >
-              Supprimer définitivement
+              {isDeletingPermanent ? 'Suppression...' : 'Supprimer définitivement'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

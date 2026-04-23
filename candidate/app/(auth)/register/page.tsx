@@ -79,7 +79,11 @@ export default function RegisterPage() {
       });
 
       const { userId, email: registeredEmail } = res.data;
-      router.push(`/verify-email?userId=${userId}&email=${encodeURIComponent(registeredEmail)}`);
+      if (typeof userId === 'string' && userId && typeof registeredEmail === 'string' && registeredEmail) {
+        router.push(`/verify-email?userId=${userId}&email=${encodeURIComponent(registeredEmail)}`);
+      } else {
+        setSubmitError("Reponse serveur invalide. Veuillez vous connecter.");
+      }
     } catch (err: any) {
       setSubmitError(err.response?.data?.error || "Erreur lors de l'inscription");
     } finally {

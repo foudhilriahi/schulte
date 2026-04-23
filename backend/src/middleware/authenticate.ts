@@ -28,28 +28,27 @@ export function authenticate(req: Request, res: Response, next: NextFunction): v
   }
 
   jwt.verify(token, env.JWT_ACCESS_SECRET, async (err, decoded) => {
-    if (err || !decoded) {
-      res.status(401).json({ error: 'Jeton d\'acces invalide ou expire' });
-      return;
-    }
+    try {
+      if (err || !decoded) {
+        res.status(401).json({ error: 'Jeton d\'acces invalide ou expire' });
+        return;
+      }
 
-    const payload = decoded as AuthPayload;
+      const payload = decoded as AuthPayload;
 
-    // Immediate Revocation Check for HR and ADMIN
-    if (payload.role === 'HR' || payload.role === 'ADMIN') {
-      try {
+      // Immediate Revocation Check for HR and ADMIN
+      if (payload.role === 'HR' || payload.role === 'ADMIN') {
         const user = await UserRepository.findById(payload.userId);
         if (!user || !user.isActive) {
           res.status(403).json({ error: 'Compte desactive. Acces refuse.' });
           return;
         }
-      } catch (dbErr) {
-        res.status(500).json({ error: 'Erreur lors de la verification du compte' });
-        return;
       }
-    }
 
-    req.user = payload;
-    next();
+      req.user = payload;
+      next();
+    } catch (error) {
+      res.status(500).json({ error: 'Erreur lors de l\'authentification' });
+    }
   });
 }

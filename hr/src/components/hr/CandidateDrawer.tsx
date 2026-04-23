@@ -469,11 +469,22 @@ const CandidateDrawer = ({
                 {candidate.formData.links?.length > 0 && (
                   <div className="rounded-lg bg-card2 p-3">
                     <p className="text-xs font-semibold mb-1">Liens</p>
-                    {candidate.formData.links.map((l: any, i: number) => (
-                      <a key={i} href={l.url} target="_blank" rel="noopener noreferrer" className="block text-primary hover:underline">
-                        {l.name}
-                      </a>
-                    ))}
+                    {candidate.formData.links.map((l: any, i: number) => {
+                      let href = l.url;
+                      try {
+                        const urlObj = new URL(href);
+                        if (urlObj.protocol !== 'http:' && urlObj.protocol !== 'https:') {
+                          href = '#';
+                        }
+                      } catch (e) {
+                        href = '#';
+                      }
+                      return (
+                        <a key={i} href={href} target={href !== '#' ? '_blank' : '_self'} rel="noopener noreferrer" className="block text-primary hover:underline">
+                          {l.name}
+                        </a>
+                      );
+                    })}
                   </div>
                 )}
               </div>

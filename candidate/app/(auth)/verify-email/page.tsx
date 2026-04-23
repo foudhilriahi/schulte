@@ -33,6 +33,16 @@ function VerifyEmailContent() {
   const [resendCooldown, setResendCooldown] = useState(0);
   const [resendMessage, setResendMessage] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
+  const resendTimeoutRef = useRef<number>();
+  const redirectTimeoutRef = useRef<number>();
+
+  // Cleanup timeouts on unmount
+  useEffect(() => {
+    return () => {
+      clearTimeout(resendTimeoutRef.current);
+      clearTimeout(redirectTimeoutRef.current);
+    };
+  }, []);
 
   // Focus input on mount
   useEffect(() => {
@@ -56,7 +66,8 @@ function VerifyEmailContent() {
       const { user, accessToken } = res.data;
       login(user, accessToken);
       setIsSuccess(true);
-      setTimeout(() => router.push('/'), 300);
+      clearTimeout(redirectTimeoutRef.current);
+      redirectTimeoutRef.current = window.setTimeout(() => router.push('/'), 300);
     } catch (err: any) {
       setError(err.response?.data?.error || 'Code invalide ou expire');
     } finally {
@@ -97,7 +108,8 @@ function VerifyEmailContent() {
       }
     }
 
-    setTimeout(() => setResendMessage(''), 5000);
+    clearTimeout(resendTimeoutRef.current);
+    resendTimeoutRef.current = window.setTimeout(() => setResendMessage(''), 5000);
   };
 
   if (isSuccess) {

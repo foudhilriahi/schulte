@@ -15,7 +15,7 @@ classDiagram
         +String site
         +Boolean isActive
         +Boolean emailVerified
-        +String verifyToken
+        +String verifyTokenHash
         +DateTime verifyTokenExpiry
         +DateTime createdAt
         +DateTime deletedAt
@@ -185,6 +185,8 @@ classDiagram
         +findById(id) OfferTemplate
         +create(data) OfferTemplate
         +update(id, data) OfferTemplate
+        +delete(id) OfferTemplate
+        +permanentDelete(id) OfferTemplate
     }
 
     class AuthService {

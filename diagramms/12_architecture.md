@@ -8,10 +8,10 @@ flowchart TB
 
         subgraph ADMIN_APP ["Admin Dashboard React Vite"]
             A1["Login Admin email + mot de passe"]
-            A2["Gestion Comptes RH CRUD + toggle actif/inactif + suppression definitive"]
-            A3["Gestion Templates 7 postes coeur proteges + custom CRUD + suppression definitive"]
+            A2["Gestion Comptes RH CRUD + toggle actif/inactif + suppression définitive"]
+            A3["Gestion Templates 7 postes cœur protégés + custom CRUD + suppression définitive"]
             A4["Vue Ensemble KPIs + Mini messagerie vers RH"]
-            A5["Parametres profil admin + changement mot de passe"]
+            A5["Paramètres profil admin + changement mot de passe"]
         end
 
         subgraph HR_APP ["Dashboard RH React Vite"]

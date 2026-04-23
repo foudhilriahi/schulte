@@ -20,11 +20,15 @@ if [ -f "$SCRIPT_DIR/backend/.env.local-backup" ]; then
     echo -e "  ${GREEN}✓${NC} backend/.env restored"
 fi
 
-[ -f "$SCRIPT_DIR/candidate/.env.local" ] && rm "$SCRIPT_DIR/candidate/.env.local"
-echo -e "  ${GREEN}✓${NC} candidate/.env.local removed"
+if [ -f "$SCRIPT_DIR/candidate/.env.local" ]; then
+    rm "$SCRIPT_DIR/candidate/.env.local"
+    echo -e "  ${GREEN}✓${NC} candidate/.env.local removed"
+fi
 
-[ -f "$SCRIPT_DIR/hr/.env.local" ] && rm "$SCRIPT_DIR/hr/.env.local"
-echo -e "  ${GREEN}✓${NC} hr/.env.local removed"
+if [ -f "$SCRIPT_DIR/hr/.env.local" ]; then
+    rm "$SCRIPT_DIR/hr/.env.local"
+    echo -e "  ${GREEN}✓${NC} hr/.env.local removed"
+fi
 
 rm -rf "$TUNNEL_LOG_DIR" 2>/dev/null
 

@@ -40,6 +40,7 @@ const HRAccountsPage = () => {
   const [creatingAccount, setCreatingAccount] = useState(false)
   const [updatingAccount, setUpdatingAccount] = useState(false)
   const [resettingPassword, setResettingPassword] = useState(false)
+  const [isDeletingPermanent, setIsDeletingPermanent] = useState(false)
 
   // Form state
   const [form, setForm] = useState({ name: '', email: '', password: '', site: 'bouarada' })
@@ -208,6 +209,7 @@ const HRAccountsPage = () => {
 
   const confirmPermanentDelete = async () => {
     if (!pendingPermanentDelete) return
+    setIsDeletingPermanent(true)
     try {
       await api.delete(`/admin/hr-accounts/${pendingPermanentDelete.id}/permanent`)
       toast.success('Compte supprimé définitivement.')
@@ -215,6 +217,12 @@ const HRAccountsPage = () => {
       setPendingPermanentDelete(null)
       fetchAccounts()
     } catch (err: any) {
+      const details = err?.response?.data?.details
+      toast.error(details?.[0] || err?.response?.data?.error || 'Erreur lors de la suppression définitive')
+    } finally {
+      setIsDeletingPermanent(false)
+    }
+  }
       const details = err?.response?.data?.details
       toast.error(details?.[0] || err?.response?.data?.error || 'Erreur lors de la suppression définitive')
     }
@@ -422,8 +430,9 @@ const HRAccountsPage = () => {
             <AlertDialogAction
               onClick={confirmPermanentDelete}
               className="bg-err hover:bg-err/90"
+              disabled={isDeletingPermanent}
             >
-              Supprimer définitivement
+              {isDeletingPermanent ? 'Suppression...' : 'Supprimer définitivement'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

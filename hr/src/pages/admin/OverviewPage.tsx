@@ -146,8 +146,9 @@ const AdminOverviewPage = () => {
         </CardHeader>
         <CardContent className="space-y-3">
           <div>
-            <label className="text-sm font-medium">Audience</label>
+            <label htmlFor="audience-select" className="text-sm font-medium">Audience</label>
             <select
+              id="audience-select"
               value={broadcastSite}
               onChange={e => setBroadcastSite(e.target.value as 'all' | 'Bouarada' | 'Zaghouan')}
               className="mt-1 h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-card"
@@ -158,8 +159,9 @@ const AdminOverviewPage = () => {
             </select>
           </div>
           <div>
-            <label className="text-sm font-medium">Message</label>
+            <label htmlFor="broadcast-message" className="text-sm font-medium">Message</label>
             <input
+              id="broadcast-message"
               value={broadcastMsg}
               onChange={e => setBroadcastMsg(e.target.value)}
               placeholder="Écrire un court message aux équipes RH"

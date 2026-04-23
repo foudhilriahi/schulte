@@ -32,7 +32,7 @@ sequenceDiagram
     Admin->>AdminUI: Clique Desactiver sur un compte RH actif
     AdminUI-->>Admin: Dialogue de confirmation Desactiver
     Admin->>AdminUI: Confirme
-    AdminUI->>API: DELETE /api/admin/hr-accounts/:id
+    AdminUI->>API: PATCH /api/admin/hr-accounts/:id/deactivate
     API->>DB: Supprime tous les refreshTokens du RH
     API->>DB: isActive false + deletedAt now (email inchangé)
     DB-->>API: OK
@@ -43,7 +43,7 @@ sequenceDiagram
     Admin->>AdminUI: Clique Reactiver sur un compte RH inactif
     AdminUI-->>Admin: Dialogue de confirmation Reactiver
     Admin->>AdminUI: Confirme
-    AdminUI->>API: DELETE /api/admin/hr-accounts/:id
+    AdminUI->>API: PATCH /api/admin/hr-accounts/:id/reactivate
     API->>DB: isActive true + deletedAt null (email inchangé)
     DB-->>API: OK
     API-->>AdminUI: 200 Compte RH reactive

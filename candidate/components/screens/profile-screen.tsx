@@ -6,6 +6,7 @@ import { useAuthStore } from '@/store/auth'
 import { api } from '@/lib/api'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -56,18 +57,31 @@ export function ProfileScreen() {
 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [deletePassword, setDeletePassword] = useState('')
 
   const handleDeleteAccount = async () => {
+    if (!deletePassword) {
+      toast.error('Le mot de passe est requis')
+      return
+    }
+
     try {
       setIsDeleting(true)
-      await api.delete('/profile')
+      await api.delete('/profile', { data: { currentPassword: deletePassword } })
       toast.success('Votre compte a ete supprime definitivement.')
+      setShowDeleteConfirm(false)
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || 'Erreur lors de la suppression du compte')
+      setIsDeleting(false)
+      return
+    }
+
+    try {
       await logout()
       router.push('/register')
     } catch (err) {
-      toast.error('Erreur lors de la suppression du compte')
+      toast.error('Erreur lors de la deconnexion')
       setIsDeleting(false)
-      setShowDeleteConfirm(false)
     }
   }
 
@@ -242,13 +256,23 @@ export function ProfileScreen() {
                   Supprimer mon compte
                 </Button>
               ) : (
-                <div className="p-4 rounded-lg border border-err bg-errl/20 space-y-3 animate-in fade-in zoom-in-95">
-                  <p className="text-sm font-semibold text-err">Êtes-vous absolument sûr ?</p>
+                <div className="p-4 rounded-lg border border-err bg-errl/20 space-y-4 animate-in fade-in zoom-in-95">
+                  <p className="text-sm font-semibold text-err">Entrez votre mot de passe pour confirmer</p>
+                  <Input
+                    type="password"
+                    placeholder="Mot de passe actuel"
+                    value={deletePassword}
+                    onChange={(e) => setDeletePassword(e.target.value)}
+                    className="w-full border-err/30 focus-visible:ring-err/50"
+                  />
                   <div className="flex gap-2">
                     <Button 
                       variant="outline" 
                       className="flex-1" 
-                      onClick={() => setShowDeleteConfirm(false)}
+                      onClick={() => {
+                        setShowDeleteConfirm(false)
+                        setDeletePassword('')
+                      }}
                       disabled={isDeleting}
                     >
                       Annuler
@@ -257,9 +281,9 @@ export function ProfileScreen() {
                       variant="destructive" 
                       className="flex-1 bg-err hover:bg-err/90 text-white" 
                       onClick={handleDeleteAccount}
-                      disabled={isDeleting}
+                      disabled={isDeleting || !deletePassword}
                     >
-                      {isDeleting ? 'Suppression...' : 'Oui, supprimer'}
+                      {isDeleting ? 'Suppression...' : 'Confirmer'}
                     </Button>
                   </div>
                 </div>

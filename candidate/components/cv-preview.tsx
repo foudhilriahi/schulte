@@ -6,7 +6,8 @@ interface CVPreviewProps {
 }
 
 export function CVPreview({ data, template }: CVPreviewProps) {
-  const { personal, education, experience, skills, languages, links, coverNote } = data
+  const safeData = data ?? {}
+  const { personal, education, experience, skills, languages, links, coverNote } = safeData
 
   const name = personal?.name || "Votre Nom"
   const email = personal?.email || "email@exemple.com"
@@ -26,9 +27,9 @@ export function CVPreview({ data, template }: CVPreviewProps) {
           {links && links.length > 0 && (
             <div className="flex flex-wrap items-center justify-center gap-3 mt-2 text-xs">
               {links.map((link: any, i: number) => (
-                <span key={i} className="flex items-center gap-1">
+                <a key={link.id || i} href={link.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:underline">
                   <ExternalLink className="w-3 h-3" /> {link.name}: {link.url}
-                </span>
+                </a>
               ))}
             </div>
           )}
@@ -119,9 +120,9 @@ export function CVPreview({ data, template }: CVPreviewProps) {
         {links && links.length > 0 && (
           <div className="flex flex-wrap items-center gap-4 mt-3 text-xs text-slate-400">
             {links.map((link: any, i: number) => (
-              <span key={i} className="flex items-center gap-1">
+              <a key={link.id || i} href={link.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-blue-400 transition-colors">
                 <ExternalLink className="w-3 h-3" /> {link.name}: {link.url}
-              </span>
+              </a>
             ))}
           </div>
         )}

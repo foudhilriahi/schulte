@@ -206,13 +206,15 @@ export class AdminController {
       }
 
       // Reassign any created offers, templates, interviews to the requesting admin
+      // Prisma cascades: RefreshToken, Notification, Application, CandidateCV are deleted when User is deleted
       const adminId = req.user!.userId;
-      await prisma.jobOffer.updateMany({ where: { createdById: id }, data: { createdById: adminId } });
-      await prisma.offerTemplate.updateMany({ where: { createdById: id }, data: { createdById: adminId } });
-      await prisma.interview.updateMany({ where: { createdById: id }, data: { createdById: adminId } });
-
-      // Prisma cascades: RefreshToken, Notification, Application, CandidateCV
-      await prisma.user.delete({ where: { id } });
+      
+      await prisma.$transaction([
+        prisma.jobOffer.updateMany({ where: { createdById: id }, data: { createdById: adminId } }),
+        prisma.offerTemplate.updateMany({ where: { createdById: id }, data: { createdById: adminId } }),
+        prisma.interview.updateMany({ where: { createdById: id }, data: { createdById: adminId } }),
+        prisma.user.delete({ where: { id } })
+      ]);
 
       logger.info(`Admin permanently deleted HR account: ${id} (${target.email})`);
       SocketService.emitToAdmin('admin:hr-account:changed', { action: 'permanent-deleted', userId: id });

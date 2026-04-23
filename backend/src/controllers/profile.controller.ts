@@ -96,11 +96,24 @@ export class ProfileController {
   static async deleteProfile(req: Request, res: Response): Promise<void> {
     try {
       const userId = req.user!.userId;
+      const { currentPassword } = req.body;
+
+      if (!currentPassword) {
+        res.status(400).json({ error: 'Le mot de passe actuel est requis pour supprimer le compte' });
+        return;
+      }
 
       // Double check if the user exists
       const user = await UserRepository.findById(userId);
       if (!user) {
         res.status(404).json({ error: 'Utilisateur introuvable' });
+        return;
+      }
+
+      // Verify current password
+      const isValid = await AuthService.comparePassword(currentPassword, user.passwordHash);
+      if (!isValid) {
+        res.status(401).json({ error: 'Mot de passe actuel incorrect' });
         return;
       }
 

@@ -83,6 +83,7 @@ const validateGeneratedCvData = (formData: any): string | null => {
   if (Array.isArray(formData?.experience)) {
     if (formData.experience.length > 20) return "Maximum 20 experiences autorisees";
     for (const exp of formData.experience) {
+      if (!exp || typeof exp !== "object") return "Experience invalide";
       if (!isValidString(exp.title, 2, 100)) return "Titre de poste invalide";
       if (!isValidString(exp.company, 2, 150)) return "Nom d'entreprise invalide";
       if (!isValidString(exp.duration, 2, 100)) return "Duree invalide";
@@ -98,6 +99,7 @@ const validateGeneratedCvData = (formData: any): string | null => {
   if (Array.isArray(formData?.languages)) {
     if (formData.languages.length > 10) return "Maximum 10 langues autorisees";
     for (const lang of formData.languages) {
+      if (!lang || typeof lang !== "object") return "Entree de langue invalide";
       if (!isValidString(lang.name, 2, 50)) return "Nom de langue invalide";
       if (!isValidString(lang.level, 2, 50)) return "Niveau de langue invalide";
     }
@@ -106,6 +108,7 @@ const validateGeneratedCvData = (formData: any): string | null => {
   if (Array.isArray(formData?.links)) {
     if (formData.links.length > 5) return "Maximum 5 liens autorises";
     for (const link of formData.links) {
+      if (!link || typeof link !== "object") return "Entree de lien invalide";
       if (!isValidString(link.name, 2, 50)) return "Nom de lien invalide";
       if (!isValidString(link.url, 5, 300, linkPattern)) return "URL invalide";
     }

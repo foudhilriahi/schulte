@@ -73,8 +73,10 @@ export default function LoginPage() {
     } catch (err: any) {
       if (err.response?.data?.code === 'EMAIL_NOT_VERIFIED') {
         const { userId, email: unverifiedEmail } = err.response.data;
-        router.push(`/verify-email?userId=${userId}&email=${encodeURIComponent(unverifiedEmail)}`);
-        return;
+        if (typeof userId === 'string' && userId && typeof unverifiedEmail === 'string' && unverifiedEmail) {
+          router.push(`/verify-email?userId=${userId}&email=${encodeURIComponent(unverifiedEmail)}`);
+          return;
+        }
       }
       setSubmitError(err.response?.data?.error || 'Erreur de connexion');
     } finally {

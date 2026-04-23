@@ -120,3 +120,6 @@ question.md
 app-audit-deep.md
 cli-commands-rapport.md
 .next-dev
+candidate/public/workbox-*.js
+candidate/public/fallback-*.js
+candidate/public/sw.js
