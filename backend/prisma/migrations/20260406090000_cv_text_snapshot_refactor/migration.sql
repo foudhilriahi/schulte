@@ -1,6 +1,6 @@
--- Add cvText to candidate CV library
+-- Add cvText to candidate CV library (if not already present)
 ALTER TABLE "CandidateCV"
-ADD COLUMN "cvText" TEXT NOT NULL DEFAULT '';
+ADD COLUMN IF NOT EXISTS "cvText" TEXT NOT NULL DEFAULT '';
 
 -- Add selected CV reference and immutable snapshot field on applications
 ALTER TABLE "Application"
@@ -23,4 +23,4 @@ ADD CONSTRAINT "Application_candidateCVId_fkey"
 FOREIGN KEY ("candidateCVId") REFERENCES "CandidateCV"("id")
 ON DELETE SET NULL ON UPDATE CASCADE;
 
-CREATE INDEX "Application_candidateCVId_idx" ON "Application"("candidateCVId");
+CREATE INDEX IF NOT EXISTS "Application_candidateCVId_idx" ON "Application"("candidateCVId");

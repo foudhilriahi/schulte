@@ -143,13 +143,13 @@ export class AdminController {
     }
   }
 
-  // DELETE /api/admin/hr-accounts/:id
+  // DELETE /api/admin/hr-accounts/:id  (toggle active/inactive)
   static async deleteHRAccount(req: Request, res: Response): Promise<void> {
     try {
       const id = req.params.id as string;
 
       if (id === req.user!.userId) {
-        res.status(400).json({ error: 'Vous ne pouvez pas desactiver votre propre compte.' });
+        res.status(400).json({ error: 'Vous ne pouvez pas modifier le statut de votre propre compte.' });
         return;
       }
 
@@ -159,30 +159,68 @@ export class AdminController {
         return;
       }
 
-      if (target.isActive === false || target.deletedAt) {
-        res.status(400).json({ error: 'Le compte est deja desactive' });
+      const nextIsActive = !target.isActive;
+
+      // If deactivating, revoke all sessions
+      if (!nextIsActive) {
+        await UserRepository.deleteAllRefreshTokens(id);
+      }
+
+      await UserRepository.update(id, {
+        isActive: nextIsActive,
+        deletedAt: nextIsActive ? null : new Date(),
+      });
+
+      const action = nextIsActive ? 'activated' : 'deactivated';
+      const label = nextIsActive ? 'réactivé' : 'désactivé';
+      logger.info(`Admin ${action} HR account: ${id}`);
+      SocketService.emitToAdmin('admin:hr-account:changed', { action, userId: id });
+      SocketService.emitToAdmin('admin:overview:updated', { reason: `hr-account-${action}` });
+      res.json({ message: `Compte RH ${label}` });
+    } catch (err: any) {
+      logger.error('Toggle HR account error:', err);
+      res.status(500).json({ error: 'Echec du changement de statut du compte RH' });
+    }
+  }
+
+  // DELETE /api/admin/hr-accounts/:id/permanent
+  static async permanentDeleteHRAccount(req: Request, res: Response): Promise<void> {
+    try {
+      const id = req.params.id as string;
+      const prisma = (await import('../config/prisma')).default;
+
+      if (id === req.user!.userId) {
+        res.status(400).json({ error: 'Vous ne pouvez pas supprimer votre propre compte.' });
         return;
       }
 
-      await UserRepository.deleteAllRefreshTokens(id);
-
-      const updates: Record<string, any> = {
-        isActive: false,
-        deletedAt: new Date(),
-      };
-
-      if (target.email && !target.email.startsWith('deleted_')) {
-        updates.email = `deleted_${id}@removed.local`;
+      const target = await UserRepository.findById(id);
+      if (!target || target.role !== 'HR') {
+        res.status(404).json({ error: 'Compte RH introuvable' });
+        return;
       }
 
-      await UserRepository.update(id, updates); // soft-delete approach
-      logger.info(`Admin deactivated HR account: ${id}`);
-      SocketService.emitToAdmin('admin:hr-account:changed', { action: 'deleted', userId: id });
-      SocketService.emitToAdmin('admin:overview:updated', { reason: 'hr-account-deleted' });
-      res.json({ message: 'Compte RH desactive' });
+      if (target.isActive !== false) {
+        res.status(400).json({ error: 'Le compte doit être désactivé avant la suppression définitive.' });
+        return;
+      }
+
+      // Reassign any created offers, templates, interviews to the requesting admin
+      const adminId = req.user!.userId;
+      await prisma.jobOffer.updateMany({ where: { createdById: id }, data: { createdById: adminId } });
+      await prisma.offerTemplate.updateMany({ where: { createdById: id }, data: { createdById: adminId } });
+      await prisma.interview.updateMany({ where: { createdById: id }, data: { createdById: adminId } });
+
+      // Prisma cascades: RefreshToken, Notification, Application, CandidateCV
+      await prisma.user.delete({ where: { id } });
+
+      logger.info(`Admin permanently deleted HR account: ${id} (${target.email})`);
+      SocketService.emitToAdmin('admin:hr-account:changed', { action: 'permanent-deleted', userId: id });
+      SocketService.emitToAdmin('admin:overview:updated', { reason: 'hr-account-permanent-deleted' });
+      res.json({ message: 'Compte RH supprimé définitivement' });
     } catch (err: any) {
-      logger.error('Delete HR account error:', err);
-      res.status(500).json({ error: 'Echec de la desactivation du compte RH' });
+      logger.error('Permanent delete HR account error:', err);
+      res.status(500).json({ error: 'Echec de la suppression définitive du compte RH' });
     }
   }
 
@@ -321,6 +359,49 @@ export class AdminController {
     } catch (err: any) {
       logger.error('Delete template error:', err);
       res.status(500).json({ error: 'Echec du changement de statut du template' });
+    }
+  }
+
+  // DELETE /api/admin/templates/:id/permanent
+  static async permanentDeleteTemplate(req: Request, res: Response): Promise<void> {
+    try {
+      const id = req.params.id as string;
+      const prisma = (await import('../config/prisma')).default;
+
+      const coreTemplateIds = [
+        'planificateur-production', 'acheteur-strategique', 'chef-equipe-achats',
+        'mecanicien-industriel', 'operateur-machines', 'technicien-electronique', 'responsable-rh'
+      ];
+
+      if (coreTemplateIds.includes(id)) {
+        res.status(403).json({ error: 'Les templates de base ne peuvent pas être supprimés.' });
+        return;
+      }
+
+      const existing = await TemplateRepository.findById(id);
+      if (!existing) {
+        res.status(404).json({ error: 'Template introuvable' });
+        return;
+      }
+
+      if (existing.isActive !== false) {
+        res.status(400).json({ error: 'Le template doit être désactivé avant la suppression définitive.' });
+        return;
+      }
+
+      // Unlink any offers referencing this template
+      await prisma.jobOffer.updateMany({ where: { templateId: id }, data: { templateId: null } });
+
+      // Hard delete
+      await prisma.offerTemplate.delete({ where: { id } });
+
+      logger.info(`Admin permanently deleted template: ${id} (${existing.titleFr})`);
+      SocketService.emitToAdmin('template:updated', { id, deleted: true });
+      SocketService.emitToAllHR('template:updated', { id, deleted: true });
+      res.json({ message: 'Template supprimé définitivement' });
+    } catch (err: any) {
+      logger.error('Permanent delete template error:', err);
+      res.status(500).json({ error: 'Echec de la suppression définitive du template' });
     }
   }
 

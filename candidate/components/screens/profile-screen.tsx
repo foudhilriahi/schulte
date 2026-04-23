@@ -1,8 +1,9 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import { useAuthStore } from '@/store/auth'
+import { api } from '@/lib/api'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -53,6 +54,23 @@ export function ProfileScreen() {
     router.push('/login')
   }
 
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+
+  const handleDeleteAccount = async () => {
+    try {
+      setIsDeleting(true)
+      await api.delete('/profile')
+      toast.success('Votre compte a ete supprime definitivement.')
+      await logout()
+      router.push('/register')
+    } catch (err) {
+      toast.error('Erreur lors de la suppression du compte')
+      setIsDeleting(false)
+      setShowDeleteConfirm(false)
+    }
+  }
+
   const siteColor = user?.site === 'Bouarada'
     ? 'bg-boul border-[var(--bou-b)] text-primary'
     : 'bg-zagl border-[var(--zag-b)] text-ok'
@@ -87,7 +105,7 @@ export function ProfileScreen() {
             {/* Profile Header */}
             <div className="flex flex-col items-center space-y-2">
               <div className="h-20 w-20 rounded-full bg-card2 border border-input flex items-center justify-center text-ink text-2xl font-semibold">
-                {user.name.split(' ').map(n => n[0]).join('')}
+                {user.name.split(' ').map((n: string) => n[0]).join('')}
               </div>
               <h2 className="text-lg font-semibold text-ink">
                 {user.name}
@@ -149,22 +167,22 @@ export function ProfileScreen() {
 
             {/* Skills */}
             {user.skills && user.skills.length > 0 && (
-              <Card className="mt-6">
-                <CardContent className="p-4">
-                  <h3 className="text-sm font-medium text-ink mb-3">Competences</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {user.skills.map((skill, index) => (
-                      <span
-                        key={`${skill}-${index}`}
-                        className="px-3 py-1 text-sm bg-card2 text-ink3 rounded-full"
-                      >
-                        {skill}
-                      </span>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+               <Card className="mt-6">
+                 <CardContent className="p-4">
+                   <h3 className="text-sm font-medium text-ink mb-3">Competences</h3>
+                   <div className="flex flex-wrap gap-2">
+                     {user.skills.map((skill: string, index: number) => (
+                       <span
+                         key={`${skill}-${index}`}
+                         className="px-3 py-1 text-sm bg-card2 text-ink3 rounded-full"
+                       >
+                         {skill}
+                       </span>
+                     ))}
+                   </div>
+                 </CardContent>
+               </Card>
+             )}
 
             {/* Menu Items */}
             <Card className="mt-6">
@@ -200,13 +218,54 @@ export function ProfileScreen() {
             <div className="mt-6">
               <Button
                 variant="outline"
-                className="w-full min-h-[48px] border-err/30 text-err hover:bg-errl hover:text-err touch-manipulation"
+                className="w-full min-h-[48px] touch-manipulation"
                 onClick={handleLogout}
               >
                 <LogOut className="h-4 w-4 mr-2" />
                 <span>Se deconnecter</span>
               </Button>
             </div>
+
+            {/* Danger Zone */}
+            <div className="mt-12 pt-6 border-t border-err/20">
+              <h3 className="text-err font-semibold text-sm mb-2">Zone de Danger</h3>
+              <p className="text-xs text-muted-foreground mb-4">
+                La suppression de votre compte est definitive. Toutes vos donnees, CVs, et candidatures seront immediatement effacees de nos serveurs.
+              </p>
+              
+              {!showDeleteConfirm ? (
+                <Button
+                  variant="outline"
+                  className="w-full min-h-[48px] border-err/30 text-err hover:bg-errl hover:text-err touch-manipulation"
+                  onClick={() => setShowDeleteConfirm(true)}
+                >
+                  Supprimer mon compte
+                </Button>
+              ) : (
+                <div className="p-4 rounded-lg border border-err bg-errl/20 space-y-3 animate-in fade-in zoom-in-95">
+                  <p className="text-sm font-semibold text-err">Êtes-vous absolument sûr ?</p>
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      className="flex-1" 
+                      onClick={() => setShowDeleteConfirm(false)}
+                      disabled={isDeleting}
+                    >
+                      Annuler
+                    </Button>
+                    <Button 
+                      variant="destructive" 
+                      className="flex-1 bg-err hover:bg-err/90 text-white" 
+                      onClick={handleDeleteAccount}
+                      disabled={isDeleting}
+                    >
+                      {isDeleting ? 'Suppression...' : 'Oui, supprimer'}
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+
           </div>
         )}
       </main>

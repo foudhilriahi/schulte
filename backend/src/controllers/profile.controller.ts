@@ -91,4 +91,35 @@ export class ProfileController {
       res.status(500).json({ error: 'Echec de la mise a jour du mot de passe' });
     }
   }
+
+  // DELETE /api/profile
+  static async deleteProfile(req: Request, res: Response): Promise<void> {
+    try {
+      const userId = req.user!.userId;
+
+      // Double check if the user exists
+      const user = await UserRepository.findById(userId);
+      if (!user) {
+        res.status(404).json({ error: 'Utilisateur introuvable' });
+        return;
+      }
+
+      // Delete the user from the database
+      // Due to Prisma's onDelete: Cascade, this will automatically delete:
+      // - CandidateCVs
+      // - Applications
+      // - RefreshTokens
+      // - Notifications
+      await UserRepository.delete(userId);
+
+      // Clear the refresh cookie
+      AuthService.clearRefreshCookie(res);
+
+      logger.info(`User account and all associated data permanently deleted: ${userId}`);
+      res.json({ message: 'Compte supprime definitivement' });
+    } catch (err: any) {
+      logger.error('Delete profile error:', err);
+      res.status(500).json({ error: 'Echec de la suppression du compte' });
+    }
+  }
 }

@@ -7,6 +7,7 @@ CREATE TABLE "CandidateCV" (
     "source" TEXT NOT NULL,
     "cvUrl" TEXT,
     "formData" JSONB,
+    "cvText" TEXT NOT NULL DEFAULT '',
     "cvTemplate" TEXT,
     "size" INTEGER,
     "isDefault" BOOLEAN NOT NULL DEFAULT false,

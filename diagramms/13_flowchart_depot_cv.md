@@ -11,10 +11,11 @@ flowchart TD
     F -->|Non| G[400 PDF vide/illisible]
     F -->|Oui| H[Save CandidateCV source=profile_upload]
 
-    B -->|Builder| I[Formulaire valide multi-etapes]
+    B -->|Builder (Split-Screen / Live Preview)| I[Formulaire interactif avec champs optionnels (Langues, Liens)]
     I --> J[POST /api/cvs/generated]
-    J --> K[Validation backend formData]
-    K --> L[Save CandidateCV source=profile_generated]
+    J --> K[Validation backend stricte (Zod + Regex Anti-Troll)]
+    K --> K2[Assemblage du CV en Markdown structuré pour l'IA]
+    K2 --> L[Save CandidateCV source=profile_generated]
 
     H --> M[Utilisateur peut marquer un CV par defaut]
     L --> M

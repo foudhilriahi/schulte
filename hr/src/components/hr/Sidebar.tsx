@@ -37,11 +37,11 @@ const Sidebar = () => {
 
   return (
     <aside className="fixed left-0 top-0 z-40 flex h-screen w-[210px] flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border">
-      <div className="flex items-center gap-3 px-5 pb-5 pt-5 border-b border-sidebar-border mb-2">
-        <img src={logo} alt="Schulte Tunisia" className="h-9 w-auto" />
-        <div>
-          <p className="text-[15px] font-bold text-ink">Schulte Tunisia</p>
-          <p className="text-[10px] font-mono text-ink4">{isAdmin ? 'ADMIN PANEL' : 'PORTAIL RH'}</p>
+      <div className="flex items-center gap-3 px-5 pb-5 pt-5 border-b border-sidebar-border mb-2 overflow-hidden">
+        <img src={logo} alt="Schulte Tunisia" className="h-9 w-auto shrink-0" />
+        <div className="min-w-0 flex-1">
+          <p className="text-[15px] font-bold text-ink truncate">Schulte Tunisia</p>
+          <p className="text-[10px] font-mono text-ink4 truncate">{isAdmin ? 'ADMIN PANEL' : 'PORTAIL RH'}</p>
         </div>
       </div>
 

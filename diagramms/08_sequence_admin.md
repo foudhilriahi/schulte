@@ -29,15 +29,37 @@ sequenceDiagram
         AdminUI-->>Admin: Toast Compte RH cree communiquer par telephone
     end
 
-    Admin->>AdminUI: Clique Desactiver sur un compte RH
-    AdminUI-->>Admin: Dialogue de confirmation
+    Admin->>AdminUI: Clique Desactiver sur un compte RH actif
+    AdminUI-->>Admin: Dialogue de confirmation Desactiver
     Admin->>AdminUI: Confirme
     AdminUI->>API: DELETE /api/admin/hr-accounts/:id
-    API->>DB: isActive false et supprime tous les refreshTokens
+    API->>DB: Supprime tous les refreshTokens du RH
+    API->>DB: isActive false + deletedAt now (email inchangé)
     DB-->>API: OK
-    API-->>AdminUI: 200 OK
-    AdminUI-->>Admin: Badge Inactif sur la ligne
-    Note over HR: Refresh tokens du RH revokes, prochaine tentative protegee renvoie 401/403
+    API-->>AdminUI: 200 Compte RH desactive
+    AdminUI-->>Admin: Badge Inactif + icone Trash2 apparait
+    Note over HR: Refresh tokens du RH revoques, prochaine tentative renvoie 401/403
+
+    Admin->>AdminUI: Clique Reactiver sur un compte RH inactif
+    AdminUI-->>Admin: Dialogue de confirmation Reactiver
+    Admin->>AdminUI: Confirme
+    AdminUI->>API: DELETE /api/admin/hr-accounts/:id
+    API->>DB: isActive true + deletedAt null (email inchangé)
+    DB-->>API: OK
+    API-->>AdminUI: 200 Compte RH reactive
+    AdminUI-->>Admin: Badge Actif + icone Trash2 disparait
+    Note over HR: Le RH peut se reconnecter avec ses identifiants originaux
+
+    Admin->>AdminUI: Clique Supprimer definitivement sur un compte RH inactif
+    AdminUI-->>Admin: Dialogue de confirmation irreversible
+    Admin->>AdminUI: Confirme
+    AdminUI->>API: DELETE /api/admin/hr-accounts/:id/permanent
+    API->>API: Verifie que le compte est bien inactif
+    API->>DB: Reassigne offres + templates + entretiens vers admin
+    API->>DB: DELETE User cascade RefreshTokens + Notifications
+    DB-->>API: OK
+    API-->>AdminUI: 200 Compte RH supprime definitivement
+    AdminUI-->>Admin: Ligne disparait du tableau
 
     Admin->>AdminUI: Clique Reset Password sur un compte RH
     AdminUI-->>Admin: Modale Reset Password
@@ -48,7 +70,6 @@ sequenceDiagram
     DB-->>API: OK
     API-->>AdminUI: 200 Password reset
     AdminUI-->>Admin: Toast Password reset
-    Note over HR: Les sessions existantes ne sont pas explicitement revoquees dans ce flow
 
     Note over Admin, HR: Gestion des Templates
 
@@ -78,8 +99,6 @@ sequenceDiagram
     AdminUI-->>Admin: Toast Template mis a jour
 
     Admin->>AdminUI: Clique Toggle actif/inactif sur un template custom
-    AdminUI-->>Admin: Dialogue de confirmation
-    Admin->>AdminUI: Confirme
     AdminUI->>API: DELETE /api/admin/templates/:id
     API->>API: If core template id then 403 protected
     API->>DB: Toggle isActive + deletedAt
@@ -90,8 +109,21 @@ sequenceDiagram
     API-->>AdminUI: 200 OK
     AdminUI-->>Admin: Toast Template activated/deactivated
 
-    Note over Admin, HR: Mini messagerie admin vers RH
-    Admin->>AdminUI: Ecrit un message dans Settings
+    Admin->>AdminUI: Clique Supprimer definitivement sur template custom inactif
+    AdminUI-->>Admin: Dialogue de confirmation irreversible
+    Admin->>AdminUI: Confirme
+    AdminUI->>API: DELETE /api/admin/templates/:id/permanent
+    API->>API: If core template id then 403 protected
+    API->>API: Verifie que le template est bien inactif
+    API->>DB: Dissocie les offres liees (templateId = null)
+    API->>DB: DELETE OfferTemplate hard delete
+    DB-->>API: OK
+    API->>Socket: emit template:updated vers all HR rooms
+    API-->>AdminUI: 200 Template supprime definitivement
+    AdminUI-->>Admin: Ligne disparait du tableau
+
+    Note over Admin, HR: Mini messagerie admin vers RH (Dashboard Overview)
+    Admin->>AdminUI: Ecrit un message dans la vue d'ensemble admin
     AdminUI->>API: POST /api/admin/broadcast-hr avec message et site optionnel
     API->>DB: createMany notifications pour RH actifs cibles
     API->>Socket: emit notification:new et admin:broadcast vers RH cibles

@@ -382,47 +382,70 @@ export class CVTextExtractor {
     }
   }
 
-  /** Assemble une chaîne CV lisible depuis un objet form-data structuré */
+  /** Assemble une chaîne CV en Markdown strict depuis un objet form-data structuré */
   static assembleFromFormData(form: Record<string, any>): string {
     if (!form) return '';
     const parts: string[] = [];
 
     const get = (...keys: string[]) => keys.reduce<any>((o, k) => o?.[k], form);
 
-    const name  = get('name')  ?? get('personal', 'name');
+    const name  = get('name')  ?? get('personal', 'name') ?? 'Candidat Anonyme';
+    parts.push(`# ${name}\n`);
+
+    parts.push(`## Informations de Contact`);
     const email = get('email') ?? get('personal', 'email');
     const phone = get('phone') ?? get('personal', 'phone');
     const city  = get('city')  ?? get('personal', 'city');
+    if (email) parts.push(`- **Email :** ${email}`);
+    if (phone) parts.push(`- **Téléphone :** ${phone}`);
+    if (city)  parts.push(`- **Ville :** ${city}`);
 
-    if (name)  parts.push(`Nom : ${name}`);
-    if (email) parts.push(`Email : ${email}`);
-    if (phone) parts.push(`Téléphone : ${phone}`);
-    if (city)  parts.push(`Localisation : ${city}`);
-
-    const edu = form.education;
-    if (Array.isArray(edu) && edu.length) {
-      parts.push('\nFormation :');
-      edu.forEach((e: any) =>
-        parts.push(`- ${e.degree ?? e.level ?? ''} en ${e.field ?? ''} à ${e.institution ?? ''} (${e.year ?? ''})`)
-      );
-    }
-
-    const exp = form.experience;
-    if (Array.isArray(exp) && exp.length) {
-      parts.push('\nExpérience professionnelle :');
-      exp.forEach((e: any) => {
-        parts.push(`- ${e.title ?? ''} chez ${e.company ?? ''} (${e.startDate ?? e.duration ?? ''} – ${e.endDate ?? 'Présent'})`);
-        if (e.description) parts.push(`  ${e.description}`);
+    const links = form.links;
+    if (Array.isArray(links) && links.length > 0) {
+      parts.push(`\n## Liens Professionnels`);
+      links.forEach((l: any) => {
+        parts.push(`- **${l.name ?? 'Lien'}** : ${l.url ?? ''}`);
       });
     }
 
-    if (Array.isArray(form.skills) && form.skills.length)
-      parts.push(`\nCompétences : ${form.skills.join(', ')}`);
+    const exp = form.experience;
+    if (Array.isArray(exp) && exp.length > 0) {
+      parts.push('\n## Expérience Professionnelle');
+      exp.forEach((e: any) => {
+        parts.push(`### ${e.title ?? 'Poste'} chez ${e.company ?? 'Entreprise'}`);
+        parts.push(`*Durée : ${e.duration ?? 'Non précisée'}*`);
+        if (e.description) {
+          parts.push(`**Description :**\n${e.description}`);
+        }
+        parts.push('');
+      });
+    }
 
-    if (Array.isArray(form.languages) && form.languages.length)
-      parts.push(`\nLangues : ${(form.languages as any[]).map(l => `${l.language ?? l.name ?? ''} (${l.level ?? ''})`).join(', ')}`);
+    const edu = form.education;
+    if (Array.isArray(edu) && edu.length > 0) {
+      parts.push('## Formation');
+      edu.forEach((e: any) => {
+        parts.push(`- **${e.degree ?? 'Diplôme'} en ${e.field ?? 'Domaine'}** à ${e.institution ?? 'Établissement'} (${e.year ?? ''})`);
+      });
+    }
 
-    if (form.coverNote) parts.push(`\nLettre de motivation : ${form.coverNote}`);
+    if (Array.isArray(form.skills) && form.skills.length > 0) {
+      parts.push(`\n## Compétences Techniques et Métier`);
+      parts.push(form.skills.map(s => `- ${s}`).join('\n'));
+    }
+
+    const langs = form.languages;
+    if (Array.isArray(langs) && langs.length > 0) {
+      parts.push(`\n## Langues`);
+      langs.forEach((l: any) => {
+        parts.push(`- **${l.name ?? 'Langue'}** : ${l.level ?? 'Non précisé'}`);
+      });
+    }
+
+    if (form.coverNote) {
+      parts.push(`\n## Note de Motivation`);
+      parts.push(form.coverNote);
+    }
 
     return parts.filter(Boolean).join('\n');
   }

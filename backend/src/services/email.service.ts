@@ -319,3 +319,48 @@ export async function sendPasswordResetEmail(
     logger.error('[EmailService] sendPasswordResetEmail failed:', err);
   }
 }
+
+/**
+ * Sends a verification email with a 6-digit code after registration.
+ */
+export async function sendVerificationEmail(
+  email: string,
+  name: string,
+  code: string
+): Promise<void> {
+  if (!env.SMTP_USER) {
+    logger.warn('[EmailService] SMTP_USER not configured — skipping sendVerificationEmail');
+    return;
+  }
+
+  try {
+    const spaced = code.split('').join(' &nbsp; ');
+    const body = `
+      <h2>Vérification de votre adresse email</h2>
+      <p>Bonjour <strong>${name}</strong>,</p>
+      <p>Merci de vous être inscrit sur Schulte Tunisia. Pour activer votre compte,
+         entrez le code ci-dessous dans l'application :</p>
+      <div style="text-align: center; margin: 30px 0;">
+        <div style="display: inline-block; background: #f0f4ff; border: 2px solid #1a3c6e; border-radius: 12px; padding: 20px 36px; font-size: 32px; font-weight: 700; letter-spacing: 8px; color: #1a3c6e;">
+          ${spaced}
+        </div>
+      </div>
+      <div class="info-box">
+        <p><strong>Important :</strong> Ce code est valide pendant 15 minutes seulement.</p>
+        <p>Si vous n'avez pas créé de compte, ignorez cet email.</p>
+      </div>
+      <p>Cordialement,<br /><strong>L'équipe — Schulte Tunisia</strong></p>
+    `;
+
+    await getTransporter().sendMail({
+      from: `"Schulte Tunisia" <${env.FROM_EMAIL}>`,
+      to: email,
+      subject: 'Code de vérification - Schulte Tunisia',
+      html: htmlShell(body),
+    });
+
+    logger.info(`[EmailService] Verification email sent to ${email}`);
+  } catch (err) {
+    logger.error('[EmailService] sendVerificationEmail failed:', err);
+  }
+}

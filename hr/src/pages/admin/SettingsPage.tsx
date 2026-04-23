@@ -16,9 +16,7 @@ const AdminSettingsPage = () => {
   const [confirmPw, setConfirmPw] = useState('')
   const [saving, setSaving] = useState(false)
   const [savingProfile, setSavingProfile] = useState(false)
-  const [broadcastMsg, setBroadcastMsg] = useState('')
-  const [broadcastSite, setBroadcastSite] = useState<'all' | 'Bouarada' | 'Zaghouan'>('all')
-  const [sendingBroadcast, setSendingBroadcast] = useState(false)
+
 
   const handleProfile = async () => {
     const nextName = name.trim()
@@ -58,29 +56,7 @@ const AdminSettingsPage = () => {
     } finally { setSaving(false) }
   }
 
-  const handleBroadcast = async () => {
-    const message = broadcastMsg.trim()
-    if (message.length < 3) { toast.error('Le message doit contenir au moins 3 caracteres'); return }
 
-    setSendingBroadcast(true)
-    try {
-      const payload: Record<string, any> = { message }
-      if (broadcastSite !== 'all') payload.site = broadcastSite
-
-      const { data } = await api.post('/admin/broadcast-hr', payload)
-      toast.success(data?.message || 'Diffusion envoyee')
-      setBroadcastMsg('')
-    } catch (err: any) {
-      const details = err.response?.data?.details
-      if (Array.isArray(details) && details.length > 0) {
-        toast.error(details[0])
-        return
-      }
-      toast.error(err.response?.data?.error || 'Echec de l\'envoi de la diffusion')
-    } finally {
-      setSendingBroadcast(false)
-    }
-  }
 
   return (
     <DashboardLayout title="Parametres admin">
@@ -103,35 +79,6 @@ const AdminSettingsPage = () => {
             <div><Label>Nouveau mot de passe</Label><Input type="password" value={newPw} onChange={e => setNewPw(e.target.value)} /><p className="text-[10px] text-muted-foreground mt-1">8 caracteres minimum, 1 chiffre</p></div>
             <div><Label>Confirmer le mot de passe</Label><Input type="password" value={confirmPw} onChange={e => setConfirmPw(e.target.value)} /></div>
             <Button onClick={handlePassword} disabled={saving} className="bg-primary">{saving ? 'Enregistrement...' : 'Mettre a jour le mot de passe'}</Button>
-          </CardContent>
-        </Card>
-
-        <Card className="rounded-md shadow-card">
-          <CardHeader><CardTitle className="text-base">Mini messagerie (admin vers RH)</CardTitle></CardHeader>
-          <CardContent className="space-y-3">
-            <div>
-              <Label>Audience</Label>
-              <select
-                value={broadcastSite}
-                onChange={e => setBroadcastSite(e.target.value as 'all' | 'Bouarada' | 'Zaghouan')}
-                className="h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-card"
-              >
-                <option value="all">Tous les sites RH</option>
-                <option value="Bouarada">Bouarada uniquement</option>
-                <option value="Zaghouan">Zaghouan uniquement</option>
-              </select>
-            </div>
-            <div>
-              <Label>Message</Label>
-              <Input
-                value={broadcastMsg}
-                onChange={e => setBroadcastMsg(e.target.value)}
-                placeholder="Ecrire un court message aux equipes RH"
-              />
-            </div>
-            <Button onClick={handleBroadcast} disabled={sendingBroadcast} className="bg-primary">
-              {sendingBroadcast ? 'Envoi...' : 'Envoyer la diffusion'}
-            </Button>
           </CardContent>
         </Card>
       </div>

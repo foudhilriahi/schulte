@@ -22,12 +22,14 @@ router.get('/hr-accounts', AdminController.getHRAccounts);
 router.post('/hr-accounts', validate(adminCreateHRSchema), AdminController.createHRAccount);
 router.patch('/hr-accounts/:id', validate(adminUpdateHRSchema), AdminController.updateHRAccount);
 router.delete('/hr-accounts/:id', AdminController.deleteHRAccount);
+router.delete('/hr-accounts/:id/permanent', AdminController.permanentDeleteHRAccount);
 
 router.use('/templates', requireRole('ADMIN'));
 router.get('/templates', AdminController.getTemplates);
 router.post('/templates', validate(adminCreateTemplateSchema), AdminController.createTemplate);
 router.patch('/templates/:id', validate(adminUpdateTemplateSchema), AdminController.updateTemplate);
 router.delete('/templates/:id', AdminController.deleteTemplate);
+router.delete('/templates/:id/permanent', AdminController.permanentDeleteTemplate);
 router.post('/broadcast-hr', validate(adminBroadcastSchema), AdminController.broadcastToHR);
 
 // Overview endpoints (both ADMIN and HR can access their respective overviews)

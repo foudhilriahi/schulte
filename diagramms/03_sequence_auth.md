@@ -44,7 +44,7 @@ sequenceDiagram
         Frontend-->>RH: Redirection dashboard RH
     end
 
-    Note over Candidat, Cookie: Inscription candidat
+    Note over Candidat, Cookie: Inscription candidat et Verification Email
 
     Candidat->>Frontend: Saisit nom + email + telephone + mot de passe
     Frontend->>Frontend: Validation formulaire (email, telephone, password)
@@ -56,12 +56,37 @@ sequenceDiagram
         alt Email/telephone deja utilise
             Backend-->>Frontend: 409 Conflit compte existant
         else Nouveau candidat
-            Backend->>Backend: hash password
-            Backend->>DB: Cree utilisateur role CANDIDATE
-            Backend->>Cookie: setRefreshCookie httpOnly 30 jours
-            Backend-->>Frontend: 201 avec accessToken et user
-            Frontend-->>Candidat: Redirection vers espace candidat
+            Backend->>Backend: hash password, genere verifyToken (6 chiffres)
+            Backend->>DB: Cree utilisateur (role CANDIDATE, emailVerified: false)
+            Backend->>EmailService: Envoie email avec le code a 6 chiffres
+            Backend-->>Frontend: 201 Created (sans token)
+            Frontend-->>Candidat: Redirection vers /verify-email
         end
+    end
+
+    Note over Candidat, Backend: Verification Email
+
+    Candidat->>Frontend: Saisit code a 6 chiffres
+    Frontend->>Backend: POST /api/auth/verify-email
+    Backend->>DB: Cherche token valide et non expire
+    alt Token invalide ou expire
+        Backend-->>Frontend: 400 Invalid or expired code
+    else Token valide
+        Backend->>DB: Met a jour emailVerified = true, efface token
+        Backend->>Backend: Genere JWT 15min + refreshToken aleatoire
+        Backend->>Cookie: setRefreshCookie httpOnly 30 jours
+        Backend-->>Frontend: 200 avec accessToken et user
+        Frontend-->>Candidat: Redirection vers espace candidat
+    end
+
+    Note over Candidat, Backend: Tentative de Connexion (Non verifie)
+
+    Candidat->>Frontend: Saisit email + mot de passe
+    Frontend->>Backend: POST /api/auth/login
+    Backend->>DB: Cherche utilisateur par email
+    alt emailVerified == false
+        Backend-->>Frontend: 403 EMAIL_NOT_VERIFIED
+        Frontend-->>Candidat: Redirection vers /verify-email
     end
 
     Note over Frontend, Cookie: Rotation du refresh token

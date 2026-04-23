@@ -76,12 +76,26 @@ export class UserRepository {
     return prisma.refreshToken.deleteMany({ where: { userId } });
   }
 
+  static async delete(id: string) {
+    return prisma.user.delete({ where: { id } });
+  }
+
   // Password reset token management
   static async findByResetToken(resetToken: string) {
     return prisma.user.findFirst({
       where: {
         resetToken,
         resetTokenExpiry: { gt: new Date() },
+      },
+    });
+  }
+
+  static async findByVerifyToken(userId: string, verifyToken: string) {
+    return prisma.user.findFirst({
+      where: {
+        id: userId,
+        verifyToken,
+        verifyTokenExpiry: { gt: new Date() },
       },
     });
   }

@@ -51,31 +51,69 @@ const namePattern = /^[A-Za-zÀ-ÿ'\-\s]{2,80}$/;
 const phonePattern = /^\+?[0-9\s\-()]{8,20}$/;
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-const isValidString = (value: unknown, minLength = 1, maxLength = 200) => {
-  return typeof value === "string" && value.trim().length >= minLength && value.trim().length <= maxLength;
+const textPattern = /^[A-Za-zÀ-ÿ0-9'.,\-\s\n\r:;?!()]{2,2000}$/;
+const linkPattern = /^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)$/;
+
+const isValidString = (value: unknown, minLength = 1, maxLength = 200, pattern?: RegExp) => {
+  if (typeof value !== "string") return false;
+  const trimmed = value.trim();
+  if (trimmed.length < minLength || trimmed.length > maxLength) return false;
+  if (pattern && !pattern.test(trimmed)) return false;
+  return true;
 };
 
 const validateGeneratedCvData = (formData: any): string | null => {
   const personal = formData?.personal;
 
   if (!personal || typeof personal !== "object") return "Les informations personnelles sont requises";
-  if (!isValidString(personal.name, 2, 80) || !namePattern.test(personal.name.trim())) return "Entrez un nom complet valide";
-  if (!isValidString(personal.email, 5, 120) || !emailPattern.test(personal.email.trim())) return "Entrez une adresse e-mail valide";
-  if (!isValidString(personal.phone, 8, 20) || !phonePattern.test(personal.phone.trim())) return "Entrez un numero de telephone valide";
+  if (!isValidString(personal.name, 2, 80, namePattern)) return "Entrez un nom complet valide (lettres uniquement)";
+  if (!isValidString(personal.email, 5, 120, emailPattern)) return "Entrez une adresse e-mail valide";
+  if (!isValidString(personal.phone, 8, 20, phonePattern)) return "Entrez un numero de telephone valide";
   if (!isValidString(personal.city, 1, 80) || !tunisianCities.has(personal.city.trim())) return "Selectionnez une ville tunisienne valide";
 
-  if (!Array.isArray(formData?.education) || formData.education.length === 0) return "Ajoutez au moins une formation";
+  if (!Array.isArray(formData?.education) || formData.education.length === 0 || formData.education.length > 15) return "Ajoutez entre 1 et 15 formations";
   for (const education of formData.education) {
     if (!education || typeof education !== "object") return "Les informations de formation sont invalides";
     if (!isValidString(education.degree, 1, 60) || !degreeOptions.has(education.degree.trim())) return "Selectionnez un diplome valide";
-    if (!isValidString(education.field, 2, 80)) return "Le domaine d'etudes est requis";
-    if (!isValidString(education.institution, 2, 120)) return "L'etablissement est requis";
+    if (!isValidString(education.field, 2, 100)) return "Le domaine d'etudes est invalide";
+    if (!isValidString(education.institution, 2, 150)) return "L'etablissement est invalide";
     if (!isValidString(education.year, 4, 4) || !/^\d{4}$/.test(education.year.trim())) return "Utilisez une annee sur 4 chiffres";
   }
 
-  if (!Array.isArray(formData?.skills) || formData.skills.length === 0) return "Ajoutez au moins une competence";
+  if (Array.isArray(formData?.experience)) {
+    if (formData.experience.length > 20) return "Maximum 20 experiences autorisees";
+    for (const exp of formData.experience) {
+      if (!isValidString(exp.title, 2, 100)) return "Titre de poste invalide";
+      if (!isValidString(exp.company, 2, 150)) return "Nom d'entreprise invalide";
+      if (!isValidString(exp.duration, 2, 100)) return "Duree invalide";
+      if (exp.description && !isValidString(exp.description, 2, 1000, textPattern)) return "Description d'experience invalide (caracteres non autorises ou trop longue)";
+    }
+  }
 
-  if (formData?.coverNote !== undefined && typeof formData.coverNote !== "string") return "La note de motivation doit etre une chaine de caracteres";
+  if (!Array.isArray(formData?.skills) || formData.skills.length === 0 || formData.skills.length > 40) return "Ajoutez entre 1 et 40 competences";
+  for (const skill of formData.skills) {
+    if (!isValidString(skill, 2, 60)) return "Une ou plusieurs competences sont invalides";
+  }
+
+  if (Array.isArray(formData?.languages)) {
+    if (formData.languages.length > 10) return "Maximum 10 langues autorisees";
+    for (const lang of formData.languages) {
+      if (!isValidString(lang.name, 2, 50)) return "Nom de langue invalide";
+      if (!isValidString(lang.level, 2, 50)) return "Niveau de langue invalide";
+    }
+  }
+
+  if (Array.isArray(formData?.links)) {
+    if (formData.links.length > 5) return "Maximum 5 liens autorises";
+    for (const link of formData.links) {
+      if (!isValidString(link.name, 2, 50)) return "Nom de lien invalide";
+      if (!isValidString(link.url, 5, 300, linkPattern)) return "URL invalide";
+    }
+  }
+
+  if (formData?.coverNote !== undefined && formData.coverNote !== "") {
+    if (!isValidString(formData.coverNote, 2, 1500, textPattern)) return "La note de motivation contient des caracteres invalides ou est trop longue";
+  }
 
   return null;
 };

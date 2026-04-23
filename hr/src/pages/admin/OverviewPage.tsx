@@ -2,37 +2,20 @@ import { useEffect, useState } from 'react'
 import DashboardLayout from '@/components/hr/DashboardLayout'
 import StatCard from '@/components/hr/StatCard'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Users, Briefcase, ClipboardList, CalendarDays, TrendingUp, UserCheck } from 'lucide-react'
 import { api } from '@/lib/axios'
 import { socketService } from '@/lib/socket'
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  Cell,
-  PieChart,
-  Pie,
-  Legend,
-} from "recharts";
-
-const statusBadge: Record<string, { label: string; className: string }> = {
-  new: { label: "Nouveau", className: "bg-card2 text-ink" },
-  reviewing: { label: "En examen", className: "bg-warn/14 text-warn" },
-  interview: { label: "Entretien", className: "bg-boul text-primary" },
-  accepted: { label: "Accepté", className: "bg-ok/14 text-ok" },
-  rejected: { label: "Rejeté", className: "bg-err/14 text-err" },
-};
+import { toast } from 'sonner'
 
 const AdminOverviewPage = () => {
   const [stats, setStats] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
+  const [broadcastMsg, setBroadcastMsg] = useState('')
+  const [broadcastSite, setBroadcastSite] = useState<'all' | 'Bouarada' | 'Zaghouan'>('all')
+  const [sendingBroadcast, setSendingBroadcast] = useState(false)
 
   useEffect(() => {
     const fallback = { 
@@ -91,20 +74,24 @@ const AdminOverviewPage = () => {
 
   if (loading) return <DashboardLayout title="Vue d'ensemble"><p>Chargement...</p></DashboardLayout>
 
-  const statusChartData = (stats?.applicationsByStatus || []).map((s: any) => ({
-    name: statusBadge[s.status]?.label || s.status,
-    value: s.count,
-      color: s.status === 'new' ? 'hsl(var(--primary))' : 
-        s.status === 'reviewing' ? 'var(--warning)' :
-        s.status === 'interview' ? 'hsl(var(--primary))' :
-        s.status === 'accepted' ? 'hsl(var(--success))' : 'var(--destructive)'
-  }));
-
-  const siteChartData = (stats?.offersBySite || []).map((s: any) => ({
-    name: s.site,
-    value: s.count,
-    color: s.site === 'Bouarada' ? 'var(--bouarada)' : 'var(--zaghouan)'
-  }));
+  const handleBroadcast = async () => {
+    const message = broadcastMsg.trim()
+    if (message.length < 3) { toast.error('Le message doit contenir au moins 3 caractères'); return }
+    setSendingBroadcast(true)
+    try {
+      const payload: Record<string, any> = { message }
+      if (broadcastSite !== 'all') payload.site = broadcastSite
+      const { data } = await api.post('/admin/broadcast-hr', payload)
+      toast.success(data?.message || 'Diffusion envoyée')
+      setBroadcastMsg('')
+    } catch (err: any) {
+      const details = err.response?.data?.details
+      if (Array.isArray(details) && details.length > 0) { toast.error(details[0]); return }
+      toast.error(err.response?.data?.error || 'Échec de l\'envoi de la diffusion')
+    } finally {
+      setSendingBroadcast(false)
+    }
+  }
 
   const retryFetch = async () => {
     setLoading(true)
@@ -152,101 +139,36 @@ const AdminOverviewPage = () => {
         <StatCard label="Entretiens (semaine)" value={stats?.interviewsWeek ?? 0} icon={CalendarDays} iconColor="text-ok" />
       </div>
 
-      {/* Sites Activity */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-        <Card className="rounded-md shadow-card">
-          <CardHeader>
-            <CardTitle className="text-base">Offres par site</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {siteChartData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={120}>
-                <PieChart>
-                  <Pie
-                    data={siteChartData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={30}
-                    outerRadius={50}
-                    paddingAngle={5}
-                    dataKey="value"
-                  >
-                    {siteChartData.map((entry: any, index: number) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                  <Legend />
-                </PieChart>
-              </ResponsiveContainer>
-            ) : (
-              <p className="text-sm text-muted-foreground text-center py-8">Aucune donnée</p>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Application Status Chart */}
-      <Card className="rounded-md shadow-card mb-6">
-        <CardHeader>
-          <CardTitle className="text-base">Répartition des statuts</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {statusChartData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={250}>
-              <BarChart
-                data={statusChartData}
-                margin={{ top: 5, right: 10, left: -20, bottom: 5 }}
-              >
-                <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-                <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
-                <Tooltip
-                  contentStyle={{ fontSize: 12, borderRadius: 8 }}
-                  formatter={(value: number) => [value, "Candidatures"]}
-                />
-                <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-                  {statusChartData.map((entry: any, index: number) => (
-                    <Cell key={index} fill={entry.color} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          ) : (
-            <p className="text-sm text-muted-foreground text-center py-8">Aucune donnée</p>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Recent Applications */}
+      {/* Mini messagerie (admin → RH) */}
       <Card className="rounded-md shadow-card">
         <CardHeader>
-          <CardTitle className="text-base">Candidatures recentes</CardTitle>
+          <CardTitle className="text-base">Mini messagerie (admin vers RH)</CardTitle>
         </CardHeader>
-        <CardContent className="p-0">
-          <div className="divide-y divide-border">
-            {(stats?.recentApplications || []).length === 0 && (
-              <p className="px-6 py-4 text-sm text-muted-foreground">Aucune candidature recente.</p>
-            )}
-            {(stats?.recentApplications || []).map((a: any, i: number) => {
-              const badge = statusBadge[a.status] ?? {
-                label: a.status,
-                className: "bg-card2 text-foreground",
-              };
-              return (
-                <div key={a.id || i} className={`flex items-center justify-between px-6 py-3 ${i % 2 === 0 ? 'bg-card' : 'bg-card2'}`}>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium">{a.candidateName || 'Inconnu'}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {a.offerTitle || ''} • {a.offerSite} • {a.contractType}
-                    </p>
-                  </div>
-                  <Badge className={`text-xs ${badge.className}`}>
-                    {badge.label}
-                  </Badge>
-                </div>
-              );
-            })}
+        <CardContent className="space-y-3">
+          <div>
+            <label className="text-sm font-medium">Audience</label>
+            <select
+              value={broadcastSite}
+              onChange={e => setBroadcastSite(e.target.value as 'all' | 'Bouarada' | 'Zaghouan')}
+              className="mt-1 h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-card"
+            >
+              <option value="all">Tous les sites RH</option>
+              <option value="Bouarada">Bouarada uniquement</option>
+              <option value="Zaghouan">Zaghouan uniquement</option>
+            </select>
           </div>
+          <div>
+            <label className="text-sm font-medium">Message</label>
+            <input
+              value={broadcastMsg}
+              onChange={e => setBroadcastMsg(e.target.value)}
+              placeholder="Écrire un court message aux équipes RH"
+              className="mt-1 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            />
+          </div>
+          <Button onClick={handleBroadcast} disabled={sendingBroadcast} className="bg-primary">
+            {sendingBroadcast ? 'Envoi...' : 'Envoyer la diffusion'}
+          </Button>
         </CardContent>
       </Card>
     </DashboardLayout>

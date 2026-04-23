@@ -3,7 +3,7 @@ import DashboardLayout from '@/components/hr/DashboardLayout'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Plus, Pencil, X, ToggleLeft, ToggleRight, Lock } from 'lucide-react'
+import { Plus, Pencil, X, ToggleLeft, ToggleRight, Lock, Trash2 } from 'lucide-react'
 import { api } from '@/lib/axios'
 import { toast } from 'sonner'
 import {
@@ -13,6 +13,10 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { socketService } from '@/lib/socket'
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 
 const CORE_TEMPLATE_IDS = new Set([
   'planificateur-production',
@@ -32,6 +36,8 @@ const TemplatesPage = () => {
   const [createOpen, setCreateOpen] = useState(false)
   const [editOpen, setEditOpen] = useState(false)
   const [selected, setSelected] = useState<any>(null)
+  const [permanentDeleteOpen, setPermanentDeleteOpen] = useState(false)
+  const [pendingPermanentDelete, setPendingPermanentDelete] = useState<any | null>(null)
 
   const [form, setForm] = useState({
     titleFr: '',
@@ -154,6 +160,19 @@ const TemplatesPage = () => {
     }
   }
 
+  const confirmPermanentDelete = async () => {
+    if (!pendingPermanentDelete) return
+    try {
+      await api.delete(`/admin/templates/${pendingPermanentDelete.id}/permanent`)
+      toast.success('Modèle supprimé définitivement.')
+      setPermanentDeleteOpen(false)
+      setPendingPermanentDelete(null)
+      fetchTemplates()
+    } catch (err: any) {
+      toast.error(err?.response?.data?.error || 'Erreur lors de la suppression définitive')
+    }
+  }
+
   return (
     <DashboardLayout title="Modeles d'offres">
       <div className="flex items-center justify-between mb-4 gap-4">
@@ -251,6 +270,16 @@ const TemplatesPage = () => {
                           <ToggleLeft className="h-4 w-4 text-muted-foreground" />
                         )}
                       </Button>
+                      {!isCore && t.isActive === false && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => { setPendingPermanentDelete(t); setPermanentDeleteOpen(true) }}
+                          title="Supprimer définitivement"
+                        >
+                          <Trash2 className="h-3.5 w-3.5 text-err" />
+                        </Button>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -309,6 +338,34 @@ const TemplatesPage = () => {
           </DialogContent>
         </Dialog>
       ))}
+
+      <AlertDialog
+        open={permanentDeleteOpen}
+        onOpenChange={(open) => {
+          setPermanentDeleteOpen(open)
+          if (!open) setPendingPermanentDelete(null)
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer définitivement ce modèle ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingPermanentDelete
+                ? `Le modèle "${pendingPermanentDelete.titleFr}" sera supprimé de manière irréversible. Les offres existantes créées depuis ce modèle ne seront pas affectées.`
+                : ''}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setPendingPermanentDelete(null)}>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmPermanentDelete}
+              className="bg-err hover:bg-err/90"
+            >
+              Supprimer définitivement
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DashboardLayout>
   )
 }

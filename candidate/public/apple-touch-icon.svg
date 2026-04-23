@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Schulte Jobs">
+  <rect width="512" height="512" rx="112" fill="#1d4ed8"/>
+  <circle cx="256" cy="168" r="76" fill="#ffffff"/>
+  <path d="M170 374c0-47.5 38.5-86 86-86s86 38.5 86 86" fill="none" stroke="#ffffff" stroke-width="42" stroke-linecap="round"/>
+  <path d="M212 168h88" stroke="#1d4ed8" stroke-width="30" stroke-linecap="round"/>
+</svg>

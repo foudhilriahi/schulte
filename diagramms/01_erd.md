@@ -12,6 +12,9 @@ erDiagram
         string password_hash
         string site "bouarada ou zaghouan"
         boolean is_active
+        boolean email_verified
+        string verify_token "nullable SHA-256"
+        timestamp verify_token_expiry "nullable"
         timestamp created_at
         timestamp deleted_at "nullable soft delete"
     }
@@ -83,7 +86,7 @@ erDiagram
         string source "profile_upload profile_generated application_upload application_generated"
         string cv_url "nullable"
         text cv_text "texte CV normalise"
-        json form_data "nullable"
+        json form_data "nullable (inclut langues, liens)"
         string cv_template "modern classic nullable"
         int size "nullable"
         boolean is_default

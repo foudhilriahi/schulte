@@ -8,10 +8,10 @@ flowchart TB
 
         subgraph ADMIN_APP ["Admin Dashboard React Vite"]
             A1["Login Admin email + mot de passe"]
-            A2["Gestion Comptes RH CRUD"]
-            A3["Gestion Templates 7 postes"]
-            A4["Vue Ensemble stats globales"]
-            A5["Mini messagerie vers RH + bell live"]
+            A2["Gestion Comptes RH CRUD + toggle actif/inactif + suppression definitive"]
+            A3["Gestion Templates 7 postes coeur proteges + custom CRUD + suppression definitive"]
+            A4["Vue Ensemble KPIs + Mini messagerie vers RH"]
+            A5["Parametres profil admin + changement mot de passe"]
         end
 
         subgraph HR_APP ["Dashboard RH React Vite"]
@@ -41,7 +41,7 @@ flowchart TB
             R3["/api/cvs mine upload generated set-default delete"]
             R4["/api/applications from-cv status analyse saveAnalysis"]
             R7["/api/interviews Planification Outcome"]
-            R5["/api/admin HR CRUD + Templates + Broadcast RH"]
+            R5["/api/admin HR CRUD toggle + permanent delete + Templates toggle + permanent delete + Broadcast RH"]
             R6["/api/notifications Lecture Marquage Suppression"]
         end
 

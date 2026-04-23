@@ -71,6 +71,11 @@ export default function LoginPage() {
       login(user, accessToken);
       router.push('/');
     } catch (err: any) {
+      if (err.response?.data?.code === 'EMAIL_NOT_VERIFIED') {
+        const { userId, email: unverifiedEmail } = err.response.data;
+        router.push(`/verify-email?userId=${userId}&email=${encodeURIComponent(unverifiedEmail)}`);
+        return;
+      }
       setSubmitError(err.response?.data?.error || 'Erreur de connexion');
     } finally {
       setIsLoading(false);

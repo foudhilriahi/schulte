@@ -3,7 +3,7 @@ import DashboardLayout from '@/components/hr/DashboardLayout'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Plus, Pencil, KeyRound, UserX, UserCheck } from 'lucide-react'
+import { Plus, Pencil, KeyRound, UserX, UserCheck, Trash2 } from 'lucide-react'
 import { api } from '@/lib/axios'
 import { toast } from 'sonner'
 import {
@@ -33,8 +33,10 @@ const HRAccountsPage = () => {
   const [editOpen, setEditOpen] = useState(false)
   const [resetOpen, setResetOpen] = useState(false)
   const [deactivateOpen, setDeactivateOpen] = useState(false)
+  const [permanentDeleteOpen, setPermanentDeleteOpen] = useState(false)
   const [selected, setSelected] = useState<any>(null)
   const [pendingDeactivate, setPendingDeactivate] = useState<any | null>(null)
+  const [pendingPermanentDelete, setPendingPermanentDelete] = useState<any | null>(null)
   const [creatingAccount, setCreatingAccount] = useState(false)
   const [updatingAccount, setUpdatingAccount] = useState(false)
   const [resettingPassword, setResettingPassword] = useState(false)
@@ -180,12 +182,6 @@ const HRAccountsPage = () => {
   }
 
   const openDeactivateDialog = (user: any) => {
-    const isInactive = user?.isActive === false || !!user?.deletedAt || String(user?.email || '').startsWith('deleted_')
-    if (isInactive) {
-      toast.error('Ce compte est deja desactive')
-      return
-    }
-
     setPendingDeactivate(user)
     setDeactivateOpen(true)
   }
@@ -202,6 +198,25 @@ const HRAccountsPage = () => {
     } catch (err: any) {
       const details = err?.response?.data?.details
       toast.error(details?.[0] || err?.response?.data?.error || 'Erreur lors de la desactivation du compte')
+    }
+  }
+
+  const openPermanentDeleteDialog = (user: any) => {
+    setPendingPermanentDelete(user)
+    setPermanentDeleteOpen(true)
+  }
+
+  const confirmPermanentDelete = async () => {
+    if (!pendingPermanentDelete) return
+    try {
+      await api.delete(`/admin/hr-accounts/${pendingPermanentDelete.id}/permanent`)
+      toast.success('Compte supprimé définitivement.')
+      setPermanentDeleteOpen(false)
+      setPendingPermanentDelete(null)
+      fetchAccounts()
+    } catch (err: any) {
+      const details = err?.response?.data?.details
+      toast.error(details?.[0] || err?.response?.data?.error || 'Erreur lors de la suppression définitive')
     }
   }
 
@@ -260,8 +275,8 @@ const HRAccountsPage = () => {
                     </Badge>
                   </td>
                   <td className="px-4 py-3">
-                    <Badge className={`text-xs ${(a.isActive !== false && !a.deletedAt && !String(a.email || '').startsWith('deleted_')) ? 'bg-ok/14 text-ok' : 'bg-err/14 text-err'}`}>
-                      {(a.isActive !== false && !a.deletedAt && !String(a.email || '').startsWith('deleted_')) ? 'Actif' : 'Inactif'}
+                    <Badge className={`text-xs ${a.isActive !== false ? 'bg-ok/14 text-ok' : 'bg-err/14 text-err'}`}>
+                      {a.isActive !== false ? 'Actif' : 'Inactif'}
                     </Badge>
                   </td>
                   <td className="px-4 py-3">
@@ -282,10 +297,15 @@ const HRAccountsPage = () => {
                         <KeyRound className="h-3.5 w-3.5" />
                       </Button>
                       <Button variant="ghost" size="sm" onClick={() => openDeactivateDialog(a)}>
-                        {(a.isActive !== false && !a.deletedAt && !String(a.email || '').startsWith('deleted_'))
+                        {a.isActive !== false
                           ? <UserX className="h-3.5 w-3.5 text-err" />
                           : <UserCheck className="h-3.5 w-3.5 text-ok" />}
                       </Button>
+                      {a.isActive === false && (
+                        <Button variant="ghost" size="sm" onClick={() => openPermanentDeleteDialog(a)} title="Supprimer définitivement">
+                          <Trash2 className="h-3.5 w-3.5 text-err" />
+                        </Button>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -358,20 +378,52 @@ const HRAccountsPage = () => {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Désactiver ce compte RH ?</AlertDialogTitle>
+            <AlertDialogTitle>
+              {pendingDeactivate?.isActive !== false ? 'Désactiver ce compte RH ?' : 'Réactiver ce compte RH ?'}
+            </AlertDialogTitle>
             <AlertDialogDescription>
               {pendingDeactivate
-                ? `Le compte ${pendingDeactivate.name} perdra immédiatement l'accès à la plateforme.`
-                : "Ce compte perdra immédiatement l'accès à la plateforme."}
+                ? pendingDeactivate.isActive !== false
+                  ? `Le compte ${pendingDeactivate.name} perdra immédiatement l'accès à la plateforme.`
+                  : `Le compte ${pendingDeactivate.name} retrouvera l'accès à la plateforme.`
+                : ''}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => setPendingDeactivate(null)}>Annuler</AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmDeactivate}
+              className={pendingDeactivate?.isActive !== false ? 'bg-err hover:bg-err/90' : 'bg-ok hover:bg-ok/90'}
+            >
+              {pendingDeactivate?.isActive !== false ? 'Désactiver' : 'Réactiver'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={permanentDeleteOpen}
+        onOpenChange={(open) => {
+          setPermanentDeleteOpen(open)
+          if (!open) setPendingPermanentDelete(null)
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer définitivement ce compte ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingPermanentDelete
+                ? `Le compte "${pendingPermanentDelete.name}" (${pendingPermanentDelete.email}) sera supprimé de manière irréversible. Les offres et entretiens créés par ce compte seront réassignés à l'administrateur.`
+                : ''}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setPendingPermanentDelete(null)}>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmPermanentDelete}
               className="bg-err hover:bg-err/90"
             >
-              Désactiver
+              Supprimer définitivement
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -50,7 +50,7 @@ export function ApplicationCard({ application, onClick }: ApplicationCardProps) 
               {application.offer?.title || 'Offre inconnue'}
             </h3>
             <p className="text-[10px] font-mono text-ink4 mt-1">
-              Candidature envoyee le {new Date(application.createdAt).toLocaleDateString('fr-TN', { day: 'numeric', month: 'short', year: 'numeric' })}
+              Candidature envoyee le {new Date(application.appliedAt).toLocaleDateString('fr-TN', { day: 'numeric', month: 'short', year: 'numeric' })}
             </p>
           </div>
           <ChevronRight className="h-5 w-5 text-ink4 flex-shrink-0" />

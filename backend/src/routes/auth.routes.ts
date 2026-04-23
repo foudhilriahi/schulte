@@ -14,6 +14,8 @@ router.post('/refresh', AuthController.refresh);
 router.post('/logout', AuthController.logout);
 router.post('/forgot-password', rateLimiter(100, 1 * 60 * 1000), AuthController.forgotPassword);
 router.post('/reset-password', rateLimiter(100, 1 * 60 * 1000), AuthController.resetPassword);
+router.post('/verify-email', rateLimiter(100, 1 * 60 * 1000), AuthController.verifyEmail);
+router.post('/resend-verification', rateLimiter(10, 1 * 60 * 1000), AuthController.resendVerification);
 
 // Protected
 router.get('/me', authenticate, AuthController.me);

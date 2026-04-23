@@ -117,8 +117,8 @@ const TopBar = ({ title }: TopBarProps) => {
   const displayUnread = unreadCount > unread ? unreadCount : unread;
 
   return (
-    <header className="sticky top-0 z-30 flex h-[54px] items-center justify-between border-b border-border bg-card px-[22px]">
-      <h1 className="text-[15px] font-bold text-ink">{title}</h1>
+    <header className="sticky top-0 z-30 flex h-[54px] items-center justify-between border-b border-border bg-card px-[22px] gap-4 overflow-hidden">
+      <h1 className="min-w-0 flex-1 truncate text-[15px] font-bold text-ink">{title}</h1>
       <div className="flex items-center gap-4">
         {user?.site && (
           <Badge

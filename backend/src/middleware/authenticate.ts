@@ -16,6 +16,8 @@ declare global {
   }
 }
 
+import { UserRepository } from '../repositories/user.repository';
+
 export function authenticate(req: Request, res: Response, next: NextFunction): void {
   const authHeader = req.headers.authorization;
   const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
@@ -25,11 +27,29 @@ export function authenticate(req: Request, res: Response, next: NextFunction): v
     return;
   }
 
-  try {
-    const payload = jwt.verify(token, env.JWT_ACCESS_SECRET) as AuthPayload;
+  jwt.verify(token, env.JWT_ACCESS_SECRET, async (err, decoded) => {
+    if (err || !decoded) {
+      res.status(401).json({ error: 'Jeton d\'acces invalide ou expire' });
+      return;
+    }
+
+    const payload = decoded as AuthPayload;
+
+    // Immediate Revocation Check for HR and ADMIN
+    if (payload.role === 'HR' || payload.role === 'ADMIN') {
+      try {
+        const user = await UserRepository.findById(payload.userId);
+        if (!user || !user.isActive) {
+          res.status(403).json({ error: 'Compte desactive. Acces refuse.' });
+          return;
+        }
+      } catch (dbErr) {
+        res.status(500).json({ error: 'Erreur lors de la verification du compte' });
+        return;
+      }
+    }
+
     req.user = payload;
     next();
-  } catch {
-    res.status(401).json({ error: 'Jeton d\'acces invalide ou expire' });
-  }
+  });
 }

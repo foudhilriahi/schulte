@@ -14,6 +14,9 @@ classDiagram
         +String passwordHash
         +String site
         +Boolean isActive
+        +Boolean emailVerified
+        +String verifyToken
+        +DateTime verifyTokenExpiry
         +DateTime createdAt
         +DateTime deletedAt
     }
@@ -117,6 +120,7 @@ classDiagram
         +findById(id) User
         +findByEmail(email) User
         +findByPhone(phone) User
+        +findByVerifyToken(token) User
         +create(data) User
         +update(id, data) User
     }
@@ -172,6 +176,15 @@ classDiagram
         +countUnread(userId) Number
         +deleteOne(id, userId) Number
         +deleteAllByUser(userId) Number
+    }
+
+    class TemplateRepository {
+        <<Repository>>
+        +findAll() OfferTemplate
+        +findActive() OfferTemplate
+        +findById(id) OfferTemplate
+        +create(data) OfferTemplate
+        +update(id, data) OfferTemplate
     }
 
     class AuthService {
@@ -242,6 +255,23 @@ classDiagram
         +buildClassic(doc, data) void
     }
 
+    class AdminController {
+        <<Controller>>
+        +getHRAccounts(req, res) void
+        +createHRAccount(req, res) void
+        +updateHRAccount(req, res) void
+        +deleteHRAccount(req, res) void "toggle actif/inactif"
+        +permanentDeleteHRAccount(req, res) void "suppression definitive"
+        +getTemplates(req, res) void
+        +createTemplate(req, res) void
+        +updateTemplate(req, res) void
+        +deleteTemplate(req, res) void "toggle actif/inactif"
+        +permanentDeleteTemplate(req, res) void "suppression definitive"
+        +broadcastToHR(req, res) void
+        +overview(req, res) void
+        +hrOverview(req, res) void
+    }
+
     User "1" --> "*" RefreshToken : possede
     User "1" --> "*" JobOffer : cree
     User "1" --> "*" OfferTemplate : cree
@@ -268,4 +298,8 @@ classDiagram
     UserRepository ..> User : gere
     InterviewRepository ..> Interview : gere
     NotificationRepository ..> Notification : gere
+    TemplateRepository ..> OfferTemplate : gere
+    AdminController ..> UserRepository : gere comptes RH
+    AdminController ..> TemplateRepository : gere templates
+    AdminController ..> NotificationRepository : broadcast
 ```

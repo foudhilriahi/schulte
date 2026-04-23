@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { AuthService } from '../services/auth.service';
 import { UserRepository } from '../repositories/user.repository';
-import { sendPasswordResetEmail } from '../services/email.service';
+import { sendPasswordResetEmail, sendVerificationEmail } from '../services/email.service';
 import logger from '../utils/logger';
 import crypto from 'crypto';
 
@@ -24,6 +24,12 @@ export class AuthController {
       }
 
       const passwordHash = await AuthService.hashPassword(password);
+
+      // Generate 6-digit verification code
+      const verifyCode = Math.floor(100000 + Math.random() * 900000).toString();
+      const verifyTokenHash = crypto.createHash('sha256').update(verifyCode).digest('hex');
+      const verifyTokenExpiry = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+
       const user = await UserRepository.create({
         email,
         passwordHash,
@@ -33,29 +39,28 @@ export class AuthController {
         city,
       });
 
-      const accessToken = AuthService.generateAccessToken({
-        userId: user.id,
-        role: user.role,
+      // Store verification token
+      await UserRepository.update(user.id, {
+        verifyToken: verifyTokenHash,
+        verifyTokenExpiry,
+        emailVerified: false,
       });
 
-      const refreshToken = AuthService.generateRefreshToken();
-      const tokenHash = AuthService.hashToken(refreshToken);
-      await UserRepository.saveRefreshToken(user.id, tokenHash, AuthService.getRefreshTokenExpiry());
+      // Send verification email (don't block on failure)
+      try {
+        await sendVerificationEmail(email, name, verifyCode);
+        logger.info(`Verification email sent to: ${email}`);
+      } catch (emailError) {
+        logger.error('Failed to send verification email:', emailError);
+      }
 
-      AuthService.setRefreshCookie(res, refreshToken);
+      logger.info(`New candidate registered (pending verification): ${user.email}`);
 
-      logger.info(`New candidate registered: ${user.email}`);
-
+      // Do NOT issue tokens — user must verify email first
       res.status(201).json({
-        accessToken,
-        user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          phone: user.phone,
-          role: user.role,
-          city: user.city,
-        },
+        message: 'Compte cree. Veuillez verifier votre adresse email.',
+        userId: user.id,
+        email: user.email,
       });
     } catch (err: any) {
       logger.error('Register error:', err);
@@ -97,6 +102,17 @@ export class AuthController {
       const valid = await AuthService.comparePassword(password, user.passwordHash);
       if (!valid) {
         res.status(401).json({ error: 'E-mail ou mot de passe invalide' });
+        return;
+      }
+
+      // Block unverified candidates
+      if (user.role === 'CANDIDATE' && !user.emailVerified) {
+        res.status(403).json({
+          error: 'Veuillez verifier votre adresse email avant de vous connecter.',
+          code: 'EMAIL_NOT_VERIFIED',
+          userId: user.id,
+          email: user.email,
+        });
         return;
       }
 
@@ -297,6 +313,113 @@ export class AuthController {
     } catch (err: any) {
       logger.error('Reset password error:', err);
       res.status(500).json({ error: 'Echec de la reinitialisation du mot de passe' });
+    }
+  }
+
+  // POST /api/auth/verify-email
+  static async verifyEmail(req: Request, res: Response): Promise<void> {
+    try {
+      const { userId, code } = req.body;
+
+      if (!userId || !code) {
+        res.status(400).json({ error: 'userId et code sont requis' });
+        return;
+      }
+
+      const codeHash = crypto.createHash('sha256').update(String(code).trim()).digest('hex');
+      const user = await UserRepository.findByVerifyToken(userId, codeHash);
+
+      if (!user) {
+        res.status(400).json({ error: 'Code de verification invalide ou expire' });
+        return;
+      }
+
+      // Mark as verified and clear token
+      await UserRepository.update(user.id, {
+        emailVerified: true,
+        verifyToken: null,
+        verifyTokenExpiry: null,
+      });
+
+      // Auto-login: issue tokens
+      const accessToken = AuthService.generateAccessToken({
+        userId: user.id,
+        role: user.role,
+      });
+
+      const refreshToken = AuthService.generateRefreshToken();
+      const tokenHash = AuthService.hashToken(refreshToken);
+      await UserRepository.saveRefreshToken(user.id, tokenHash, AuthService.getRefreshTokenExpiry());
+
+      AuthService.setRefreshCookie(res, refreshToken);
+
+      logger.info(`Email verified for: ${user.email}`);
+
+      res.json({
+        message: 'Email verifie avec succes',
+        accessToken,
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          phone: user.phone,
+          role: user.role,
+          city: user.city,
+        },
+      });
+    } catch (err: any) {
+      logger.error('Verify email error:', err);
+      res.status(500).json({ error: 'Echec de la verification de l\'email' });
+    }
+  }
+
+  // POST /api/auth/resend-verification
+  static async resendVerification(req: Request, res: Response): Promise<void> {
+    try {
+      const { email } = req.body;
+
+      if (!email) {
+        res.status(400).json({ error: 'Email requis' });
+        return;
+      }
+
+      const user = await UserRepository.findByEmail(email);
+      if (!user || user.emailVerified) {
+        // Don't reveal if email exists or is already verified
+        res.json({ message: 'Si l\'adresse existe et n\'est pas encore verifiee, un nouveau code a ete envoye.' });
+        return;
+      }
+
+      // Cooldown check: if token was sent less than 60s ago, reject
+      if (user.verifyTokenExpiry) {
+        const tokenAge = Date.now() - (user.verifyTokenExpiry.getTime() - 15 * 60 * 1000);
+        if (tokenAge < 60 * 1000) {
+          res.status(429).json({ error: 'Veuillez patienter 60 secondes avant de renvoyer un code.' });
+          return;
+        }
+      }
+
+      // Generate new code
+      const verifyCode = Math.floor(100000 + Math.random() * 900000).toString();
+      const verifyTokenHash = crypto.createHash('sha256').update(verifyCode).digest('hex');
+      const verifyTokenExpiry = new Date(Date.now() + 15 * 60 * 1000);
+
+      await UserRepository.update(user.id, {
+        verifyToken: verifyTokenHash,
+        verifyTokenExpiry,
+      });
+
+      try {
+        await sendVerificationEmail(user.email || '', user.name, verifyCode);
+        logger.info(`Verification code resent to: ${user.email}`);
+      } catch (emailError) {
+        logger.error('Failed to resend verification email:', emailError);
+      }
+
+      res.json({ message: 'Si l\'adresse existe et n\'est pas encore verifiee, un nouveau code a ete envoye.' });
+    } catch (err: any) {
+      logger.error('Resend verification error:', err);
+      res.status(500).json({ error: 'Echec du renvoi du code de verification' });
     }
   }
 }

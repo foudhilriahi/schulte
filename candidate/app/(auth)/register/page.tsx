@@ -78,9 +78,8 @@ export default function RegisterPage() {
         password: values.password,
       });
 
-      const { user, accessToken } = res.data;
-      login(user, accessToken);
-      router.push('/');
+      const { userId, email: registeredEmail } = res.data;
+      router.push(`/verify-email?userId=${userId}&email=${encodeURIComponent(registeredEmail)}`);
     } catch (err: any) {
       setSubmitError(err.response?.data?.error || "Erreur lors de l'inscription");
     } finally {

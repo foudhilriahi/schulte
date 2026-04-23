@@ -456,6 +456,26 @@ const CandidateDrawer = ({
                     </div>
                   </div>
                 )}
+                {candidate.formData.languages?.length > 0 && (
+                  <div className="rounded-lg bg-card2 p-3">
+                    <p className="text-xs font-semibold mb-1">Langues</p>
+                    {candidate.formData.languages.map((l: any, i: number) => (
+                      <p key={i}>
+                        {l.name} ({l.level})
+                      </p>
+                    ))}
+                  </div>
+                )}
+                {candidate.formData.links?.length > 0 && (
+                  <div className="rounded-lg bg-card2 p-3">
+                    <p className="text-xs font-semibold mb-1">Liens</p>
+                    {candidate.formData.links.map((l: any, i: number) => (
+                      <a key={i} href={l.url} target="_blank" rel="noopener noreferrer" className="block text-primary hover:underline">
+                        {l.name}
+                      </a>
+                    ))}
+                  </div>
+                )}
               </div>
             ) : (
               <div className="flex h-[200px] items-center justify-center rounded-xl bg-card2">
