@@ -1,6 +1,0 @@
-{
-  "version": 3,
-  "sources": [],
-  "sections": [
-    {"offset": {"line": 4, "column": 0}, "map": {"version":3,"sources":["file:///home/dell/pfe/schulte/candidate/app/%28main%29/loading.tsx"],"sourcesContent":["import { PageLoadingState } from \"@/components/page-loading-state\";\n\nexport default function MainRoutesLoading() {\n  return <PageLoadingState label=\"Chargement de l'ecran...\" />;\n}\n"],"names":[],"mappings":";;;;;AAAA;;;AAEe,SAAS;IACtB,qBAAO,8OAAC,2JAAgB;QAAC,OAAM;;;;;;AACjC","debugId":null}}]
-}
