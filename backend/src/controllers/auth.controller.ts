@@ -351,7 +351,7 @@ export class AuthController {
       const accessToken = AuthService.generateAccessToken({
         userId: user.id,
         role: user.role,
-        site: user.site,
+        site: user.site ?? undefined,
       });
 
       const refreshToken = AuthService.generateRefreshToken();

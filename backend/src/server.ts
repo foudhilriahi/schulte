@@ -8,6 +8,7 @@ import fs from "fs";
 import { createServer } from "http";
 
 import { env } from "./config/env";
+import { getAllowedOriginsForLog, isAllowedOrigin } from "./config/origins";
 import logger from "./utils/logger";
 import { errorHandler } from "./middleware/errorHandler";
 
@@ -44,7 +45,14 @@ startCronJobs();
 app.use(helmet());
 app.use(
   cors({
-    origin: [env.CLIENT_URL, env.ADMIN_URL, env.HR_URL],
+    origin: (origin, callback) => {
+      if (isAllowedOrigin(origin)) {
+        callback(null, true);
+        return;
+      }
+
+      callback(new Error(`CORS blocked for origin: ${origin ?? "unknown"}`));
+    },
     credentials: true,
   }),
 );
@@ -76,6 +84,8 @@ app.use(errorHandler);
 httpServer.listen(env.PORT, () => {
   logger.info(`Server running on http://localhost:${env.PORT}`);
   logger.info(`Environment: ${env.NODE_ENV}`);
+  logger.info(`Explicit CORS origins: ${getAllowedOriginsForLog().join(", ")}`);
+  logger.info("Dynamic CORS allowed for localhost, *.trycloudflare.com, *.ngrok-free.app, *.ngrok.app");
 });
 
 export { app, httpServer };

@@ -223,10 +223,6 @@ const HRAccountsPage = () => {
       setIsDeletingPermanent(false)
     }
   }
-      const details = err?.response?.data?.details
-      toast.error(details?.[0] || err?.response?.data?.error || 'Erreur lors de la suppression définitive')
-    }
-  }
 
   const filtered = accounts.filter(a =>
     a.name?.toLowerCase().includes(search.toLowerCase()) ||

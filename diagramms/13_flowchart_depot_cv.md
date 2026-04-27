@@ -11,15 +11,15 @@ flowchart TD
     F -->|Non| G[400 PDF vide/illisible]
     F -->|Oui| H[Save CandidateCV source=profile_upload]
 
-    B -->|Builder (Split-Screen / Live Preview)| I[Formulaire interactif avec champs optionnels (Langues, Liens)]
+    B -->|Builder Split Screen Live Preview| I[Formulaire interactif avec champs optionnels Langues et Liens]
     I --> J[POST /api/cvs/generated]
-    J --> K[Validation backend stricte (Zod + Regex Anti-Troll)]
+    J --> K[Validation backend stricte Zod + Regex Anti-Troll]
     K --> K2[Assemblage du CV en Markdown structuré pour l'IA]
     K2 --> L[Save CandidateCV source=profile_generated]
 
     H --> M[Utilisateur peut marquer un CV par defaut]
     L --> M
-    M --> N[PATCH /api/cvs/:id/default]
+    M --> N[PATCH /api/cvs/id/default]
 
     N --> O([Candidat clique Postuler sur offre])
     O --> P[GET /api/cvs/mine]
@@ -33,11 +33,11 @@ flowchart TD
     T --> U[Verifie ownership cvId + offre open + unicite offre/candidat]
     U --> V[Cree Application + candidateCVId + cvTextSnapshot]
     V --> W[201 Created]
-    V --> X[Emit application:new room RH]
+    V --> X[Emit application_new room RH]
     X --> Y[Kanban RH mis a jour]
 
     V --> Z[Analyse IA asynchrone depuis snapshot]
     Z --> AA[Save aiAnalysis/aiScore]
-    AA --> AB[Emit application:analysed RH]
-    AA --> AC[Emit ai:analysis_complete candidat]
+    AA --> AB[Emit application_analysed RH]
+    AA --> AC[Emit ai_analysis_complete candidat]
 ```

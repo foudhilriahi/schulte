@@ -13,7 +13,7 @@ stateDiagram-v2
         FormulairePreRempli --> Validation : Complete les champs requis
         note right of ChoixTemplate
             RH voit uniquement templates actifs
-            Liste mise a jour en temps reel via template:updated
+            Liste mise a jour en temps reel via template_updated
             Creation RH depuis template uniquement
         end note
     }
@@ -23,7 +23,7 @@ stateDiagram-v2
     state Ouverte {
         [*] --> Publiee
         note right of Publiee
-            Socket.io offer:new broadcast
+            Socket.io offer_new broadcast
             Toutes les PWA recoivent l'offre sans rechargement
         end note
     }
@@ -38,18 +38,18 @@ stateDiagram-v2
     state Cloturee {
         [*] --> Fermee
         note right of Fermee
-            Socket.io offer:closed broadcast
+            Socket.io offer_closed broadcast
             Offre disparait de la PWA candidat
             Aucune nouvelle candidature acceptee
         end note
     }
 
-    Ouverte --> Supprimee : DELETE /api/offers/:id
-    EnPause --> Supprimee : DELETE /api/offers/:id
-    Cloturee --> Supprimee : DELETE /api/offers/:id
+    Ouverte --> Supprimee : DELETE /api/offers/{id}
+    EnPause --> Supprimee : DELETE /api/offers/{id}
+    Cloturee --> Supprimee : DELETE /api/offers/{id}
     note right of Supprimee
         Suppression hard delete cote repository
-        Emission offer:closed vers les candidats
+        Emission offer_closed vers les candidats
     end note
 
     Cloturee --> [*]

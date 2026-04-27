@@ -14,7 +14,7 @@ gantt
     Admin CRUD comptes RH et templates           :done, m1t4, 2025-02-14, 5d
     RH creation offre via template               :done, m1t5, 2025-02-19, 4d
     PWA Candidat inscription parcours detail     :done, m1t6, 2025-02-23, 5d
-    Socket.io offer:new bout en bout             :done, m1t7, 2025-02-28, 1d
+    Socket.io offer_new bout en bout             :done, m1t7, 2025-02-28, 1d
 
     section Mois 2 Flux de Candidature
     Upload PDF Multer UUID pdf-parse             :done, m2t1, 2025-03-03, 5d
@@ -33,7 +33,7 @@ gantt
     Extraction email depuis CV regex             :done, m3t5, 2025-04-14, 2d
     Endpoint backend bulk-status candidatures     :done, m3t6, 2025-04-16, 3d
     Logging winston evenements securite          :done, m3t7, 2025-04-19, 2d
-    Socket.io template:updated dashboards RH     :done, m3t8, 2025-04-21, 2d
+    Socket.io template_updated dashboards RH     :done, m3t8, 2025-04-21, 2d
 
     section Mois 4 Polish et Rapport
     Dashboard RH Recharts funnel et stats        :done, m4t1, 2025-05-01, 4d

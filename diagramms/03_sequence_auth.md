@@ -76,11 +76,12 @@ sequenceDiagram
         alt Token invalide ou expire
             Backend-->>Frontend: 400 Invalid or expired code
         else Token valide
-        Backend->>DB: Met a jour emailVerified = true, efface token
-        Backend->>Backend: Genere JWT 15min + refreshToken aleatoire
-        Backend->>Cookie: setRefreshCookie httpOnly 30 jours
-        Backend-->>Frontend: 200 avec accessToken et user
-        Frontend-->>Candidat: Redirection vers espace candidat
+            Backend->>DB: Met a jour emailVerified = true, efface token
+            Backend->>Backend: Genere JWT 15min + refreshToken aleatoire
+            Backend->>Cookie: setRefreshCookie httpOnly 30 jours
+            Backend-->>Frontend: 200 avec accessToken et user
+            Frontend-->>Candidat: Redirection vers espace candidat
+        end
     end
 
     Note over Candidat, Backend: Tentative de Connexion (Non verifie)

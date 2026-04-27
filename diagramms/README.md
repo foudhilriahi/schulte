@@ -87,6 +87,28 @@ Copiez le contenu du bloc ` ```mermaid ``` ` sur [mermaid.live](https://mermaid.
 2. Exportez en **SVG** ou **PNG** haute résolution
 3. Insérez l'image dans votre rapport
 
+### Option 5 — Export Batch (recommande)
+Depuis la racine du projet :
+
+```bash
+./diagramms/export_diagrams.sh
+```
+
+- Validation syntaxe Mermaid de tous les fichiers `diagramms/*.md`
+- Export en `diagramms/exports/svg/*.svg` (qualite vectorielle)
+- Export en `diagramms/exports/png-2x/*.png` et `diagramms/exports/png-3x/*.png`
+- Rapport: `diagramms/exports/validation_report.txt`
+
+Exemple LaTeX pour eviter des images trop grandes sans perdre la qualite :
+
+```latex
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.88\textwidth]{diagramms/exports/png-2x/12_architecture.png}
+  \caption{Architecture globale de la plateforme}
+\end{figure}
+```
+
 ---
 
 ## 📋 Récapitulatif des Patterns Illustrés

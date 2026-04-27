@@ -8,10 +8,16 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
-    allowedHosts: [".loca.lt", "localhost", "127.0.0.1"],
+    // Demo-friendly: allow external tunnel hostnames (ngrok/cloudflare/etc.)
+    allowedHosts: true,
     hmr: {
       overlay: false,
     },
+  },
+  preview: {
+    host: "::",
+    port: 8080,
+    allowedHosts: true,
   },
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
   resolve: {

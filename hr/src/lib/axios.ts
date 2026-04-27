@@ -2,12 +2,14 @@ import axios from 'axios'
 import { authSession } from '@/lib/authSession'
 
 const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api'
+const isNgrokApi = /https?:\/\/[^/]*\.ngrok(-free)?\.app(\/|$)/i.test(baseURL)
 
 export const api = axios.create({
   baseURL,
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
+    ...(isNgrokApi ? { 'ngrok-skip-browser-warning': 'true' } : {}),
   },
 })
 

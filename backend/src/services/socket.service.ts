@@ -2,6 +2,7 @@ import { Server as SocketIOServer, Socket } from 'socket.io';
 import { Server as HttpServer } from 'http';
 import jwt from 'jsonwebtoken';
 import { env } from '../config/env';
+import { isAllowedOrigin } from '../config/origins';
 import { AuthPayload } from '../middleware/authenticate';
 import logger from '../utils/logger';
 
@@ -11,7 +12,14 @@ export class SocketService {
   static init(server: HttpServer): void {
     io = new SocketIOServer(server, {
       cors: {
-        origin: [env.CLIENT_URL, env.ADMIN_URL, env.HR_URL],
+        origin: (origin, callback) => {
+          if (isAllowedOrigin(origin)) {
+            callback(null, true);
+            return;
+          }
+
+          callback(new Error(`Socket CORS blocked for origin: ${origin ?? 'unknown'}`));
+        },
         credentials: true,
       },
     });

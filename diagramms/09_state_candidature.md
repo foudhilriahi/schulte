@@ -18,7 +18,7 @@ stateDiagram-v2
 
     state IA {
         [*] --> EnCours
-        EnCours --> Completee : ai:analysis_complete + application:analysed
+        EnCours --> Completee : event ai_analysis_complete + application_analysed
     }
 
     Nouvelle --> IA : background analysis
@@ -32,7 +32,7 @@ stateDiagram-v2
         note right of EnCours
             Entree API normalisee: review -> reviewing
             Statut invalide rejete en 400
-            Socket.io status:changed vers PWA candidat
+            Socket.io status_changed vers PWA candidat
             Notification creee en base
             Email envoye si email disponible
         end note
@@ -47,8 +47,8 @@ stateDiagram-v2
         note right of DateFixee
             POST /api/interviews cree ou met a jour l'entretien
             API met application.status a interview
-            Socket.io interview:scheduled vers candidat
-            Socket.io interview:scheduled vers room site RH
+            Socket.io interview_scheduled vers candidat
+            Socket.io interview_scheduled vers room site RH
             Email avec fichier ics calendrier
             Rappel J-1 automatique via node-cron
         end note
@@ -73,7 +73,7 @@ stateDiagram-v2
     state Acceptee {
         [*] --> Terminee
         note right of Terminee
-            Notification en base + event status:changed
+            Notification en base + event status_changed
             Toast candidat "candidature acceptee"
         end note
     }
@@ -81,7 +81,7 @@ stateDiagram-v2
     state Refusee {
         [*] --> Terminee
         note right of Terminee
-            Notification en base + event status:changed
+            Notification en base + event status_changed
             Toast candidat "candidature non retenue"
         end note
     }
