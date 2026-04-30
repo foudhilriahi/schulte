@@ -31,6 +31,11 @@ export function ApplicationCard({ application, onClick }: ApplicationCardProps) 
   const cityColor = city === 'Bouarada'
     ? 'bg-boul border-[var(--bou-b)] text-primary'
     : 'bg-zagl border-[var(--zag-b)] text-ok'
+  const appliedAt = application.appliedAt || application.createdAt
+  const sentDate = new Date(appliedAt)
+  const sentDateLabel = !isNaN(sentDate.getTime())
+    ? sentDate.toLocaleDateString('fr-TN', { day: 'numeric', month: 'short', year: 'numeric' })
+    : 'date indisponible'
 
   return (
     <Card 
@@ -50,7 +55,7 @@ export function ApplicationCard({ application, onClick }: ApplicationCardProps) 
               {application.offer?.title || 'Offre inconnue'}
             </h3>
             <p className="text-[10px] font-mono text-ink4 mt-1">
-              Candidature envoyee le {new Date(application.appliedAt).toLocaleDateString('fr-TN', { day: 'numeric', month: 'short', year: 'numeric' })}
+              Candidature envoyee le {sentDateLabel}
             </p>
           </div>
           <ChevronRight className="h-5 w-5 text-ink4 flex-shrink-0" />

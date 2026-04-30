@@ -99,7 +99,11 @@ function parseRawJSON(raw: string): any {
   if (start !== -1 && end !== -1) {
     cleaned = cleaned.substring(start, end + 1);
   }
-  return JSON.parse(cleaned);
+  try {
+    return JSON.parse(cleaned);
+  } catch {
+    throw new Error("Reponse IA non conforme (JSON invalide)");
+  }
 }
 
 function parseStoredAnalysis(value: unknown): any | null {

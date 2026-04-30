@@ -85,7 +85,7 @@ httpServer.listen(env.PORT, () => {
   logger.info(`Server running on http://localhost:${env.PORT}`);
   logger.info(`Environment: ${env.NODE_ENV}`);
   logger.info(`Explicit CORS origins: ${getAllowedOriginsForLog().join(", ")}`);
-  logger.info("Dynamic CORS allowed for localhost, *.trycloudflare.com, *.ngrok-free.app, *.ngrok.app");
+  logger.info("CORS policy loaded (explicit origins + optional controlled localhost/no-origin allowances)");
 });
 
 export { app, httpServer };

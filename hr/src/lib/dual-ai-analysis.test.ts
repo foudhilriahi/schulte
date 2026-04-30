@@ -124,6 +124,40 @@ Retourne UNIQUEMENT du JSON valide — sans markdown, sans backticks, sans expli
     expect(result.mergedRecommendation).toBe("Interview");
   });
 
+  it("bascule vers le backend si Puter renvoie un JSON invalide", async () => {
+    (window as any).puter = {
+      ai: {
+        chat: vi.fn().mockResolvedValue(streamFromText("NOT_A_VALID_JSON_PAYLOAD")),
+      },
+    };
+
+    axiosMocks.post.mockResolvedValue({
+      data: {
+        score: 71,
+        confidence: "medium",
+        recommendation: "Interview",
+        thinking: "Fallback backend",
+        reasoning: "Fallback backend reasoning",
+        tipsForCandidate: ["Conseil fallback"],
+        strengths: ["s"],
+        gaps: ["g"],
+      },
+    });
+
+    const result = await runDualAnalysis("app-3", {
+      cvText: "Texte CV suffisamment long".repeat(20),
+      offerTitle: "Planner",
+      requiredSkills: ["sap"],
+      experienceYears: 2,
+      description: "desc",
+    });
+
+    expect(axiosMocks.post).toHaveBeenCalledWith("/applications/app-3/analyse");
+    expect(result.providers).toHaveLength(1);
+    expect(result.mergedScore).toBe(71);
+    expect(result.mergedRecommendation).toBe("Interview");
+  });
+
   it("normalise un ancien format d'analyse mono-fournisseur stocké", () => {
     const normalized = normalizeStoredDualAnalysis(
       JSON.stringify({

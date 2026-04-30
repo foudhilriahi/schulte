@@ -7,14 +7,29 @@ import { SocketService } from "../services/socket.service";
 import { appEmitter } from "../events/emitter";
 import logger from "../utils/logger";
 import type { ApplicationStatus } from "@prisma/client";
+import prisma from "../config/prisma";
 
 export class ApplicationsController {
+  private static readonly BULK_STATUS_MAX_IDS = 100;
+
   private static normalizeStatus(status: unknown): ApplicationStatus | null {
     if (status === "review") return "reviewing";
     if (status === "new" || status === "reviewing" || status === "interview" || status === "accepted" || status === "rejected") {
       return status;
     }
     return null;
+  }
+
+  private static canReadApplication(
+    req: Request,
+    application: Awaited<ReturnType<typeof ApplicationRepository.findById>>,
+  ): boolean {
+    if (!req.user || !application) return false;
+
+    if (req.user.role === "ADMIN") return true;
+    if (req.user.role === "CANDIDATE") return application.candidateId === req.user.userId;
+    if (req.user.role === "HR") return !!req.user.site && application.offer?.site === req.user.site;
+    return false;
   }
 
   // GET /api/applications/mine (candidate)
@@ -54,6 +69,12 @@ export class ApplicationsController {
         res.status(404).json({ error: "Candidature introuvable" });
         return;
       }
+
+      if (!ApplicationsController.canReadApplication(req, app)) {
+        res.status(403).json({ error: "Permissions insuffisantes pour acceder a cette candidature" });
+        return;
+      }
+
       res.json(app);
     } catch (err: any) {
       logger.error("Get application error:", err);
@@ -210,27 +231,86 @@ export class ApplicationsController {
   // PATCH /api/applications/bulk-status (HR / ADMIN)
   static async bulkUpdateStatus(req: Request, res: Response): Promise<void> {
     try {
-      const { ids, status }: { ids: string[]; status: ApplicationStatus } =
-        req.body;
+      const { ids, status }: { ids?: unknown; status?: unknown } = req.body;
+      const normalizedStatus = ApplicationsController.normalizeStatus(status);
 
-      for (const id of ids) {
-        await ApplicationRepository.updateStatus(id, status);
-
-        const fullApp = await ApplicationRepository.findById(id);
-
-        appEmitter.emit("application.statusChanged", {
-          applicationId: id,
-          candidateId: fullApp?.candidateId ?? "",
-          status,
-          candidateName: fullApp?.candidate?.name ?? "",
-          candidateEmail: fullApp?.candidate?.email ?? "",
-          offerTitle: fullApp?.offer?.title ?? "",
-          offerSite: fullApp?.offer?.site ?? "",
-        });
+      if (!Array.isArray(ids) || ids.length === 0) {
+        res.status(400).json({ error: "La liste ids est requise et ne peut pas etre vide" });
+        return;
       }
 
-      logger.info(`Bulk status update: ${ids.length} applications → ${status}`);
-      res.json({ updated: ids.length });
+      const uniqueIds = Array.from(new Set(ids))
+        .filter((id): id is string => typeof id === "string" && id.trim().length > 0);
+
+      if (uniqueIds.length === 0) {
+        res.status(400).json({ error: "Aucun identifiant valide fourni" });
+        return;
+      }
+
+      if (uniqueIds.length > ApplicationsController.BULK_STATUS_MAX_IDS) {
+        res.status(400).json({
+          error: `Maximum ${ApplicationsController.BULK_STATUS_MAX_IDS} candidatures par mise a jour en lot`,
+        });
+        return;
+      }
+
+      if (!normalizedStatus) {
+        res.status(400).json({
+          error: "Statut de candidature invalide",
+          allowed: ["new", "reviewing", "interview", "accepted", "rejected"],
+        });
+        return;
+      }
+
+      const existing = await prisma.application.findMany({
+        where: { id: { in: uniqueIds } },
+        include: { offer: { select: { site: true } } },
+      });
+
+      if (existing.length !== uniqueIds.length) {
+        res.status(404).json({ error: "Une ou plusieurs candidatures sont introuvables" });
+        return;
+      }
+
+      if (req.user?.role === "HR") {
+        const hrSite = req.user.site;
+        if (!hrSite) {
+          res.status(400).json({ error: "L'utilisateur RH doit etre associe a un site" });
+          return;
+        }
+
+        const hasCrossSiteApp = existing.some((app) => app.offer.site !== hrSite);
+        if (hasCrossSiteApp) {
+          res.status(403).json({ error: "Mise a jour en lot interdite sur des candidatures hors site" });
+          return;
+        }
+      }
+
+      await prisma.$transaction(
+        uniqueIds.map((id) =>
+          prisma.application.update({
+            where: { id },
+            data: { status: normalizedStatus },
+          }),
+        ),
+      );
+
+      const fullApps = await Promise.all(uniqueIds.map((id) => ApplicationRepository.findById(id)));
+      fullApps.forEach((fullApp, index) => {
+        if (!fullApp) return;
+        appEmitter.emit("application.statusChanged", {
+          applicationId: uniqueIds[index],
+          candidateId: fullApp.candidateId,
+          status: normalizedStatus,
+          candidateName: fullApp.candidate?.name ?? "",
+          candidateEmail: fullApp.candidate?.email ?? "",
+          offerTitle: fullApp.offer?.title ?? "",
+          offerSite: fullApp.offer?.site ?? "",
+        });
+      });
+
+      logger.info(`Bulk status update: ${uniqueIds.length} applications → ${normalizedStatus}`);
+      res.json({ updated: uniqueIds.length });
     } catch (err: any) {
       logger.error("Bulk update status error:", err);
       res

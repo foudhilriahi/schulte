@@ -59,6 +59,7 @@ export interface Application {
   aiScore?: number;
   aiAnalysis?: string;
   hrNotes?: string;
+  appliedAt?: string;
   createdAt: string;
   updatedAt: string;
   offer?: JobOffer;

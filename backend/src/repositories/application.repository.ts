@@ -1,6 +1,23 @@
 import prisma from "../config/prisma";
 import type { ApplicationStatus } from "@prisma/client";
 
+const candidateSafeSelect = {
+  id: true,
+  name: true,
+  email: true,
+  phone: true,
+  skills: true,
+  experience: true,
+  city: true,
+  role: true,
+  site: true,
+  cvUrl: true,
+  createdAt: true,
+  updatedAt: true,
+  emailVerified: true,
+  isActive: true,
+} as const;
+
 export class ApplicationRepository {
   static async findByCandidate(candidateId: string) {
     return prisma.application.findMany({
@@ -25,14 +42,7 @@ export class ApplicationRepository {
       where: { offerId },
       include: {
         candidate: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            phone: true,
-            skills: true,
-            experience: true,
-          },
+          select: candidateSafeSelect,
         },
         interview: true,
       },
@@ -45,15 +55,7 @@ export class ApplicationRepository {
       where: { offer: { site: site as any } },
       include: {
         candidate: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            phone: true,
-            skills: true,
-            experience: true,
-            city: true,
-          },
+          select: candidateSafeSelect,
         },
         candidateCV: {
           select: {
@@ -84,7 +86,9 @@ export class ApplicationRepository {
     return prisma.application.findUnique({
       where: { id },
       include: {
-        candidate: true,
+        candidate: {
+          select: candidateSafeSelect,
+        },
         offer: true,
         candidateCV: {
           select: {
@@ -169,6 +173,15 @@ export class ApplicationRepository {
   static async checkDuplicate(candidateId: string, offerId: string) {
     return prisma.application.findUnique({
       where: { candidateId_offerId: { candidateId, offerId } },
+    });
+  }
+
+  static async countActiveByCandidate(candidateId: string) {
+    return prisma.application.count({
+      where: {
+        candidateId,
+        status: { in: ["new", "reviewing", "interview"] },
+      },
     });
   }
 }

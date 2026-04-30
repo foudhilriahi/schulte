@@ -6,6 +6,32 @@ import { SocketService } from '../services/socket.service';
 import logger from '../utils/logger';
 
 export class OffersController {
+  private static parseLimit(raw: unknown, max = 100): number | undefined {
+    const value = Number(raw);
+    if (!Number.isFinite(value)) return undefined;
+    return Math.min(Math.max(Math.trunc(value), 1), max);
+  }
+
+  private static parseCursorDate(raw: unknown): Date | undefined {
+    if (typeof raw !== 'string' || raw.trim().length === 0) return undefined;
+    const parsed = new Date(raw);
+    if (Number.isNaN(parsed.getTime())) return undefined;
+    return parsed;
+  }
+
+  private static assertOfferAccess(req: Request, offerSite: string): { ok: boolean; status?: number; error?: string } {
+    if (req.user?.role === 'ADMIN') return { ok: true };
+    if (req.user?.role !== 'HR') return { ok: false, status: 403, error: 'Permissions insuffisantes' };
+
+    if (!req.user.site) {
+      return { ok: false, status: 400, error: "L'utilisateur RH doit etre associe a un site" };
+    }
+    if (req.user.site !== offerSite) {
+      return { ok: false, status: 403, error: "Acces interdit a une offre d'un autre site" };
+    }
+    return { ok: true };
+  }
+
   private static async notifyUsers(userIds: string[], payload: any, type: string = 'info'): Promise<void> {
     await NotificationRepository.createManyForUsers({
       userIds,
@@ -20,10 +46,14 @@ export class OffersController {
   // GET /api/offers (public — candidates can browse)
   static async getAll(req: Request, res: Response): Promise<void> {
     try {
-      const { site, status } = req.query;
+      const { site, status, limit, cursor } = req.query;
+      const pageSize = OffersController.parseLimit(limit, 100);
+      const beforeCreatedAt = OffersController.parseCursorDate(cursor);
       const offers = await OfferRepository.findAll({
         site: site as any,
         status: (status as any) || 'open',
+        limit: pageSize,
+        beforeCreatedAt,
       });
       res.json(offers);
     } catch (err: any) {
@@ -42,10 +72,16 @@ export class OffersController {
       }
 
       const prisma = (await import('../config/prisma')).default;
+      const pageSize = OffersController.parseLimit(req.query.limit, 100);
+      const beforeCreatedAt = OffersController.parseCursorDate(req.query.cursor);
       
       // Get offers with application counts and AI stats
       const offers = await prisma.jobOffer.findMany({
-        where: { site: userSite as any },
+        where: {
+          site: userSite as any,
+          ...(beforeCreatedAt ? { createdAt: { lt: beforeCreatedAt } } : {}),
+        },
+        ...(pageSize ? { take: pageSize } : {}),
         include: {
           _count: {
             select: { applications: true }
@@ -118,19 +154,24 @@ export class OffersController {
   static async getById(req: Request, res: Response): Promise<void> {
     try {
       const prisma = (await import('../config/prisma')).default;
+      const applicationsLimit = OffersController.parseLimit(req.query.applicationsLimit, 200);
+      const applicationsCursor = OffersController.parseCursorDate(req.query.applicationsCursor);
       
       const offer = await prisma.jobOffer.findUnique({
         where: { id: req.params.id as string },
         include: {
           _count: { select: { applications: true } },
           applications: {
+            ...(applicationsLimit ? { take: applicationsLimit } : {}),
+            ...(applicationsCursor ? { where: { appliedAt: { lt: applicationsCursor } } } : {}),
+            orderBy: { appliedAt: 'desc' },
             select: {
               id: true,
               status: true,
               aiScore: true,
               appliedAt: true,
             }
-          }
+          },
         },
       });
       
@@ -141,22 +182,40 @@ export class OffersController {
       
       // Calculate stats
       const apps = offer.applications;
-      const appsWithAI = apps.filter(a => a.aiScore !== null).length;
-      const avgAIScore = appsWithAI > 0 
-        ? Math.round(apps.reduce((sum, a) => sum + (a.aiScore || 0), 0) / appsWithAI)
-        : null;
-      
+      const [appsWithAI, avgAIScoreResult, groupedStatuses] = await Promise.all([
+        prisma.application.count({
+          where: { offerId: offer.id, aiScore: { not: null } },
+        }),
+        prisma.application.aggregate({
+          _avg: { aiScore: true },
+          where: { offerId: offer.id, aiScore: { not: null } },
+        }),
+        prisma.application.groupBy({
+          by: ['status'],
+          where: { offerId: offer.id },
+          _count: { status: true },
+        }),
+      ]);
+
       const statusCounts = {
-        reviewing: apps.filter(a => a.status === 'reviewing').length,
-        interview: apps.filter(a => a.status === 'interview').length,
-        accepted: apps.filter(a => a.status === 'accepted').length,
-        rejected: apps.filter(a => a.status === 'rejected').length,
+        reviewing: 0,
+        interview: 0,
+        accepted: 0,
+        rejected: 0,
       };
+      groupedStatuses.forEach((item) => {
+        if (item.status === 'reviewing') statusCounts.reviewing = item._count.status;
+        if (item.status === 'interview') statusCounts.interview = item._count.status;
+        if (item.status === 'accepted') statusCounts.accepted = item._count.status;
+        if (item.status === 'rejected') statusCounts.rejected = item._count.status;
+      });
+      const avgAIScore = avgAIScoreResult._avg.aiScore ? Math.round(avgAIScoreResult._avg.aiScore) : null;
       
       res.json({
         ...offer,
+        applications: apps,
         stats: {
-          totalApplications: apps.length,
+          totalApplications: offer._count.applications,
           applicationsWithAI: appsWithAI,
           averageAIScore: avgAIScore,
           statusBreakdown: statusCounts,
@@ -253,7 +312,25 @@ export class OffersController {
   // PATCH /api/offers/:id (HR only)
   static async update(req: Request, res: Response): Promise<void> {
     try {
-      const offer = await OfferRepository.update(req.params.id as string, req.body);
+      const id = req.params.id as string;
+      const existing = await OfferRepository.findById(id);
+      if (!existing) {
+        res.status(404).json({ error: 'Offre introuvable' });
+        return;
+      }
+
+      const access = OffersController.assertOfferAccess(req, String(existing.site));
+      if (!access.ok) {
+        res.status(access.status || 403).json({ error: access.error || 'Permissions insuffisantes' });
+        return;
+      }
+
+      const payload = { ...req.body };
+      if (req.user?.role === 'HR') {
+        payload.site = req.user.site;
+      }
+
+      const offer = await OfferRepository.update(id, payload);
       logger.info(`HR updated offer: ${offer.title}`);
 
       if (req.body.status === 'closed') {
@@ -297,6 +374,17 @@ export class OffersController {
     try {
       const id = req.params.id as string;
       const existing = await OfferRepository.findById(id);
+      if (!existing) {
+        res.status(404).json({ error: 'Offre introuvable' });
+        return;
+      }
+
+      const access = OffersController.assertOfferAccess(req, String(existing.site));
+      if (!access.ok) {
+        res.status(access.status || 403).json({ error: access.error || 'Permissions insuffisantes' });
+        return;
+      }
+
       await OfferRepository.delete(id);
       logger.info(`HR deleted offer: ${id}`);
       
@@ -312,7 +400,7 @@ export class OffersController {
         offerId: id,
       }, 'warning');
 
-      if (existing?.site) {
+      if (existing.site) {
         const hrIds = await UserRepository.findActiveHRIds(existing.site as any, req.user!.userId);
         await OffersController.notifyUsers(hrIds, {
           title: 'Offre supprimee',

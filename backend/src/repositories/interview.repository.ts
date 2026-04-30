@@ -1,15 +1,34 @@
 import prisma from '../config/prisma';
 
+const candidateSafeSelect = {
+  id: true,
+  name: true,
+  email: true,
+  phone: true,
+  skills: true,
+  experience: true,
+  city: true,
+  role: true,
+  site: true,
+  cvUrl: true,
+  createdAt: true,
+  updatedAt: true,
+  emailVerified: true,
+  isActive: true,
+} as const;
+
+const applicationInclude = {
+  candidate: { select: candidateSafeSelect },
+  offer: true,
+} as const;
+
 export class InterviewRepository {
   static async findById(id: string) {
     return prisma.interview.findUnique({
       where: { id },
       include: {
         application: {
-          include: {
-            candidate: true,
-            offer: true,
-          },
+          include: applicationInclude,
         },
       },
     });
@@ -20,10 +39,7 @@ export class InterviewRepository {
       where: { applicationId },
       include: {
         application: {
-          include: {
-            candidate: true,
-            offer: true,
-          },
+          include: applicationInclude,
         },
       },
     });
@@ -49,10 +65,7 @@ export class InterviewRepository {
       },
       include: {
         application: {
-          include: {
-            candidate: true,
-            offer: true,
-          },
+          include: applicationInclude,
         },
       },
     });
@@ -61,13 +74,13 @@ export class InterviewRepository {
   static async markOutcome(id: string, outcome: 'pass' | 'fail' | 'no_show') {
     return prisma.interview.update({
       where: { id },
-      data: { outcome: outcome as any },
+      data: {
+        outcome: outcome as any,
+        ...(outcome === 'no_show' ? { noShowCount: { increment: 1 } } : {}),
+      },
       include: {
         application: {
-          include: {
-            candidate: true,
-            offer: true,
-          },
+          include: applicationInclude,
         },
       },
     });

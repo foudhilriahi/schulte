@@ -27,15 +27,26 @@ export const useAuthStore = create<AuthState>((set) => ({
     const stored = authSession.getUserRaw()
     const token = authSession.getAccessToken()
     if (stored && token) {
-      const user = JSON.parse(stored)
-      // Validate role - only HR and ADMIN allowed
-      if (user.role === 'HR' || user.role === 'ADMIN') {
-        set({ user, isAuthenticated: true })
-      } else {
-        // Clear invalid user
-        authSession.clear()
-        set({ user: null, isAuthenticated: false })
+      try {
+        const user = JSON.parse(stored)
+        // Validate role - only HR and ADMIN allowed
+        if (user.role === 'HR' || user.role === 'ADMIN') {
+          set({ user, isAuthenticated: true })
+          return
+        }
+      } catch {
+        // Corrupted storage payload, clear and recover gracefully.
       }
+
+      // Clear invalid or corrupted user payload
+      authSession.clear()
+      set({ user: null, isAuthenticated: false })
+    } else if (stored || token) {
+      // Partial auth artifacts are treated as invalid session state.
+      authSession.clear()
+      set({ user: null, isAuthenticated: false })
+    } else {
+      set({ user: null, isAuthenticated: false })
     }
   },
 

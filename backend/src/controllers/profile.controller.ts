@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { UserRepository } from '../repositories/user.repository';
+import { ApplicationRepository } from '../repositories/application.repository';
 import { AuthService } from '../services/auth.service';
 import logger from '../utils/logger';
 
@@ -114,6 +115,15 @@ export class ProfileController {
       const isValid = await AuthService.comparePassword(currentPassword, user.passwordHash);
       if (!isValid) {
         res.status(401).json({ error: 'Mot de passe actuel incorrect' });
+        return;
+      }
+
+      const activeApplications = await ApplicationRepository.countActiveByCandidate(userId);
+      if (activeApplications > 0) {
+        res.status(409).json({
+          error:
+            "Suppression impossible: vous avez des candidatures actives en cours de traitement.",
+        });
         return;
       }
 

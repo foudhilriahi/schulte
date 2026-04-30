@@ -235,6 +235,13 @@ export class CandidateCVController {
 
       res.status(204).send();
     } catch (err) {
+      if ((err as Error)?.message === "CV_LINKED_TO_ACTIVE_APPLICATION") {
+        res.status(409).json({
+          error:
+            "Ce CV est lie a une ou plusieurs candidatures actives. Mettez fin aux candidatures actives avant suppression.",
+        });
+        return;
+      }
       logger.error("Delete CV error:", err);
       res.status(500).json({ error: "Echec de la suppression du CV" });
     }

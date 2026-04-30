@@ -3,11 +3,25 @@ import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
+function getSeedAdminPassword(): string {
+  const password = process.env.SEED_ADMIN_PASSWORD;
+  const env = process.env.NODE_ENV || 'development';
+
+  if (!password || password.trim().length === 0) {
+    if (env !== 'development' && env !== 'test') {
+      throw new Error('Missing SEED_ADMIN_PASSWORD for non-development seeding.');
+    }
+    throw new Error('Missing SEED_ADMIN_PASSWORD. Set it explicitly before running the seed script.');
+  }
+
+  return password.trim();
+}
+
 async function main() {
   console.log('Seeding database...');
 
   // 1. Create ADMIN user
-  const adminPassword = await bcrypt.hash('admin123', 12);
+  const adminPassword = await bcrypt.hash(getSeedAdminPassword(), 12);
   const admin = await prisma.user.upsert({
     where: { email: 'admin@schulte-tunisia.com' },
     update: {},

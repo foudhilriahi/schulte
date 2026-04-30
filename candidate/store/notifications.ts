@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { api } from '@/lib/axios'
+import { toast } from 'sonner'
 
 interface CandidateNotification {
   id: string
@@ -138,51 +139,72 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
   },
 
   markAllRead: async () => {
+    const previousState = {
+      notifications: get().notifications,
+      unreadCount: get().unreadCount,
+    }
+
+    set((state) => ({
+      notifications: state.notifications.map((n) => ({ ...n, read: true })),
+      unreadCount: 0,
+    }))
+
     try {
       await api.patch('/notifications/mark-all-read')
-      set((state) => ({
-        notifications: state.notifications.map((n) => ({ ...n, read: true })),
-        unreadCount: 0,
-      }))
     } catch {
-      // fail silently
+      set(previousState)
+      toast.error('Echec du marquage des notifications comme lues.')
     }
   },
 
   markOneRead: async (id: string) => {
+    const previousState = {
+      notifications: get().notifications,
+      unreadCount: get().unreadCount,
+    }
+
+    set((state) => {
+      const notifications = state.notifications.map((n) =>
+        n.id === id ? { ...n, read: true } : n
+      )
+      const wasUnread = state.notifications.find((n) => n.id === id && !n.read)
+      const unreadCount = wasUnread
+        ? Math.max(0, state.unreadCount - 1)
+        : state.unreadCount
+      return { notifications, unreadCount }
+    })
+
     try {
       await api.patch(`/notifications/${id}/read`)
-      set((state) => {
-        const notifications = state.notifications.map((n) =>
-          n.id === id ? { ...n, read: true } : n
-        )
-        const wasUnread = state.notifications.find((n) => n.id === id && !n.read)
-        const unreadCount = wasUnread
-          ? Math.max(0, state.unreadCount - 1)
-          : state.unreadCount
-        return { notifications, unreadCount }
-      })
     } catch {
-      // fail silently
+      set(previousState)
+      toast.error('Echec du marquage de la notification.')
     }
   },
 
   deleteNotification: async (id: string) => {
+    const previousState = {
+      notifications: get().notifications,
+      unreadCount: get().unreadCount,
+    }
+
+    set((state) => {
+      const target = state.notifications.find((n) => n.id === id)
+      const unreadCount =
+        target && !target.read
+          ? Math.max(0, state.unreadCount - 1)
+          : state.unreadCount
+      return {
+        notifications: state.notifications.filter((n) => n.id !== id),
+        unreadCount,
+      }
+    })
+
     try {
       await api.delete(`/notifications/${id}`)
-      set((state) => {
-        const target = state.notifications.find((n) => n.id === id)
-        const unreadCount =
-          target && !target.read
-            ? Math.max(0, state.unreadCount - 1)
-            : state.unreadCount
-        return {
-          notifications: state.notifications.filter((n) => n.id !== id),
-          unreadCount,
-        }
-      })
     } catch {
-      // fail silently
+      set(previousState)
+      toast.error('Echec de la suppression de la notification.')
     }
   },
 

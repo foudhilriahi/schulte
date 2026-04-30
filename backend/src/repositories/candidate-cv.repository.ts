@@ -84,6 +84,18 @@ export class CandidateCVRepository {
 
     if (!deleted) return null;
 
+    const activeLinkedApplications = await prisma.application.count({
+      where: {
+        candidateId,
+        candidateCVId: cvId,
+        status: { in: ["new", "reviewing", "interview"] },
+      },
+    });
+
+    if (activeLinkedApplications > 0) {
+      throw new Error("CV_LINKED_TO_ACTIVE_APPLICATION");
+    }
+
     await prisma.candidateCV.delete({ where: { id: cvId } });
 
     if (deleted.isDefault) {

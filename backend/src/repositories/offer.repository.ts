@@ -2,12 +2,14 @@ import prisma from '../config/prisma';
 import type { OfferStatus, Site, ContractType } from '@prisma/client';
 
 export class OfferRepository {
-  static async findAll(filters?: { site?: Site; status?: OfferStatus }) {
+  static async findAll(filters?: { site?: Site; status?: OfferStatus; limit?: number; beforeCreatedAt?: Date }) {
     return prisma.jobOffer.findMany({
       where: {
         ...(filters?.site && { site: filters.site }),
         ...(filters?.status && { status: filters.status }),
+        ...(filters?.beforeCreatedAt && { createdAt: { lt: filters.beforeCreatedAt } }),
       },
+      ...(filters?.limit ? { take: filters.limit } : {}),
       orderBy: { createdAt: 'desc' },
     });
   }

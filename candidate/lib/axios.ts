@@ -16,6 +16,7 @@ export const api = axios.create({
 });
 
 const LOADER_SKIP_HEADER = 'x-skip-global-loader';
+let refreshPromise: Promise<string> | null = null;
 
 const startRequestLoader = (config: any) => {
   const headers = config.headers ?? {};
@@ -37,6 +38,26 @@ const stopRequestLoader = (config: any) => {
   if (config?.__globalLoaderTracked) {
     useNetworkActivityStore.getState().end();
   }
+};
+
+const requestTokenRefresh = async (): Promise<string> => {
+  if (!refreshPromise) {
+    refreshPromise = axios
+      .post(`${baseURL}/auth/refresh`, {}, { withCredentials: true })
+      .then((res) => {
+        const newAccessToken = res.data?.accessToken;
+        if (typeof newAccessToken !== 'string' || newAccessToken.length === 0) {
+          throw new Error('Refresh token response missing accessToken');
+        }
+        storage.setItem(STORAGE_KEYS.ACCESS_TOKEN, newAccessToken);
+        return newAccessToken;
+      })
+      .finally(() => {
+        refreshPromise = null;
+      });
+  }
+
+  return refreshPromise;
 };
 
 // Request interceptor: attach Access Token if present
@@ -79,14 +100,10 @@ api.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        // Attempt to refresh the token using httpOnly cookie via the endpoint
-        const res = await axios.post(`${baseURL}/auth/refresh`, {}, { withCredentials: true });
-        
-        const newAccessToken = res.data.accessToken;
-        // Save the new token using storage service
-        storage.setItem(STORAGE_KEYS.ACCESS_TOKEN, newAccessToken);
+        const newAccessToken = await requestTokenRefresh();
         
         // Update header and retry original request
+        originalRequest.headers = originalRequest.headers ?? {};
         originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
         return api(originalRequest);
       } catch (refreshError) {
