@@ -3,6 +3,16 @@ import DashboardLayout from '@/components/hr/DashboardLayout'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { MapPin, Users, Calendar, Plus, Pause, X as XIcon } from 'lucide-react'
 import { api } from '@/lib/axios'
 import { toast } from 'sonner'
@@ -20,6 +30,8 @@ const OffersPage = () => {
   const [offers, setOffers] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [showTemplateSelector, setShowTemplateSelector] = useState(false)
+  const [pendingCloseOffer, setPendingCloseOffer] = useState<any | null>(null)
+  const [closing, setClosing] = useState(false)
   const navigate = useNavigate()
 
   const fetchOffers = async () => {
@@ -38,6 +50,21 @@ const OffersPage = () => {
       toast.success('Statut de l\'offre mis a jour.')
       fetchOffers()
     } catch { toast.error('Erreur lors de la mise a jour de l\'offre') }
+  }
+
+  const confirmCloseOffer = async () => {
+    if (!pendingCloseOffer?.id) return
+    setClosing(true)
+    try {
+      await api.patch(`/offers/${pendingCloseOffer.id}`, { status: 'closed', confirmClose: true })
+      toast.success('Offre fermee avec succes.')
+      setPendingCloseOffer(null)
+      fetchOffers()
+    } catch (error: any) {
+      toast.error(error?.response?.data?.error || 'Erreur lors de la fermeture de l\'offre')
+    } finally {
+      setClosing(false)
+    }
   }
 
   const handleTemplateSelect = (template: any) => {
@@ -136,7 +163,12 @@ const OffersPage = () => {
                     </Button>
                   )}
                   {offer.status !== 'closed' && (
-                    <Button variant="outline" size="sm" className="text-xs gap-1 border-err/40 text-err hover:bg-errl" onClick={() => handleStatusChange(offer.id, 'closed')}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-xs gap-1 border-err/40 text-err hover:bg-errl"
+                      onClick={() => setPendingCloseOffer(offer)}
+                    >
                       <XIcon className="h-3 w-3" /> Fermer
                     </Button>
                   )}
@@ -154,6 +186,33 @@ const OffersPage = () => {
         onSelectTemplate={handleTemplateSelect}
         onCreateFromScratch={handleCreateFromScratch}
       />
+
+      <AlertDialog
+        open={!!pendingCloseOffer}
+        onOpenChange={(open) => {
+          if (!open && !closing) setPendingCloseOffer(null)
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Fermer cette offre ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Cette action arretera immediatement la visibilite cote candidat et retirera l'offre de la liste des offres courantes RH.
+              Vous pourrez consulter l'historique via les candidatures liees.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={closing}>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmCloseOffer}
+              disabled={closing}
+              className="bg-err text-err-foreground hover:bg-err/90"
+            >
+              {closing ? 'Fermeture...' : 'Confirmer la fermeture'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DashboardLayout>
   )
 }

@@ -163,6 +163,13 @@ export class AuthController {
         return;
       }
 
+      // CRITICAL: Verify user is still active (not deleted or deactivated)
+      if (!stored.user.isActive || stored.user.deletedAt) {
+        await UserRepository.deleteRefreshToken(tokenHash);
+        res.status(401).json({ error: 'Compte utilisateur inactif ou supprime' });
+        return;
+      }
+
       // Rotate: delete old, create new
       await UserRepository.deleteRefreshToken(tokenHash);
 

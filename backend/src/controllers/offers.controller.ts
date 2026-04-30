@@ -79,6 +79,8 @@ export class OffersController {
       const offers = await prisma.jobOffer.findMany({
         where: {
           site: userSite as any,
+          deletedAt: null,
+          status: { not: 'closed' },
           ...(beforeCreatedAt ? { createdAt: { lt: beforeCreatedAt } } : {}),
         },
         ...(pageSize ? { take: pageSize } : {}),
@@ -330,6 +332,13 @@ export class OffersController {
         payload.site = req.user.site;
       }
 
+      if (req.body.status === 'closed' && req.body.confirmClose !== true) {
+        res.status(400).json({ error: 'Confirmation de fermeture requise' });
+        return;
+      }
+
+      delete payload.confirmClose;
+
       const offer = await OfferRepository.update(id, payload);
       logger.info(`HR updated offer: ${offer.title}`);
 
@@ -385,8 +394,11 @@ export class OffersController {
         return;
       }
 
-      await OfferRepository.delete(id);
-      logger.info(`HR deleted offer: ${id}`);
+      await OfferRepository.update(id, {
+        status: 'closed',
+        deletedAt: new Date(),
+      });
+      logger.info(`HR retired offer: ${id}`);
       
       SocketService.emitToAllCandidates('offer:closed', { id });
       SocketService.emitToAdmin('admin:overview:updated', { reason: 'offer-deleted', offerId: id });
@@ -394,7 +406,7 @@ export class OffersController {
       const adminIds = await UserRepository.findActiveAdminIds();
       await OffersController.notifyUsers(adminIds, {
         title: 'Offre supprimee',
-        message: `L'offre ${id} a ete supprimee`,
+        message: `L'offre ${id} a ete retiree`,
         category: 'offer',
         action: 'deleted',
         offerId: id,
@@ -412,7 +424,7 @@ export class OffersController {
         }, 'warning');
       }
 
-      res.json({ message: 'Offre supprimee' });
+      res.json({ message: 'Offre retiree' });
     } catch (err: any) {
       logger.error('Delete offer error:', err);
       res.status(500).json({ error: 'Echec de la suppression de l\'offre' });

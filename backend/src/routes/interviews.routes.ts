@@ -6,7 +6,12 @@ import { requireRole } from "../middleware/requireRole";
 const router = Router();
 
 router.get("/", authenticate, InterviewsController.getInterviews);
-router.post("/", authenticate, InterviewsController.scheduleInterview);
+router.post(
+  "/",
+  authenticate,
+  requireRole("HR", "ADMIN"),
+  InterviewsController.scheduleInterview,
+);
 router.patch(
   "/:id/outcome",
   authenticate,

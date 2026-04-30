@@ -190,6 +190,7 @@ model Interview {
   type             String           @default("on-site")
   notesForCandidate String?
   outcome          InterviewOutcome?
+  noShowCount      Int              @default(0)
   reminderSent     Boolean          @default(false)
   createdById      String
   createdAt        DateTime         @default(now())

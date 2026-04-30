@@ -44,7 +44,7 @@ export class AuthService {
       secure: env.NODE_ENV === 'production',
       sameSite: 'lax',
       maxAge: REFRESH_TOKEN_EXPIRY_DAYS * 24 * 60 * 60 * 1000,
-      path: '/api/auth/refresh',
+      path: '/api',
     });
   }
 
@@ -53,7 +53,7 @@ export class AuthService {
       httpOnly: true,
       secure: env.NODE_ENV === 'production',
       sameSite: 'lax',
-      path: '/api/auth/refresh',
+      path: '/api',
     });
   }
 }
