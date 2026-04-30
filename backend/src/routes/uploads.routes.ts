@@ -2,9 +2,11 @@ import { Router } from 'express';
 import path from 'path';
 import fs from 'fs';
 import { authenticate } from '../middleware/authenticate';
+import { rateLimiter } from '../middleware/rateLimiter';
 import logger from '../utils/logger';
 
 const router = Router();
+router.use(rateLimiter(60, 1 * 60 * 1000));
 
 // GET /api/uploads/:filename - Authenticated file serving
 router.get('/:filename', authenticate, (req, res) => {

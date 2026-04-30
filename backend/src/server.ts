@@ -11,6 +11,7 @@ import { env } from "./config/env";
 import { getAllowedOriginsForLog, isAllowedOrigin } from "./config/origins";
 import logger from "./utils/logger";
 import { errorHandler } from "./middleware/errorHandler";
+import { rateLimiter } from "./middleware/rateLimiter";
 
 // Routes
 import authRoutes from "./routes/auth.routes";
@@ -59,6 +60,7 @@ app.use(
 app.use(morgan("dev"));
 app.use(express.json());
 app.use(cookieParser());
+app.use("/api", rateLimiter(400, 1 * 60 * 1000));
 
 // Static files (uploaded CVs) - now authenticated
 app.use("/api/uploads", uploadsRoutes);

@@ -6,6 +6,7 @@ import { rateLimiter } from '../middleware/rateLimiter';
 import { registerSchema, loginSchema } from '../middleware/schemas';
 
 const router = Router();
+router.use(rateLimiter(200, 1 * 60 * 1000));
 
 // Public
 router.post('/register', validate(registerSchema), AuthController.register);

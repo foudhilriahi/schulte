@@ -2,10 +2,12 @@ import { Router } from 'express';
 import { ProfileController } from '../controllers/profile.controller';
 import { authenticate } from '../middleware/authenticate';
 import { requireRole } from '../middleware/requireRole';
+import { rateLimiter } from '../middleware/rateLimiter';
 import { validate } from '../middleware/validate';
 import { profileUpdateSchema, profilePasswordSchema } from '../middleware/schemas';
 
 const router = Router();
+router.use(rateLimiter(120, 1 * 60 * 1000));
 
 router.get('/', authenticate, requireRole('CANDIDATE', 'HR', 'ADMIN'), ProfileController.getProfile);
 router.patch('/', authenticate, requireRole('CANDIDATE', 'HR', 'ADMIN'), validate(profileUpdateSchema), ProfileController.updateProfile);

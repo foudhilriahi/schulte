@@ -3,8 +3,10 @@ import { OffersController } from '../controllers/offers.controller';
 import { AdminController } from '../controllers/admin.controller';
 import { authenticate } from '../middleware/authenticate';
 import { requireRole } from '../middleware/requireRole';
+import { rateLimiter } from '../middleware/rateLimiter';
 
 const router = Router();
+router.use(rateLimiter(120, 1 * 60 * 1000));
 
 // Public routes
 router.get('/', OffersController.getAll);
