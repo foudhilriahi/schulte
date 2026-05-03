@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { Bell, CheckCheck, X } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Bell, CheckCheck, LogOut, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
@@ -31,9 +32,13 @@ interface AppNotification {
 }
 
 const TopBar = ({ title }: TopBarProps) => {
-  const { user } = useAuthStore();
+  const navigate = useNavigate();
+  const { user, logout } = useAuthStore();
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const initials = user?.name
+    ? user.name.split(" ").map((n) => n[0]).join("")
+    : "?";
 
   const unread = useMemo(
     () => notifications.filter((n) => !n.readAt).length,
@@ -88,7 +93,7 @@ const TopBar = ({ title }: TopBarProps) => {
       setNotifications((prev) => prev.map((n) => ({ ...n, readAt: n.readAt || new Date().toISOString() })));
       setUnreadCount(0);
     } catch {
-      toast.error("Echec du marquage des notifications comme lues");
+      toast.error("Échec — réessaie.");
     }
   };
 
@@ -98,7 +103,7 @@ const TopBar = ({ title }: TopBarProps) => {
       setNotifications([]);
       setUnreadCount(0);
     } catch {
-      toast.error("Echec de la suppression des notifications");
+      toast.error("Échec — réessaie.");
     }
   };
 
@@ -116,29 +121,45 @@ const TopBar = ({ title }: TopBarProps) => {
 
   const displayUnread = unreadCount > unread ? unreadCount : unread;
 
+  const handleLogout = async () => {
+    await logout();
+    navigate("/login");
+  };
+
   return (
-    <header className="sticky top-0 z-30 flex h-[54px] items-center justify-between border-b border-border bg-card px-[22px] gap-4 overflow-hidden">
-      <h1 className="min-w-0 flex-1 truncate text-[15px] font-bold text-ink">{title}</h1>
-      <div className="flex items-center gap-4">
+    <header
+      aria-label={title}
+      className="sticky top-0 z-30 flex h-[54px] items-center justify-between border-b border-border bg-card px-[20px] gap-4"
+    >
+      <div className="flex items-center gap-3">
+        <div className="text-[14px] font-semibold tracking-[-0.015em] text-ink">
+          SCHULTE <span className="text-v">&</span> <span className="text-ink3">CO</span>
+        </div>
+        <span className="ml-1 font-mono text-[10px] tracking-[0.06em] text-ink4">
+          automotive components
+        </span>
+      </div>
+
+      <div className="flex items-center gap-3">
         {user?.site && (
           <Badge
             variant="outline"
-            className={`text-[10px] font-mono font-medium tracking-[-0.05em] ${
-              user.site === 'Bouarada'
-                ? 'bg-boul border-[var(--bou-b)] text-primary'
-                : 'bg-zagl border-[var(--zag-b)] text-ok'
+            className={`text-[10px] font-mono font-medium ${
+              user.site === "Bouarada"
+                ? "bg-boul text-[#1a5fcc] border-[var(--boub)]"
+                : "bg-zagl text-[#0a8a5a] border-[var(--zagb)]"
             }`}
           >
-            Site: {user.site}
+            {user.site}
           </Badge>
         )}
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="relative p-2 hover:text-ink transition-colors text-ink4">
-              <Bell className="h-5 w-5" />
+            <button className="relative p-2 text-ink4 transition-colors hover:text-ink">
+              <Bell className="h-[18px] w-[18px]" />
               {displayUnread > 0 && (
-                <span className="absolute right-0 top-0 h-2 w-2 rounded-full bg-coral border-2 border-card" />
+                <span className="absolute right-[-2px] top-[-2px] h-[7px] w-[7px] rounded-full border-2 border-card bg-tan" />
               )}
             </button>
           </DropdownMenuTrigger>
@@ -148,7 +169,7 @@ const TopBar = ({ title }: TopBarProps) => {
               <div className="flex items-center gap-3">
                 <button
                   onClick={markAllRead}
-                  className="inline-flex items-center gap-1 text-xs text-violet hover:underline"
+                  className="inline-flex items-center gap-1 text-xs text-v hover:underline"
                 >
                   <CheckCheck className="h-3.5 w-3.5" />
                   Tout marquer comme lu
@@ -165,7 +186,7 @@ const TopBar = ({ title }: TopBarProps) => {
             <DropdownMenuSeparator />
             <div className="max-h-80 overflow-y-auto">
               {notifications.length === 0 && (
-                <p className="px-3 py-4 text-sm text-muted-foreground">Aucune notification pour le moment.</p>
+                <p className="px-3 py-4 text-[12px] text-ink3">Aucune notification.</p>
               )}
               {notifications.map((n) => (
                 <DropdownMenuItem
@@ -177,14 +198,30 @@ const TopBar = ({ title }: TopBarProps) => {
                     <span className="text-sm font-medium">
                       {n.payload?.title || "Mise a jour"}
                     </span>
-                    {!n.readAt && <span className="h-2 w-2 rounded-full bg-coral" />}
+                    {!n.readAt && <span className="h-2 w-2 rounded-full bg-tan" />}
                   </div>
-                  <p className="line-clamp-2 text-xs text-muted-foreground">
+                  <p className="line-clamp-2 text-[11px] text-ink3">
                     {n.payload?.message || "A new event was received."}
                   </p>
                 </DropdownMenuItem>
               ))}
             </div>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="flex h-7 w-7 items-center justify-center rounded-full bg-vl text-[11px] font-semibold text-v">
+              {initials}
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-44">
+            <DropdownMenuLabel className="text-xs">{user?.name || "Utilisateur"}</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleLogout} className="text-xs text-err">
+              <LogOut className="mr-2 h-3.5 w-3.5" />
+              Deconnexion
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

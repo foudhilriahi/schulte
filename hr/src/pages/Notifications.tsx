@@ -12,7 +12,7 @@ const Notifications = () => {
     <div className="min-h-screen bg-background pb-24">
       <header className="sticky top-0 z-40 border-b border-border bg-card/80 backdrop-blur-lg">
         <div className="mx-auto max-w-lg px-4 py-3">
-          <h1 className="text-lg font-bold text-foreground">Notifications</h1>
+          <h1 className="text-lg font-semibold text-foreground">Notifications</h1>
         </div>
       </header>
 

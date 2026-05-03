@@ -165,13 +165,13 @@ const NewOfferPage = () => {
               <ArrowLeft className="h-4 w-4" />
             </Button>
             <div>
-              <h1 className="text-2xl font-bold text-foreground">
+              <h1 className="text-[22px] font-semibold tracking-[-0.025em] text-ink">
                 Nouvelle offre (depuis modèle)
               </h1>
               {selectedTemplate && (
                 <div className="flex items-center gap-2 mt-1">
                   <Sparkles className="h-4 w-4 text-warn" />
-                  <span className="text-sm text-muted-foreground">
+                  <span className="text-[12px] text-ink3">
                     Basée sur le modèle: {selectedTemplate.titleFr}
                   </span>
                 </div>
@@ -303,7 +303,7 @@ const NewOfferPage = () => {
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
-                      className="w-full justify-start text-left font-normal"
+                      className="w-full justify-start text-left text-[13px] font-medium"
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
                       {formData.deadline ? format(formData.deadline, 'PPP', { locale: fr }) : 'Sélectionner une date'}
@@ -362,7 +362,7 @@ const NewOfferPage = () => {
             <Button type="button" variant="outline" onClick={() => navigate('/offers')}>
               Annuler
             </Button>
-            <Button type="submit" disabled={loading} className="bg-primary hover:bg-violeth">
+            <Button type="submit" disabled={loading}>
               {loading ? 'Création...' : 'Créer l\'offre'}
             </Button>
           </div>

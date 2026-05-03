@@ -9,6 +9,9 @@ import { FilterChips, type FilterType } from '@/components/filter-chips'
 import { useOffers } from '@/hooks/useOffers'
 import { useMyApplications } from '@/hooks/useApplications'
 import { useAuthStore } from '@/store/auth'
+import { SmartInstallBanner } from '@/components/smart-install-banner'
+import { EmptyJourneyState } from '@/components/empty-journey-state'
+import { InterviewCountdown } from '@/components/interview-countdown'
 
 export function HomeScreen() {
   const router = useRouterWithLoader()
@@ -34,6 +37,9 @@ export function HomeScreen() {
   // Get list of offerIds the user has already applied to
   const appliedOfferIds = new Set(myApps.map(app => app.offerId))
 
+  // Check if we have an active interview
+  const activeInterviewApp = myApps.find(app => app.status === 'interview');
+
   return (
     <div className="flex flex-col min-h-screen pb-20">
       {/* Header */}
@@ -57,6 +63,18 @@ export function HomeScreen() {
 
       {/* Job List */}
       <main className="flex-1 px-4 py-4">
+        {activeInterviewApp && (
+          <div className="animate-slide-up-fade" style={{ animationDelay: '50ms' }}>
+            <InterviewCountdown 
+              applicationId={activeInterviewApp.id}
+              jobTitle={activeInterviewApp.offer?.title || "Poste inconnu"}
+              site={activeInterviewApp.offer?.site || "Site inconnu"}
+              scheduledAt={activeInterviewApp.interview?.scheduledAt}
+              location={activeInterviewApp.interview?.location}
+            />
+          </div>
+        )}
+
         <div className="space-y-3">
           {loading ? (
             <>
@@ -66,21 +84,22 @@ export function HomeScreen() {
               <JobCardSkeleton />
             </>
           ) : filteredJobs.length > 0 ? (
-            filteredJobs.map((job) => (
+            filteredJobs.map((job, index) => (
               <JobCard
                 key={job.id}
+                index={index}
                 job={job}
                 hasApplied={isAuthenticated && appliedOfferIds.has(job.id)}
                 onClick={() => router.push(`/jobs/${job.id}`)}
               />
             ))
           ) : (
-            <div className="text-center py-12">
-              <p className="text-muted-foreground">Aucune offre ne correspond a ce filtre.</p>
-            </div>
+            <EmptyJourneyState variant="no-jobs" />
           )}
         </div>
       </main>
+
+      <SmartInstallBanner />
     </div>
   )
 }

@@ -13,15 +13,15 @@ const SettingsPage = () => {
           <CardHeader><CardTitle className="text-base">Profil RH</CardTitle></CardHeader>
           <CardContent className="space-y-3">
             <div className="flex items-center justify-between py-2 border-b border-border">
-              <span className="text-sm text-muted-foreground">Nom</span>
+              <span className="text-[12px] text-ink3">Nom</span>
               <span className="text-sm font-medium">{user?.name}</span>
             </div>
             <div className="flex items-center justify-between py-2 border-b border-border">
-              <span className="text-sm text-muted-foreground">Email</span>
+              <span className="text-[12px] text-ink3">Email</span>
               <span className="text-sm font-medium">{user?.email}</span>
             </div>
             <div className="flex items-center justify-between py-2">
-              <span className="text-sm text-muted-foreground">Site</span>
+              <span className="text-[12px] text-ink3">Site</span>
               <span className="text-sm font-medium capitalize">{user?.site || '—'}</span>
             </div>
           </CardContent>
@@ -31,7 +31,7 @@ const SettingsPage = () => {
           <CardHeader><CardTitle className="text-base">Site d'affectation</CardTitle></CardHeader>
           <CardContent>
             <p className="text-sm capitalize font-medium">{user?.site || '—'}</p>
-            <p className="text-xs text-muted-foreground mt-1">Contactez l'administrateur pour changer de site ou réinitialiser votre mot de passe.</p>
+            <p className="mt-1 text-[11px] text-ink3">Contactez l'administrateur pour changer de site ou réinitialiser votre mot de passe.</p>
           </CardContent>
         </Card>
       </div>

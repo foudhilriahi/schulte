@@ -14,7 +14,7 @@ La conception a commence par une phase de planification pour eviter les iteratio
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.86\textwidth]{gantt_mois_1_2.png}
+\includegraphics[width=0.86\textwidth]{gantt_mois_1_2.jpg}
 \caption{Planification de conception -- Mois 1 et 2}
 \end{figure}
 
@@ -22,7 +22,7 @@ Le premier Gantt couvre le cadrage : collecte des besoins, premiers modeles UML 
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.86\textwidth]{gantt_mois_3_4.png}
+\includegraphics[width=0.86\textwidth]{gantt_mois_3_4.jpg}
 \caption{Planification de conception -- Mois 3 et 4}
 \end{figure}
 
@@ -298,7 +298,7 @@ Les besoins ont ete organises en quatre blocs: candidat, RH, administration et e
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{vue_globale_exigence_racine_categories.png}
+\includegraphics[width=\textwidth]{vue_globale_exigence_racine_categories.jpg}
 \caption{Vue globale des exigences fonctionnelles et transversales}
 \end{figure}
 
@@ -306,7 +306,7 @@ Le schema racine fixe le perimetre du produit. Nous y separons clairement ce qui
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{exigences_candidat_req.png}
+\includegraphics[width=\textwidth]{exigences_candidat_req.jpg}
 \caption{Detail des exigences du module Candidat}
 \end{figure}
 
@@ -314,7 +314,7 @@ Le diagramme candidat couvre toute la chaine : creation de compte, verification 
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{exigences_rh_req.png}
+\includegraphics[width=\textwidth]{exigences_rh_req.jpg}
 \caption{Detail des exigences du module RH}
 \end{figure}
 
@@ -322,7 +322,7 @@ Le diagramme RH formalise le cycle metier : tri, changement de statut, planifica
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{exigences_admin_transversales.png}
+\includegraphics[width=\textwidth]{exigences_admin_transversales.jpg}
 \caption{Detail des exigences Administration et contraintes transversales}
 \end{figure}
 
@@ -340,7 +340,7 @@ L'architecture retenue est en couches (presentation, metier, persistance). Ce ch
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{architecture_globale.png}
+\includegraphics[width=\textwidth]{architecture_globale.jpg}
 \caption{Architecture globale de la solution}
 \end{figure}
 
@@ -348,7 +348,7 @@ La vue globale montre les trois applications et le backend central. Les flux pri
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{architecture_frontends.png}
+\includegraphics[width=\textwidth]{architecture_frontends.jpg}
 \caption{Architecture des frontends (PWA candidat et interface RH/Admin)}
 \end{figure}
 
@@ -358,7 +358,7 @@ Sur le plan client, les deux frontends n'appliquent pas la meme strategie de ses
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{architecture_backend.png}
+\includegraphics[width=\textwidth]{architecture_backend.jpg}
 \caption{Architecture du backend Node.js/Express}
 \end{figure}
 
@@ -368,7 +368,7 @@ Cette couche centralise aussi des protections transverses: normalisation des sta
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{architecture_temps_reel_socket_services_externes.png}
+\includegraphics[width=\textwidth]{architecture_temps_reel_socket_services_externes.jpg}
 \caption{Architecture temps reel et services externes}
 \end{figure}
 
@@ -386,7 +386,7 @@ Quatre principes structurent la conception: regles metier centralisees cote API,
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{inscription_candidat.png}
+\includegraphics[width=\textwidth]{inscription_candidat.jpg}
 \caption{Sequence d'inscription candidat}
 \end{figure}
 
@@ -394,7 +394,7 @@ Ce diagramme decrit la creation de compte et les validations prealables a l'acti
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{tentative_connexion_avant_verification.png}
+\includegraphics[width=\textwidth]{tentative_connexion_avant_verification.jpg}
 \caption{Tentative de connexion avant verification email}
 \end{figure}
 
@@ -402,7 +402,7 @@ Le flux de connexion avant verification montre le blocage volontaire de l'acces 
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{verification_email_premiere_connexion.png}
+\includegraphics[width=\textwidth]{verification_email_premiere_connexion.jpg}
 \caption{Verification email et premiere connexion}
 \end{figure}
 
@@ -410,7 +410,7 @@ Cette etape ferme la boucle d'activation du compte candidat.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{renvoi_code_verification.png}
+\includegraphics[width=\textwidth]{renvoi_code_verification.jpg}
 \caption{Renvoi du code de verification}
 \end{figure}
 
@@ -418,7 +418,7 @@ Le renvoi de code limite la perte de candidatures quand le mail de verification 
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{creation_cv_upload_builder.png}
+\includegraphics[width=\textwidth]{creation_cv_upload_builder.jpg}
 \caption{Creation d'un CV (upload PDF ou formulaire)}
 \end{figure}
 
@@ -426,7 +426,7 @@ Le candidat peut importer un CV PDF ou produire un CV via le builder. Les valida
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{selection_cv_soumission_candidature.png}
+\includegraphics[width=\textwidth]{selection_cv_soumission_candidature.jpg}
 \caption{Selection du CV puis soumission}
 \end{figure}
 
@@ -434,7 +434,7 @@ Le choix du CV a ete separe de la soumission pour limiter les erreurs de dossier
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{depot_candidature_analyse_ia.png}
+\includegraphics[width=\textwidth]{depot_candidature_analyse_ia.jpg}
 \caption{Depot de candidature et lancement de l'analyse IA}
 \end{figure}
 
@@ -446,7 +446,7 @@ Au moment du depot, le texte CV est fige dans un instantane (\texttt{cvTextSnaps
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{analyse_ia_async_notifications_socket.png}
+\includegraphics[width=\textwidth]{analyse_ia_async_notifications_socket.jpg}
 \caption{Analyse IA asynchrone et notification temps reel}
 \end{figure}
 
@@ -454,7 +454,7 @@ Ce flux montre le decouplage entre depot de candidature et calcul IA, puis la no
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{analyse_backend_gemini.png}
+\includegraphics[width=\textwidth]{analyse_backend_gemini.jpg}
 \caption{Analyse IA cote backend (Gemini)}
 \end{figure}
 
@@ -462,7 +462,7 @@ Le backend produit une premiere evaluation standardisee a partir du meme prompt 
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{analyse_puterjs.png}
+\includegraphics[width=\textwidth]{analyse_puterjs.jpg}
 \caption{Analyse IA cote navigateur RH (Puter.js)}
 \end{figure}
 
@@ -472,7 +472,7 @@ Le module RH de double analyse applique des gardes techniques explicites: nettoy
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{fusion_resultats_persistance.png}
+\includegraphics[width=\textwidth]{fusion_resultats_persistance.jpg}
 \caption{Fusion des resultats IA et persistance}
 \end{figure}
 
@@ -482,7 +482,7 @@ La fusion applique une logique conservative sur la recommandation: en cas de div
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{mise_a_jour_backend_normalisation_notifications.png}
+\includegraphics[width=\textwidth]{mise_a_jour_backend_normalisation_notifications.jpg}
 \caption{Normalisation backend et diffusion des mises a jour}
 \end{figure}
 
@@ -492,7 +492,7 @@ Le backend normalise les donnees (ex. conversion des statuts UI) puis notifie le
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{changement_statut_candidature.png}
+\includegraphics[width=\textwidth]{changement_statut_candidature.jpg}
 \caption{Flux de changement de statut d'une candidature}
 \end{figure}
 
@@ -500,7 +500,7 @@ Ce diagramme formalise les transitions autorisees dans le Kanban RH.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{action_rh_planification_statut_interview.png}
+\includegraphics[width=\textwidth]{action_rh_planification_statut_interview.jpg}
 \caption{Action RH et declenchement de planification}
 \end{figure}
 
@@ -510,7 +510,7 @@ La route de planification verifie aussi des preconditions metier strictes: date 
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{planification_entretien_initiale.png}
+\includegraphics[width=\textwidth]{planification_entretien_initiale.jpg}
 \caption{Planification initiale d'un entretien}
 \end{figure}
 
@@ -518,7 +518,7 @@ Nous y decrivons la creation d'un rendez-vous avec ses contraintes de base (date
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{planification_entretien_maj.png}
+\includegraphics[width=\textwidth]{planification_entretien_maj.jpg}
 \caption{Mise a jour ou replanification d'entretien}
 \end{figure}
 
@@ -526,7 +526,7 @@ Le flux de replanification preserve l'historique pour garder la tracabilite.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{enregistrement_resultat_entretien.png}
+\includegraphics[width=\textwidth]{enregistrement_resultat_entretien.jpg}
 \caption{Enregistrement du resultat d'entretien}
 \end{figure}
 
@@ -536,7 +536,7 @@ La decision d'entretien (\texttt{pass}, \texttt{fail}, \texttt{no\_show}) alimen
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{vue_ensemble_etats_principaux.png}
+\includegraphics[width=\textwidth]{vue_ensemble_etats_principaux.jpg}
 \caption{Vue d'ensemble des etats candidature}
 \end{figure}
 
@@ -544,7 +544,7 @@ Le diagramme fixe le cycle complet, du statut initial aux statuts terminaux.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{detail_etapes_initiales_nouvelle_ia_enexamen.png}
+\includegraphics[width=\textwidth]{detail_etapes_initiales_nouvelle_ia_enexamen.jpg}
 \caption{Detail des etapes initiales}
 \end{figure}
 
@@ -552,7 +552,7 @@ Nous y precisons la progression controlee entre reception, analyse et examen RH 
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{detail_etats_entretien_resultat_fin.png}
+\includegraphics[width=\textwidth]{detail_etats_entretien_resultat_fin.jpg}
 \caption{Detail des etats entretien et fin de cycle}
 \end{figure}
 
@@ -560,7 +560,7 @@ Cette partie explicite les decisions finales et leur impact metier.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{details_transitions_notifications.png}
+\includegraphics[width=\textwidth]{details_transitions_notifications.jpg}
 \caption{Transitions d'etat et notifications associees}
 \end{figure}
 
@@ -598,7 +598,7 @@ CV insuffisant ou invalide & Validation de contenu (taille texte, structure form
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{authentification_generation_jetons.png}
+\includegraphics[width=\textwidth]{authentification_generation_jetons.jpg}
 \caption{Authentification et generation des jetons}
 \end{figure}
 
@@ -606,7 +606,7 @@ Ce diagramme presente l'emission du token d'acces et du refresh token.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{rotation_refresh_token.png}
+\includegraphics[width=\textwidth]{rotation_refresh_token.jpg}
 \caption{Rotation du refresh token}
 \end{figure}
 
@@ -614,7 +614,7 @@ La rotation limite l'impact d'un jeton compromis sur une longue duree.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{acces_securise_revocation_websockets.png}
+\includegraphics[width=\textwidth]{acces_securise_revocation_websockets.jpg}
 \caption{Acces securise, revocation et controle WebSocket}
 \end{figure}
 
@@ -626,7 +626,7 @@ Le refresh token n'est pas stocke en clair: seule une empreinte SHA-256 est pers
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{connexion_rh.png}
+\includegraphics[width=\textwidth]{connexion_rh.jpg}
 \caption{Connexion RH}
 \end{figure}
 
@@ -634,7 +634,7 @@ Le flux RH inclut verification de role et perimetre de site.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{connexion_admin.png}
+\includegraphics[width=\textwidth]{connexion_admin.jpg}
 \caption{Connexion Admin}
 \end{figure}
 
@@ -642,7 +642,7 @@ Le flux admin separe les privileges de gouvernance des operations RH.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{reset_mot_de_passe_rh.png}
+\includegraphics[width=\textwidth]{reset_mot_de_passe_rh.jpg}
 \caption{Reset de mot de passe RH}
 \end{figure}
 
@@ -660,7 +660,7 @@ Le modele de donnees est centre sur sept tables pivots : \texttt{Users}, \texttt
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{diagramme_entites_metier.png}
+\includegraphics[width=\textwidth]{diagramme_entites_metier.jpg}
 \caption{Diagramme des entites metier}
 \end{figure}
 
@@ -668,7 +668,7 @@ Le diagramme mappe les objets metier et leurs relations principales.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{er_utilisateurs_offres.png}
+\includegraphics[width=\textwidth]{er_utilisateurs_offres.jpg}
 \caption{Sous-modele E-R utilisateurs et offres}
 \end{figure}
 
@@ -676,7 +676,7 @@ Nous y isolons la relation entre comptes, roles et publication d'offres.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{er_candidatures_cv_entretiens_notifications.png}
+\includegraphics[width=\textwidth]{er_candidatures_cv_entretiens_notifications.jpg}
 \caption{Sous-modele E-R candidatures, CV, entretiens et notifications}
 \end{figure}
 
@@ -694,7 +694,7 @@ La datation metier repose sur \texttt{appliedAt} pour l'ordre de traitement RH, 
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{diagramme_repositories.png}
+\includegraphics[width=\textwidth]{diagramme_repositories.jpg}
 \caption{Organisation des repositories backend}
 \end{figure}
 
@@ -702,7 +702,7 @@ Le diagramme repositories montre la separation entre acces aux donnees et logiqu
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{diagramme_services_patterns_conception.png}
+\includegraphics[width=\textwidth]{diagramme_services_patterns_conception.jpg}
 \caption{Services applicatifs et patterns de conception}
 \end{figure}
 
@@ -714,7 +714,7 @@ Pour les operations de masse, la conception impose des garde-fous explicites: va
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{diagramme_controleur_admincontroller.png}
+\includegraphics[width=\textwidth]{diagramme_controleur_admincontroller.jpg}
 \caption{Conception detaillee du controleur d'administration}
 \end{figure}
 
@@ -728,7 +728,7 @@ Sur les endpoints lourds (offres, entretiens), la pagination (\texttt{limit} + \
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{creation_compte_rh.png}
+\includegraphics[width=\textwidth]{creation_compte_rh.jpg}
 \caption{Creation d'un compte RH}
 \end{figure}
 
@@ -738,7 +738,7 @@ Le perimetre RH est ensuite contraint par site: un RH ne peut agir que sur les o
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{cycle_vie_compte_rh.png}
+\includegraphics[width=\textwidth]{cycle_vie_compte_rh.jpg}
 \caption{Cycle de vie d'un compte RH}
 \end{figure}
 
@@ -746,7 +746,7 @@ Le cycle RH formalise activation, desactivation et reactivation pour eviter les 
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{flux_suppression_compte.png}
+\includegraphics[width=\textwidth]{flux_suppression_compte.jpg}
 \caption{Flux de suppression de compte RH}
 \end{figure}
 
@@ -754,7 +754,7 @@ La suppression suit un flux controle pour conserver la coherence des donnees dep
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{gestion_templates.png}
+\includegraphics[width=\textwidth]{gestion_templates.jpg}
 \caption{Gestion des templates d'offres}
 \end{figure}
 
@@ -762,7 +762,7 @@ Les templates accelerent la publication tout en gardant un cadre commun entre si
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{broadcast_admin_vers_rh.png}
+\includegraphics[width=\textwidth]{broadcast_admin_vers_rh.jpg}
 \caption{Broadcast admin vers RH}
 \end{figure}
 
@@ -772,7 +772,7 @@ Ce flux couvre la diffusion d'informations transversales vers les equipes RH.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{notifications_rappel_automatique.png}
+\includegraphics[width=\textwidth]{notifications_rappel_automatique.jpg}
 \caption{Conception des notifications et rappels}
 \end{figure}
 
@@ -782,7 +782,7 @@ La chaine de notification est bi-canal: persistance en base (historique, non-lus
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{rappel_automatique_entretien.png}
+\includegraphics[width=\textwidth]{rappel_automatique_entretien.jpg}
 \caption{Rappel automatique d'entretien}
 \end{figure}
 

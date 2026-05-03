@@ -6,6 +6,7 @@ import { useMyApplications } from '@/hooks/useApplications'
 import type { Application } from '@/lib/types'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Card, CardContent } from '@/components/ui/card'
+import { EmptyJourneyState } from '@/components/empty-journey-state'
 
 interface ApplicationsScreenProps {
   onSelectApplication: (app: Application) => void
@@ -57,12 +58,7 @@ export function ApplicationsScreen({ onSelectApplication }: ApplicationsScreenPr
               />
             ))
           ) : (
-            <div className="text-center py-12">
-              <p className="text-muted-foreground">Aucune candidature pour le moment.</p>
-              <p className="text-sm text-muted-foreground mt-1">
-                Parcourez les offres et postulez pour commencer.
-              </p>
-            </div>
+            <EmptyJourneyState variant="no-applications" />
           )}
         </div>
       </main>

@@ -1,9 +1,7 @@
 import { useEffect, useState } from 'react'
 import DashboardLayout from '@/components/hr/DashboardLayout'
-import StatCard from '@/components/hr/StatCard'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Users, Briefcase, ClipboardList, CalendarDays, TrendingUp, UserCheck } from 'lucide-react'
 import { api } from '@/lib/axios'
 import { socketService } from '@/lib/socket'
 import { toast } from 'sonner'
@@ -72,7 +70,7 @@ const AdminOverviewPage = () => {
     }
   }, [])
 
-  if (loading) return <DashboardLayout title="Vue d'ensemble"><p>Chargement...</p></DashboardLayout>
+  if (loading) return <DashboardLayout title="Vue d'ensemble"><p className="text-[12px] text-ink3">Chargement...</p></DashboardLayout>
 
   const handleBroadcast = async () => {
     const message = broadcastMsg.trim()
@@ -110,48 +108,74 @@ const AdminOverviewPage = () => {
   return (
     <DashboardLayout title="Vue d'ensemble admin">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <p className="text-xs text-muted-foreground">
+        <p className="text-[11px] text-ink4">
           {lastUpdated
-            ? `Dernière mise à jour: ${lastUpdated.toLocaleTimeString('fr-TN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`
-            : 'Dernière mise à jour: —'}
+            ? `Derniere mise a jour: ${lastUpdated.toLocaleTimeString('fr-TN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`
+            : 'Derniere mise a jour: -'}
         </p>
-        <Button variant="outline" size="sm" onClick={retryFetch}>
+        <Button variant="outline" size="sm" onClick={retryFetch} className="text-[11px]">
           Recharger
         </Button>
       </div>
 
       {error && (
-        <div className="mb-4 flex items-center justify-between gap-3 rounded-lg border border-warn/30 bg-warn/10 px-3 py-2 text-sm text-warn">
+        <div className="mb-4 flex items-center justify-between gap-3 rounded-md border border-warn/30 bg-warn/10 px-3 py-2 text-[12px] text-warn">
           <span>{error}</span>
-          <Button variant="outline" size="sm" onClick={retryFetch}>
+          <Button variant="outline" size="sm" onClick={retryFetch} className="text-[11px]">
             Réessayer
           </Button>
         </div>
       )}
 
-      {/* Top KPIs */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 mb-6">
-        <StatCard label="Total candidats" value={stats?.totalCandidates ?? 0} icon={Users} iconColor="text-primary" />
-        <StatCard label="Comptes RH" value={stats?.hrAccounts ?? 0} icon={UserCheck} iconColor="text-primary" />
-        <StatCard label="Offres actives" value={stats?.activeOffers ?? 0} icon={Briefcase} iconColor="text-warn" />
-        <StatCard label="Total candidatures" value={stats?.totalApplications ?? 0} icon={ClipboardList} iconColor="text-ok" />
-        <StatCard label="Candidatures (mois)" value={stats?.applicationsMonth ?? 0} icon={TrendingUp} iconColor="text-primary" />
-        <StatCard label="Entretiens (semaine)" value={stats?.interviewsWeek ?? 0} icon={CalendarDays} iconColor="text-ok" />
+      <div className="mb-6 rounded-xl border border-border bg-card p-5 shadow-card">
+        <p className="text-[10px] font-medium uppercase tracking-[0.09em] text-ink4">
+          Resume activite
+        </p>
+        <div className="mt-4 grid grid-cols-2 gap-4 md:grid-cols-3">
+          <div>
+            <p className="text-[11px] text-ink3">Total candidats</p>
+            <p className="text-[12px] font-mono text-ink2">{stats?.totalCandidates ?? 0}</p>
+          </div>
+          <div>
+            <p className="text-[11px] text-ink3">Comptes RH</p>
+            <p className="text-[12px] font-mono text-ink2">{stats?.hrAccounts ?? 0}</p>
+          </div>
+          <div>
+            <p className="text-[11px] text-ink3">Offres actives</p>
+            <p className="text-[12px] font-mono text-ink2">{stats?.activeOffers ?? 0}</p>
+          </div>
+          <div>
+            <p className="text-[11px] text-ink3">Total candidatures</p>
+            <p className="text-[12px] font-mono text-ink2">{stats?.totalApplications ?? 0}</p>
+          </div>
+          <div>
+            <p className="text-[11px] text-ink3">Candidatures (mois)</p>
+            <p className="text-[12px] font-mono text-ink2">{stats?.applicationsMonth ?? 0}</p>
+          </div>
+          <div>
+            <p className="text-[11px] text-ink3">Entretiens (semaine)</p>
+            <p className="text-[12px] font-mono text-ink2">{stats?.interviewsWeek ?? 0}</p>
+          </div>
+        </div>
       </div>
 
       {/* Mini messagerie (admin → RH) */}
-      <Card className="rounded-md shadow-card">
+      <Card className="rounded-lg shadow-card">
         <CardHeader>
-          <CardTitle className="text-base">Mini messagerie (admin vers RH)</CardTitle>
+          <CardTitle className="text-[16px] font-semibold tracking-[-0.015em] text-ink">
+            Mini messagerie (admin vers RH)
+          </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3">
+        <CardContent className="space-y-4">
           <div>
-            <label htmlFor="audience-select" className="text-sm font-medium">Audience</label>
+            <label htmlFor="audience-select" className="text-[11px] font-medium uppercase tracking-[0.09em] text-ink3">
+              Audience
+            </label>
             <select
               id="audience-select"
               value={broadcastSite}
               onChange={e => setBroadcastSite(e.target.value as 'all' | 'Bouarada' | 'Zaghouan')}
-              className="mt-1 h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-card"
+              className="mt-1 h-10 w-full rounded-lg border-[1.5px] border-input bg-card px-3.5 py-2 text-[13px] text-ink focus:outline-none focus:border-v focus:ring-[3px] focus:ring-vl"
             >
               <option value="all">Tous les sites RH</option>
               <option value="Bouarada">Bouarada uniquement</option>
@@ -159,16 +183,18 @@ const AdminOverviewPage = () => {
             </select>
           </div>
           <div>
-            <label htmlFor="broadcast-message" className="text-sm font-medium">Message</label>
+            <label htmlFor="broadcast-message" className="text-[11px] font-medium uppercase tracking-[0.09em] text-ink3">
+              Message
+            </label>
             <input
               id="broadcast-message"
               value={broadcastMsg}
               onChange={e => setBroadcastMsg(e.target.value)}
               placeholder="Écrire un court message aux équipes RH"
-              className="mt-1 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              className="mt-1 flex h-10 w-full rounded-lg border-[1.5px] border-input bg-card px-3.5 py-2 text-[13px] text-ink placeholder:text-ink4 focus-visible:outline-none focus-visible:border-v focus-visible:ring-[3px] focus-visible:ring-vl"
             />
           </div>
-          <Button onClick={handleBroadcast} disabled={sendingBroadcast} className="bg-primary">
+          <Button onClick={handleBroadcast} disabled={sendingBroadcast} className="text-[11px]">
             {sendingBroadcast ? 'Envoi...' : 'Envoyer la diffusion'}
           </Button>
         </CardContent>

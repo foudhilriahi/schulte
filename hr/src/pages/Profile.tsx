@@ -5,7 +5,7 @@ const Profile = () => {
     <div className="min-h-screen bg-background pb-24">
       <header className="sticky top-0 z-40 border-b border-border bg-card/80 backdrop-blur-lg">
         <div className="mx-auto max-w-lg px-4 py-3">
-          <h1 className="text-lg font-bold text-foreground">Mon Profil</h1>
+          <h1 className="text-lg font-semibold text-foreground">Mon Profil</h1>
         </div>
       </header>
 
@@ -15,7 +15,7 @@ const Profile = () => {
           <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary/10 text-primary">
             <User className="h-10 w-10" />
           </div>
-          <h2 className="mt-3 text-lg font-bold text-foreground">Ahmed Ben Ali</h2>
+          <h2 className="mt-3 text-lg font-semibold text-foreground">Ahmed Ben Ali</h2>
           <p className="text-sm text-muted-foreground">Ingénieur Qualité</p>
         </div>
 

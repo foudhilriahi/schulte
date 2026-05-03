@@ -74,7 +74,7 @@ const TemplateSelector = ({ open, onClose, onSelectTemplate }: TemplateSelectorP
             <Sparkles className="h-5 w-5 text-warn" />
             Créer une nouvelle offre
           </DialogTitle>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-[12px] text-ink3">
             Choisissez un modèle pré-défini. La création d'offre côté RH se fait uniquement à partir d'un modèle.
           </p>
         </DialogHeader>
@@ -82,17 +82,17 @@ const TemplateSelector = ({ open, onClose, onSelectTemplate }: TemplateSelectorP
         <div className="space-y-6">
           {/* Template Options */}
           <div>
-            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <h3 className="mb-4 flex items-center gap-2 text-[16px] font-semibold tracking-[-0.015em] text-ink">
               <FileText className="h-5 w-5" />
               Modèles disponibles ({templates.length})
             </h3>
             
             {loading ? (
-              <div className="text-center py-8 text-muted-foreground">
+              <div className="py-8 text-center text-[12px] text-ink3">
                 Chargement des modèles...
               </div>
             ) : templates.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
+              <div className="py-8 text-center text-[12px] text-ink3">
                 Aucun modèle disponible
               </div>
             ) : (
@@ -106,10 +106,10 @@ const TemplateSelector = ({ open, onClose, onSelectTemplate }: TemplateSelectorP
                     <CardHeader className="pb-3">
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
-                          <CardTitle className="text-base text-foreground mb-1">
+                          <CardTitle className="mb-1 text-base text-ink">
                             {template.titleFr}
                           </CardTitle>
-                          <CardDescription className="text-xs text-muted-foreground">
+                          <CardDescription className="text-[11px] text-ink3">
                             {template.titleEn}
                           </CardDescription>
                         </div>
@@ -119,16 +119,16 @@ const TemplateSelector = ({ open, onClose, onSelectTemplate }: TemplateSelectorP
                       </div>
                     </CardHeader>
                     <CardContent className="pt-0">
-                      <p className="mb-3 line-clamp-2 text-sm text-muted-foreground">
+                      <p className="mb-3 line-clamp-2 text-[12px] text-ink3">
                         {template.description}
                       </p>
                       <div className="space-y-2">
-                        <p className="text-xs font-medium text-foreground">
+                        <p className="text-[11px] font-medium text-ink">
                           Département: {template.department}
                         </p>
                         {template.suggestedSkills.length > 0 && (
                           <div>
-                            <p className="mb-1 text-xs font-medium text-foreground">
+                            <p className="mb-1 text-[11px] font-medium text-ink">
                               Compétences suggérées:
                             </p>
                             <div className="flex flex-wrap gap-1">
@@ -154,7 +154,7 @@ const TemplateSelector = ({ open, onClose, onSelectTemplate }: TemplateSelectorP
           </div>
         </div>
 
-        <div className="flex justify-end gap-3 pt-4 border-t">
+        <div className="flex justify-end gap-3 border-t border-border pt-4">
           <Button variant="outline" onClick={onClose}>
             Annuler
           </Button>

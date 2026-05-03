@@ -7,6 +7,7 @@ import { useNotificationStore } from "@/store/notifications";
 import { useAuthStore } from "@/store/auth";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
+import { EmptyJourneyState } from "@/components/empty-journey-state";
 
 function formatRelative(dateStr: string): string {
   try {
@@ -110,18 +111,7 @@ export function NotificationsScreen() {
 
         {/* Empty state */}
         {!isLoading && notifications.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center mb-4">
-              <Bell className="h-8 w-8 text-muted-foreground" />
-            </div>
-            <p className="text-foreground font-medium">
-              Aucune notification pour le moment.
-            </p>
-            <p className="text-sm text-muted-foreground mt-1 max-w-xs">
-              Vous serez notifié ici lors des changements de statut de vos
-              candidatures.
-            </p>
-          </div>
+          <EmptyJourneyState variant="no-notifications" />
         )}
 
         {/* Notification list */}
@@ -134,7 +124,7 @@ export function NotificationsScreen() {
                     {dayLabel}
                   </h2>
                   <span className="text-[10px] text-muted-foreground">
-                    {group.length} item{group.length > 1 ? 's' : ''}
+                    {group.length} notification{group.length > 1 ? 's' : ''}
                   </span>
                 </div>
                 <div className="flex flex-col gap-2">

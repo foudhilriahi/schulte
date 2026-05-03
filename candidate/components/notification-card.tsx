@@ -19,10 +19,10 @@ function formatTimeAgo(dateString: string) {
   const hours = Math.floor(diff / (1000 * 60 * 60));
   const days = Math.floor(diff / (1000 * 60 * 60 * 24));
 
-  if (days > 0) return `${days}d ago`;
-  if (hours > 0) return `${hours}h ago`;
-  if (minutes > 0) return `${minutes}m ago`;
-  return "Just now";
+  if (days > 0) return `il y a ${days}j`;
+  if (hours > 0) return `il y a ${hours}h`;
+  if (minutes > 0) return `il y a ${minutes}m`;
+  return "À l'instant";
 }
 
 export function NotificationCard({
@@ -47,7 +47,7 @@ export function NotificationCard({
     <Card
       className={cn(
         "cursor-pointer active:scale-[0.98] transition-all touch-manipulation",
-        !notification.read && "border-l-4 border-l-violet bg-violetl",
+        !notification.read && "border-l-4 border-l-violet bg-violetl animate-slide-up-fade",
       )}
       onClick={onClick}
     >

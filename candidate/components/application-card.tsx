@@ -4,28 +4,12 @@ import type { Application } from '@/lib/types'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { ChevronRight } from 'lucide-react'
+import { ApplicationStatusPill } from './application-status-pill'
 
 interface ApplicationCardProps {
   application: Application
   onClick: () => void
 }
-
-const statusLabels: Record<string, string> = {
-  new: 'Candidature envoyee',
-  reviewing: 'En examen',
-  interview: 'Entretien',
-  accepted: 'Acceptee',
-  rejected: 'Rejetee'
-}
-
-const statusColors: Record<string, string> = {
-  new: 'bg-card2 text-ink3 border-border',
-  reviewing: 'bg-warnl text-warn border-[var(--warn-b)]',
-  interview: 'bg-violetl text-violet border-[var(--violet-b)]',
-  accepted: 'bg-okl text-ok border-[var(--ok-b)]',
-  rejected: 'bg-errl text-err border-[var(--err-b)]'
-}
-
 export function ApplicationCard({ application, onClick }: ApplicationCardProps) {
   const city = application.offer?.site || 'Zaghouan';
   const cityColor = city === 'Bouarada'
@@ -47,9 +31,7 @@ export function ApplicationCard({ application, onClick }: ApplicationCardProps) 
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-2 flex-wrap">
               <Badge className={cityColor}>{city}</Badge>
-              <Badge variant="secondary" className={statusColors[application.status] || statusColors.new}>
-                {statusLabels[application.status] || 'Inconnu'}
-              </Badge>
+              <ApplicationStatusPill status={application.status} />
             </div>
             <h3 className="font-bold text-[13px] tracking-[-0.01em] text-ink line-clamp-1">
               {application.offer?.title || 'Offre inconnue'}

@@ -43,7 +43,8 @@ const AppInner = () => {
       <Route path="/login" element={<LoginPage />} />
 
       {/* HR Routes */}
-      <Route path="/" element={<RouteGuard allowedRoles={['HR']}><DashboardPage /></RouteGuard>} />
+      <Route path="/" element={<RouteGuard allowedRoles={['HR']}><ApplicationsPage /></RouteGuard>} />
+      <Route path="/overview" element={<RouteGuard allowedRoles={['HR']}><DashboardPage /></RouteGuard>} />
       <Route path="/offers" element={<RouteGuard allowedRoles={['HR']}><OffersPage /></RouteGuard>} />
       <Route path="/offers/new" element={<RouteGuard allowedRoles={['HR']}><NewOfferPage /></RouteGuard>} />
       <Route path="/applications" element={<RouteGuard allowedRoles={['HR']}><ApplicationsPage /></RouteGuard>} />

@@ -1,27 +1,33 @@
 import { Draggable } from "@hello-pangea/dnd";
-import { Star, Phone, Calendar, Copy, Mail } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { toast } from "sonner";
-import type { Candidate } from "@/data/hrMockData";
+import { Star } from "lucide-react";
+import type { Candidate, KanbanStatus } from "@/data/hrMockData";
 
 interface KanbanCardProps {
   candidate: Candidate;
   index: number;
-  onClick: (candidate: Candidate) => void;
+  onClick: (candidate: Candidate, e: React.MouseEvent) => void;
+  selected?: boolean;
+  laneId: KanbanStatus;
+  isPending?: boolean;
+  isSnapBack?: boolean;
+  isBatchSelected?: boolean;
 }
 
 const getScoreColor = (score: number) => {
-  if (score >= 75) return "bg-okl border-[var(--ok-b)] text-ok";
-  if (score >= 40) return "bg-warnl border-[var(--warn-b)] text-warn";
-  return "bg-errl border-[var(--err-b)] text-err";
+  if (score >= 75) return "bg-okl border-[var(--okb)] text-ok";
+  if (score >= 40) return "bg-warnl border-[var(--warnb)] text-warn";
+  return "bg-errl border-[var(--errb)] text-err";
 };
 
-const KanbanCard = ({ candidate, index, onClick }: KanbanCardProps) => {
-  const handleCopy = (e: React.MouseEvent, text: string, label: string) => {
-    e.stopPropagation();
-    navigator.clipboard.writeText(text);
-    toast.success(`${label} copié`);
-  };
+const KanbanCard = ({ candidate, index, onClick, selected, laneId, isPending, isSnapBack, isBatchSelected }: KanbanCardProps) => {
+  const isNew = laneId === "new";
+  const isReview = laneId === "review";
+  const isInterview = laneId === "interview";
+  const isAccepted = laneId === "accepted" || laneId === "rejected";
+
+  const appliedAgo = candidate.appliedDate ? new Date(candidate.appliedDate).toLocaleDateString("fr-TN", { month: "short", day: "numeric" }) : "";
+  const hoverClass = isNew || isAccepted ? "" : "hover:-translate-y-[2px] hover:rotate-[0.3deg] hover:shadow-hover hover:border-border2";
+  const heightClass = isNew || isAccepted ? "h-[48px]" : "min-h-[72px]";
 
   return (
     <Draggable draggableId={candidate.id} index={index}>
@@ -30,81 +36,50 @@ const KanbanCard = ({ candidate, index, onClick }: KanbanCardProps) => {
           ref={provided.innerRef}
           {...provided.draggableProps}
           {...provided.dragHandleProps}
-          onClick={() => onClick(candidate)}
-          className={`rounded-md border-[1.5px] bg-card p-[13px] cursor-pointer transition-[transform,box-shadow,border-color] duration-200 ease-[cubic-bezier(.34,1.56,.64,1)] hover:-translate-y-[2px] hover:rotate-[0.4deg] hover:shadow-lift hover:border-[var(--violet-b)] group ${
-            snapshot.isDragging ? "scale-[1.03] shadow-drag border-[var(--violet-b)]" : ""
-          } ${candidate.city === "Bouarada" ? "card-bouarada" : "card-zaghouan"}`}
+          onClick={(e) => onClick(candidate, e)}
+          className={`cursor-pointer rounded-md border bg-card2 px-3 py-2 flex flex-col justify-center transition-[transform,box-shadow,border-color,opacity] duration-180 ease-[cubic-bezier(.34,1.56,.64,1)] ${hoverClass} ${heightClass} ${
+            snapshot.isDragging ? "scale-[1.02] shadow-drag border-border2" : ""
+          } ${
+            selected ? "bg-vl border-[var(--vb)] border-l-2 border-l-v" : ""
+          } ${isBatchSelected ? "bg-vl border-[var(--vb)] ring-1 ring-[var(--v)]" : ""} ${isInterview ? "border-l-2 border-l-v border-[var(--vb)]" : ""} ${isAccepted ? "opacity-50" : ""} ${isPending ? "border-[var(--v)] load-pulse" : ""} ${isSnapBack ? "snap-back" : ""}`}
         >
-          <div className="flex items-start justify-between gap-2 mb-2">
+          <div className="flex items-start justify-between gap-2">
             <div className="min-w-0 flex-1">
-              <p className="font-bold text-[13px] text-ink truncate">{candidate.name}</p>
-              <p className="text-[10px] text-ink4 font-mono truncate">{candidate.phone}</p>
+              <p className="text-[12px] font-semibold text-ink truncate">{candidate.name}</p>
+              {isReview && <p className="text-[10px] font-mono text-ink4 truncate">{candidate.phone}</p>}
+              {isAccepted && <p className="text-[10px] font-mono text-ink4 truncate">{appliedAgo}</p>}
             </div>
-            <span className={`shrink-0 flex h-8 min-w-8 items-center justify-center rounded-full border text-xs font-medium font-mono px-2 ${getScoreColor(candidate.aiScore)}`}>
-              {candidate.aiScore}
-            </span>
+            {isNew ? (
+              <div className="flex items-center gap-2 shrink-0">
+                <span className="text-[10px] text-ink4">{appliedAgo}</span>
+                <span className={`rounded-full border px-2 py-[1px] text-[10px] font-mono ${getScoreColor(candidate.aiScore)}`}>
+                  {candidate.aiScore}
+                </span>
+              </div>
+            ) : (
+              <span className={`shrink-0 rounded-full border px-2 py-1 text-[10px] font-mono ${getScoreColor(candidate.aiScore)}`}>
+                {candidate.aiScore}
+              </span>
+            )}
           </div>
 
-          {/* Contact info with quick copy */}
-          <div className="space-y-1.5 mb-3">
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground group/phone">
-              <Phone className="h-3 w-3 shrink-0" />
-              <span className="truncate flex-1">{candidate.phone}</span>
-              <button
-                onClick={(e) => handleCopy(e, candidate.phone, "Tél.")}
-                className="opacity-0 group-hover/phone:opacity-100 p-0.5 hover:bg-accent rounded-sm transition-colors"
-                title="Copier le téléphone"
-              >
-                <Copy className="h-3 w-3" />
-              </button>
-            </div>
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground group/email">
-              <Mail className="h-3 w-3 shrink-0" />
-              <span className="truncate flex-1">{candidate.email || "—"}</span>
-              {candidate.email && (
-                <button
-                  onClick={(e) => handleCopy(e, candidate.email, "Email")}
-                  className="opacity-0 group-hover/email:opacity-100 p-0.5 hover:bg-accent rounded-sm transition-colors"
-                  title="Copier l'email"
-                >
-                  <Copy className="h-3 w-3" />
-                </button>
+          {(isReview || isInterview) && (
+            <div className="mt-2 flex items-center justify-between">
+              {isInterview ? (
+                <div className="text-[10px] font-semibold text-[#9A6210] bg-warnl border border-[var(--warnb)] px-2 py-px rounded-full truncate max-w-[140px]">
+                  {candidate.interviewDate ? new Date(candidate.interviewDate).toLocaleString("fr-TN", { weekday: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "À planifier"}
+                </div>
+              ) : (
+                <div className="flex flex-wrap gap-1">
+                  {candidate.skills?.slice(0, 3).map((s: string) => (
+                    <span key={s} className="text-[9px] bg-card border border-[var(--border)] rounded px-1.5 py-px text-ink3 truncate max-w-[60px]">
+                      {s}
+                    </span>
+                  ))}
+                </div>
               )}
             </div>
-          </div>
-
-          <div className="flex items-center gap-1.5 text-xs text-ink3 mb-3">
-            <Calendar className="h-3 w-3 shrink-0" />
-            <span>{new Date(candidate.appliedDate).toLocaleDateString("fr-TN")}</span>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <Badge variant="outline" className="text-[10px]">
-              {candidate.contractType}
-            </Badge>
-            <div className="flex gap-0.5">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <Star
-                  key={star}
-                  className={`h-3.5 w-3.5 ${
-                    star <= candidate.starRating
-                      ? "fill-violet text-violet"
-                      : "text-ink4"
-                  }`}
-                />
-              ))}
-            </div>
-          </div>
-
-          <div className="mt-2 pt-2 border-t border-border/50 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
-            <button
-              type="button"
-              className="w-full rounded-md border-[1.5px] border-border bg-card px-3 py-2 text-xs font-semibold text-ink3 transition-colors hover:bg-card2 hover:border-[var(--border2)]"
-              onClick={() => onClick(candidate)}
-            >
-              Ouvrir les détails et changer le statut
-            </button>
-          </div>
+          )}
         </div>
       )}
     </Draggable>

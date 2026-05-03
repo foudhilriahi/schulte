@@ -33,7 +33,7 @@ const JobCard = ({ job, onClick }: JobCardProps) => {
               {job.contractType}
             </span>
           </div>
-          <h3 className="mb-2 text-[17px] font-bold tracking-[-0.02em] text-ink">{job.title}</h3>
+          <h3 className="mb-2 text-[17px] font-semibold tracking-[-0.02em] text-ink">{job.title}</h3>
           <div className="mb-3 flex flex-wrap gap-1.5">
             {job.skills.map((skill) => (
               <span

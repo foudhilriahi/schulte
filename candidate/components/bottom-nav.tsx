@@ -39,7 +39,7 @@ export function BottomNav() {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex flex-col items-center justify-center gap-1 min-w-[64px] min-h-[44px] px-3 py-2 transition-colors touch-manipulation",
+                "relative flex flex-col items-center justify-center gap-1 min-w-[64px] min-h-[44px] px-3 py-2 transition-transform active:scale-[0.88] touch-manipulation",
                 isActive ? "text-violet" : "text-ink4",
               )}
             >
@@ -57,6 +57,10 @@ export function BottomNav() {
               >
                 {item.label}
               </span>
+              
+              {isActive && (
+                <span className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 h-[4px] w-[4px] rounded-full bg-violet" />
+              )}
             </Link>
           );
         })}

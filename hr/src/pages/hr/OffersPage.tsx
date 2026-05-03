@@ -16,7 +16,7 @@ import {
 import { MapPin, Users, Calendar, Plus, Pause, X as XIcon } from 'lucide-react'
 import { api } from '@/lib/axios'
 import { toast } from 'sonner'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import TemplateSelector from '@/components/hr/TemplateSelector'
 
 const statusMap: Record<string, { label: string; className: string }> = {
@@ -32,6 +32,9 @@ const OffersPage = () => {
   const [showTemplateSelector, setShowTemplateSelector] = useState(false)
   const [pendingCloseOffer, setPendingCloseOffer] = useState<any | null>(null)
   const [closing, setClosing] = useState(false)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const queryParam = searchParams.get('q') || ''
+  const [searchQuery, setSearchQuery] = useState(queryParam)
   const navigate = useNavigate()
 
   const fetchOffers = async () => {
@@ -43,6 +46,10 @@ const OffersPage = () => {
   }
 
   useEffect(() => { fetchOffers() }, [])
+
+  useEffect(() => {
+    setSearchQuery(queryParam)
+  }, [queryParam])
 
   const handleStatusChange = async (id: string, status: string) => {
     try {
@@ -71,23 +78,43 @@ const OffersPage = () => {
     navigate('/offers/new', { state: { selectedTemplate: template } })
   }
 
-  const handleCreateFromScratch = () => {
-    navigate('/offers/new', { state: { selectedTemplate: null } })
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value)
+    if (value.trim()) {
+      setSearchParams({ q: value }, { replace: true })
+    } else {
+      setSearchParams({}, { replace: true })
+    }
   }
+
+  const filteredOffers = offers.filter((offer) => {
+    if (!searchQuery.trim()) return true
+    return String(offer.title || '')
+      .toLowerCase()
+      .includes(searchQuery.trim().toLowerCase())
+  })
 
   return (
     <DashboardLayout title="Offres">
-      <div className="flex items-center justify-between mb-4">
-        <p className="text-sm text-muted-foreground">{offers.length} offre(s)</p>
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+        <div className="flex flex-wrap items-center gap-3">
+          <p className="text-[12px] text-ink3">{filteredOffers.length} offre(s)</p>
+          <input
+            value={searchQuery}
+            onChange={(e) => handleSearchChange(e.target.value)}
+            placeholder="Rechercher une offre..."
+            className="h-9 w-56 rounded-full border border-border bg-card px-3 text-[11px] text-ink placeholder:text-ink4 focus:outline-none focus:border-v focus:ring-[3px] focus:ring-vl"
+          />
+        </div>
         <Button onClick={() => setShowTemplateSelector(true)} className="gap-2">
           <Plus className="h-4 w-4" /> Nouvelle Offre
         </Button>
       </div>
 
-      {loading && <p className="text-muted-foreground text-sm">Chargement...</p>}
+      {loading && <p className="text-[12px] text-ink3">Chargement...</p>}
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-        {offers.map((offer: any) => {
+        {filteredOffers.map((offer: any) => {
           const s = statusMap[offer.status] || statusMap.closed
           const stats = offer.stats || {}
           const hasStats = (stats?.totalApplications ?? 0) > 0
@@ -101,7 +128,7 @@ const OffersPage = () => {
                 </div>
               </CardHeader>
               <CardContent className="space-y-2.5">
-                <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                <div className="flex items-center gap-4 text-[12px] text-ink3">
                   <span className="flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{offer.site}</span>
                   <Badge variant="outline" className="text-xs bg-card2 text-ink3 border-border">{offer.contractType}</Badge>
                 </div>
@@ -109,16 +136,16 @@ const OffersPage = () => {
                 {/* Application Stats */}
                 <div className="pt-2 border-t border-border space-y-2">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="flex items-center gap-1 text-muted-foreground">
+                    <span className="flex items-center gap-1 text-ink3">
                       <Users className="h-3.5 w-3.5" />Total candidatures :
                     </span>
-                    <span className="font-semibold">{stats.totalApplications || 0}</span>
+                    <span className="font-mono text-ink2">{stats.totalApplications || 0}</span>
                   </div>
                   
                   {hasStats && (
                     <>
                       <div className="flex items-center justify-between text-xs">
-                        <span className="text-muted-foreground">Analyse IA :</span>
+                        <span className="text-ink3">Analyse IA :</span>
                         <span className="font-medium text-ok">
                           {stats.applicationsWithAI || 0} ({stats.averageAIScore ? `${stats.averageAIScore}%` : 'N/A'})
                         </span>
@@ -146,7 +173,7 @@ const OffersPage = () => {
                   )}
                 </div>
                 
-                <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t border-border">
+                <div className="flex items-center justify-between border-t border-border pt-2 text-[11px] text-ink3">
                   <span className="flex items-center gap-1"><Calendar className="h-3.5 w-3.5" />Date limite : {offer.deadline ? new Date(offer.deadline).toLocaleDateString('fr-TN') : '—'}</span>
                   <span>{offer.seats || 1} poste(s)</span>
                 </div>
@@ -184,7 +211,6 @@ const OffersPage = () => {
         open={showTemplateSelector}
         onClose={() => setShowTemplateSelector(false)}
         onSelectTemplate={handleTemplateSelect}
-        onCreateFromScratch={handleCreateFromScratch}
       />
 
       <AlertDialog

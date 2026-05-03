@@ -37,7 +37,7 @@ const ApplyForm = () => {
             <ArrowLeft className="h-5 w-5 text-foreground" />
           </button>
           <div>
-            <h1 className="text-sm font-bold text-foreground">Postuler</h1>
+            <h1 className="text-sm font-semibold text-foreground">Postuler</h1>
             <p className="text-[11px] text-muted-foreground">{job.title}</p>
           </div>
         </div>
@@ -49,7 +49,7 @@ const ApplyForm = () => {
         <div className="rounded-md border border-border bg-card p-5">
           {step === 0 && (
             <div className="animate-slide-in-right space-y-4">
-              <h3 className="text-base font-bold text-card-foreground">Informations personnelles</h3>
+              <h3 className="text-base font-semibold text-card-foreground">Informations personnelles</h3>
               <InputField label="Nom complet" placeholder="Ahmed Ben Ali" />
               <InputField label="Email" placeholder="ahmed@email.com" type="email" />
               <InputField label="Téléphone" placeholder="+216 55 123 456" type="tel" />
@@ -57,7 +57,7 @@ const ApplyForm = () => {
           )}
           {step === 1 && (
             <div className="animate-slide-in-right space-y-4">
-              <h3 className="text-base font-bold text-card-foreground">Expérience professionnelle</h3>
+              <h3 className="text-base font-semibold text-card-foreground">Expérience professionnelle</h3>
               <InputField label="Poste actuel" placeholder="Ingénieur Qualité" />
               <InputField label="Années d'expérience" placeholder="3" type="number" />
               <div>
@@ -74,7 +74,7 @@ const ApplyForm = () => {
           )}
           {step === 2 && (
             <div className="animate-slide-in-right space-y-4">
-              <h3 className="text-base font-bold text-card-foreground">Documents</h3>
+              <h3 className="text-base font-semibold text-card-foreground">Documents</h3>
               <div className="rounded-xl border-2 border-dashed border-border bg-muted/50 p-8 text-center">
                 <p className="text-sm font-medium text-muted-foreground">
                   Glissez votre CV ici ou appuyez pour parcourir
@@ -91,7 +91,7 @@ const ApplyForm = () => {
           )}
           {step === 3 && (
             <div className="animate-slide-in-right space-y-4">
-              <h3 className="text-base font-bold text-card-foreground">Confirmation</h3>
+              <h3 className="text-base font-semibold text-card-foreground">Confirmation</h3>
               <div className="rounded-xl bg-muted p-4 text-sm text-card-foreground">
                 <p className="font-semibold">{job.title}</p>
                 <p className="text-xs text-muted-foreground">

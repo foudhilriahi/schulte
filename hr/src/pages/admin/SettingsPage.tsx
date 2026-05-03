@@ -65,8 +65,8 @@ const AdminSettingsPage = () => {
           <CardHeader><CardTitle className="text-base">Profil</CardTitle></CardHeader>
           <CardContent className="space-y-3">
             <div><Label>Nom affiche</Label><Input value={name} onChange={e => setName(e.target.value)} /></div>
-            <div><Label>Email</Label><p className="text-sm text-muted-foreground">{user?.email} (lecture seule)</p></div>
-            <Button onClick={handleProfile} disabled={savingProfile} className="bg-primary">
+            <div><Label>Email</Label><p className="text-[12px] text-ink3">{user?.email} (lecture seule)</p></div>
+            <Button onClick={handleProfile} disabled={savingProfile}>
               {savingProfile ? 'Enregistrement...' : 'Enregistrer le profil'}
             </Button>
           </CardContent>
@@ -76,9 +76,9 @@ const AdminSettingsPage = () => {
           <CardHeader><CardTitle className="text-base">Changer le mot de passe</CardTitle></CardHeader>
           <CardContent className="space-y-3">
             <div><Label>Mot de passe actuel</Label><Input type="password" value={currentPw} onChange={e => setCurrentPw(e.target.value)} /></div>
-            <div><Label>Nouveau mot de passe</Label><Input type="password" value={newPw} onChange={e => setNewPw(e.target.value)} /><p className="text-[10px] text-muted-foreground mt-1">8 caracteres minimum, 1 chiffre</p></div>
+            <div><Label>Nouveau mot de passe</Label><Input type="password" value={newPw} onChange={e => setNewPw(e.target.value)} /><p className="mt-1 text-[10px] text-ink3">8 caracteres minimum, 1 chiffre</p></div>
             <div><Label>Confirmer le mot de passe</Label><Input type="password" value={confirmPw} onChange={e => setConfirmPw(e.target.value)} /></div>
-            <Button onClick={handlePassword} disabled={saving} className="bg-primary">{saving ? 'Enregistrement...' : 'Mettre a jour le mot de passe'}</Button>
+            <Button onClick={handlePassword} disabled={saving}>{saving ? 'Enregistrement...' : 'Mettre a jour le mot de passe'}</Button>
           </CardContent>
         </Card>
       </div>

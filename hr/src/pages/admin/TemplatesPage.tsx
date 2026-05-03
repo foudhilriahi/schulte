@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import DashboardLayout from '@/components/hr/DashboardLayout'
-import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Plus, Pencil, X, ToggleLeft, ToggleRight, Lock, Trash2 } from 'lucide-react'
@@ -12,6 +11,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { socketService } from '@/lib/socket'
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -181,13 +181,13 @@ const TemplatesPage = () => {
     <DashboardLayout title="Modeles d'offres">
       <div className="flex items-center justify-between mb-4 gap-4">
         <div className="flex items-center gap-3">
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Rechercher des modeles..." className="h-9 w-64 px-3 rounded-lg border border-input bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
-          <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Rechercher des modeles..." className="h-10 w-64 rounded-lg border-[1.5px] border-input bg-card px-3.5 text-[13px] text-ink placeholder:text-ink4 focus:outline-none focus:border-v focus:ring-[3px] focus:ring-vl" />
+          <label className="flex cursor-pointer items-center gap-2 text-[11px] text-ink3">
             <input type="checkbox" checked={showInactive} onChange={e => setShowInactive(e.target.checked)} className="rounded" />
             Afficher inactifs
           </label>
         </div>
-        <Button onClick={() => { setForm({ titleFr: '', titleEn: '', contractType: 'CDI', department: '', description: '', suggestedSkills: [], skillInput: '' }); setCreateOpen(true) }} className="gap-2 bg-primary hover:bg-violeth">
+        <Button onClick={() => { setForm({ titleFr: '', titleEn: '', contractType: 'CDI', department: '', description: '', suggestedSkills: [], skillInput: '' }); setCreateOpen(true) }} className="gap-2">
           <Plus className="h-4 w-4" /> Creer un modele
         </Button>
       </div>
@@ -196,21 +196,20 @@ const TemplatesPage = () => {
         Les modeles coeur sont proteges et ne peuvent pas etre desactives.
       </p>
 
-      <Card className="rounded-md shadow-card">
-        <CardContent className="p-0">
+      <div className="overflow-hidden rounded-xl border border-border bg-card">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b">
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Position (FR)</th>
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Reference (EN)</th>
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Competences</th>
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Statut</th>
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Actions</th>
+                <th className="px-4 py-3 text-left text-[11px] font-medium uppercase tracking-[0.09em] text-ink3">Position (FR)</th>
+                <th className="px-4 py-3 text-left text-[11px] font-medium uppercase tracking-[0.09em] text-ink3">Reference (EN)</th>
+                <th className="px-4 py-3 text-left text-[11px] font-medium uppercase tracking-[0.09em] text-ink3">Competences</th>
+                <th className="px-4 py-3 text-left text-[11px] font-medium uppercase tracking-[0.09em] text-ink3">Statut</th>
+                <th className="px-4 py-3 text-left text-[11px] font-medium uppercase tracking-[0.09em] text-ink3">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {loading && <tr><td colSpan={5} className="px-4 py-6 text-center text-muted-foreground">Chargement...</td></tr>}
-              {!loading && filtered.length === 0 && <tr><td colSpan={5} className="px-4 py-6 text-center text-muted-foreground">Aucun modele trouve.</td></tr>}
+              {loading && <tr><td colSpan={5} className="px-4 py-6 text-center text-[12px] text-ink3">Chargement...</td></tr>}
+              {!loading && filtered.length === 0 && <tr><td colSpan={5} className="px-4 py-6 text-center text-[12px] text-ink3">Aucun modele trouve.</td></tr>}
               {filtered.map((t, i) => (
                 (() => {
                   const isCore = CORE_TEMPLATE_IDS.has(t.id)
@@ -226,7 +225,7 @@ const TemplatesPage = () => {
                       )}
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-muted-foreground">{t.titleEn || '—'}</td>
+                  <td className="px-4 py-3 text-[12px] text-ink3">{t.titleEn || '—'}</td>
                   <td className="px-4 py-3">
                     <div className="flex flex-wrap gap-1">
                       {(t.suggestedSkills || t.suggested_skills || []).slice(0, 3).map((s: string) => (
@@ -238,13 +237,13 @@ const TemplatesPage = () => {
                     </div>
                   </td>
                   <td className="px-4 py-3">
-                    <Badge className={`text-xs ${t.isActive !== false ? 'bg-ok/14 text-ok' : 'bg-card2 text-muted-foreground'}`}>
+                    <Badge className={`text-xs ${t.isActive !== false ? 'bg-ok/14 text-ok' : 'bg-card2 text-ink3'}`}>
                       {t.isActive !== false ? 'Actif' : 'Inactif'}
                     </Badge>
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-1">
-                      <Button variant="ghost" size="sm" onClick={() => {
+                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-ink3 hover:bg-card2 hover:text-ink" onClick={() => {
                         setSelected(t)
                         setForm({
                           titleFr: t.titleFr || '',
@@ -262,26 +261,28 @@ const TemplatesPage = () => {
                       <Button
                         variant="ghost"
                         size="sm"
+                        className="h-8 w-8 p-0 text-ink3 hover:bg-card2 hover:text-err"
                         onClick={() => handleToggle(t)}
                         disabled={isCore}
                         title={isCore ? 'Les modeles coeur ne peuvent pas etre desactives' : 'Basculer le statut actif'}
                       >
                         {isCore ? (
-                          <Lock className="h-4 w-4 text-warn" />
+                          <Lock className="h-4 w-4" />
                         ) : t.isActive !== false ? (
-                          <ToggleRight className="h-4 w-4 text-ok" />
+                          <ToggleRight className="h-4 w-4" />
                         ) : (
-                          <ToggleLeft className="h-4 w-4 text-muted-foreground" />
+                          <ToggleLeft className="h-4 w-4" />
                         )}
                       </Button>
                       {!isCore && t.isActive === false && (
                         <Button
                           variant="ghost"
                           size="sm"
+                          className="h-8 w-8 p-0 text-ink3 hover:bg-card2 hover:text-err"
                           onClick={() => { setPendingPermanentDelete(t); setPermanentDeleteOpen(true) }}
                           title="Supprimer définitivement"
                         >
-                          <Trash2 className="h-3.5 w-3.5 text-err" />
+                          <Trash2 className="h-3.5 w-3.5" />
                         </Button>
                       )}
                     </div>
@@ -292,8 +293,7 @@ const TemplatesPage = () => {
               ))}
             </tbody>
           </table>
-        </CardContent>
-      </Card>
+      </div>
 
       {/* Create/Edit shared modal content */}
       {[{ open: createOpen, setOpen: setCreateOpen, title: 'Creer un modele', action: handleCreate },
@@ -308,16 +308,17 @@ const TemplatesPage = () => {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <Label>Type de contrat</Label>
-                  <select
-                    value={form.contractType}
-                    onChange={e => setForm({ ...form, contractType: e.target.value })}
-                    className="h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-card"
-                  >
-                    <option value="CDI">CDI</option>
-                    <option value="CDD">CDD</option>
-                    <option value="Stage">Stage</option>
-                    <option value="Alternance">Alternance</option>
-                  </select>
+                  <Select value={form.contractType} onValueChange={value => setForm({ ...form, contractType: value })}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="CDI">CDI</SelectItem>
+                      <SelectItem value="CDD">CDD</SelectItem>
+                      <SelectItem value="Stage">Stage</SelectItem>
+                      <SelectItem value="Alternance">Alternance</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div>
                   <Label>Departement</Label>
@@ -338,7 +339,7 @@ const TemplatesPage = () => {
                 </div>
               </div>
             </div>
-            <DialogFooter><Button onClick={action} className="bg-primary">{title === 'Creer un modele' ? 'Creer' : 'Enregistrer'}</Button></DialogFooter>
+            <DialogFooter><Button onClick={action}>{title === 'Creer un modele' ? 'Creer' : 'Enregistrer'}</Button></DialogFooter>
           </DialogContent>
         </Dialog>
       ))}

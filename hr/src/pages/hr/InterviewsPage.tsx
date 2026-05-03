@@ -45,7 +45,7 @@ const statusConfig: Record<
   },
   no_show: {
     label: "Absent",
-    className: "bg-card2 text-muted-foreground border-border",
+    className: "bg-card2 text-ink3 border-border",
     icon: UserX,
   },
 };
@@ -144,8 +144,8 @@ const InterviewsPage = () => {
   if (loading) {
     return (
       <DashboardLayout title="Entretiens">
-        <div className="flex items-center gap-2 text-muted-foreground text-sm">
-          <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+        <div className="flex items-center gap-2 text-[12px] text-ink3">
+          <div className="h-4 w-4 animate-spin rounded-full border-2 border-v border-t-transparent" />
           Chargement des entretiens...
         </div>
       </DashboardLayout>
@@ -175,15 +175,15 @@ const InterviewsPage = () => {
           {
             label: "Absents",
             count: interviews.filter((i) => i.status === "no_show").length,
-            color: "bg-card2 text-muted-foreground border-border",
+            color: "bg-card2 text-ink3 border-border",
           },
         ].map((s) => (
           <div
             key={s.label}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl border text-sm font-medium ${s.color}`}
+            className={`flex items-center gap-2 rounded-xl border px-4 py-2 text-[12px] font-medium ${s.color}`}
           >
             <span>{s.label}</span>
-            <span className="font-bold">{s.count}</span>
+            <span className="font-mono text-ink2">{s.count}</span>
           </div>
         ))}
       </div>
@@ -195,7 +195,7 @@ const InterviewsPage = () => {
       )}
 
       {interviews.length === 0 && !error && (
-        <p className="text-muted-foreground text-sm">
+        <p className="text-[12px] text-ink3">
           Aucun entretien planifié pour le moment.
         </p>
       )}
@@ -203,7 +203,7 @@ const InterviewsPage = () => {
       {/* Scheduled interviews */}
       {scheduled.length > 0 && (
         <section className="mb-8">
-          <h2 className="text-sm font-semibold text-foreground mb-3 uppercase tracking-wide">
+          <h2 className="mb-3 text-[11px] font-medium uppercase tracking-[0.09em] text-ink3">
             À venir
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -225,7 +225,7 @@ const InterviewsPage = () => {
               >
                 Précédent
               </Button>
-              <span className="text-xs text-muted-foreground">
+              <span className="text-[11px] text-ink3">
                 Page {scheduledPage}/{scheduledPages}
               </span>
               <Button
@@ -244,7 +244,7 @@ const InterviewsPage = () => {
       {/* Concluded interviews */}
       {concluded.length > 0 && (
         <section>
-          <h2 className="text-sm font-semibold text-foreground mb-3 uppercase tracking-wide">
+          <h2 className="mb-3 text-[11px] font-medium uppercase tracking-[0.09em] text-ink3">
             Terminés
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -266,7 +266,7 @@ const InterviewsPage = () => {
               >
                 Précédent
               </Button>
-              <span className="text-xs text-muted-foreground">
+              <span className="text-[11px] text-ink3">
                 Page {concludedPage}/{concludedPages}
               </span>
               <Button
@@ -331,7 +331,7 @@ const InterviewCard = ({ interview, onRecordOutcome }: InterviewCardProps) => {
             <CardTitle className="text-base truncate">
               {candidateName}
             </CardTitle>
-            <p className="text-xs text-muted-foreground mt-0.5 truncate">
+            <p className="mt-0.5 truncate text-[11px] text-ink3">
               {offerTitle}
               {offerCity ? ` — ${offerCity}` : ""}
             </p>
@@ -348,14 +348,14 @@ const InterviewCard = ({ interview, onRecordOutcome }: InterviewCardProps) => {
 
       <CardContent className="space-y-2.5">
         {/* Date & time */}
-        <div className="flex items-start gap-2 text-sm text-muted-foreground">
+        <div className="flex items-start gap-2 text-[12px] text-ink3">
           <Clock className="h-3.5 w-3.5 mt-0.5 shrink-0" />
           <span className="capitalize">{dateDisplay}</span>
         </div>
 
         {/* Location */}
         {interview.location && (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <div className="flex items-center gap-2 text-[12px] text-ink3">
             <TypeIcon className="h-3.5 w-3.5 shrink-0" />
             <span>
               {interview.location}
@@ -368,7 +368,7 @@ const InterviewCard = ({ interview, onRecordOutcome }: InterviewCardProps) => {
 
         {/* Notes */}
         {interview.notes && (
-          <p className="text-xs text-muted-foreground italic border-l-2 border-warning pl-2 mt-1">
+          <p className="mt-1 border-l-2 border-warn pl-2 text-[11px] italic text-ink3">
             "{interview.notes}"
           </p>
         )}
@@ -376,8 +376,8 @@ const InterviewCard = ({ interview, onRecordOutcome }: InterviewCardProps) => {
         {/* Prep notes */}
         {Array.isArray(interview.prepNotes) &&
           interview.prepNotes.length > 0 && (
-            <div className="text-xs text-muted-foreground space-y-0.5">
-              <p className="font-medium text-foreground">Points à aborder :</p>
+            <div className="space-y-0.5 text-[11px] text-ink3">
+              <p className="font-medium text-ink">Points à aborder :</p>
               <ul className="list-disc list-inside space-y-0.5">
                 {interview.prepNotes.map((note: string, idx: number) => (
                   <li key={idx}>{note}</li>
@@ -390,7 +390,7 @@ const InterviewCard = ({ interview, onRecordOutcome }: InterviewCardProps) => {
         {onRecordOutcome && (
           <Button
             size="sm"
-            className="mt-1 w-full gap-1.5 bg-primary text-xs text-primary-foreground hover:bg-violeth"
+            className="mt-1 w-full gap-1.5 text-[11px]"
             onClick={onRecordOutcome}
           >
             <CheckCircle className="h-3.5 w-3.5" />

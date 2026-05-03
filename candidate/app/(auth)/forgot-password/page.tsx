@@ -81,11 +81,11 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="flex flex-col gap-6 w-full animate-in fade-in duration-200">
-      <div className="flex flex-col items-center text-center">
-        <h1 className="text-2xl font-semibold tracking-tight">Mot de passe oublie ?</h1>
-        <p className="text-sm text-muted-foreground mt-2">
-          Entrez votre adresse email pour recevoir un lien de reinitialisation
+    <div className="flex flex-col w-full animate-in fade-in duration-300">
+      <div className="flex flex-col mb-4">
+        <h2 className="text-2xl font-bold tracking-tight text-ink">Mot de passe oublié ?</h2>
+        <p className="text-sm text-ink3 mt-1.5 leading-relaxed">
+          Entrez votre adresse email pour recevoir un lien de réinitialisation sécurisé.
         </p>
       </div>
 
@@ -101,7 +101,7 @@ export default function ForgotPasswordPage() {
             autoCorrect="off"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
-            className={`bg-background transition-shadow duration-300 focus-visible:ring-primary/50 ${error ? 'border-err focus-visible:ring-destructive/50' : ''}`}
+            className={`h-11 bg-card border-border transition-all duration-200 focus-visible:ring-[3px] focus-visible:ring-[var(--violet-b)] focus-visible:border-violet ${error ? 'border-err focus-visible:ring-err/20' : ''}`}
           />
           {error && (
             <span className="text-xs text-err absolute -bottom-5 left-0">{error}</span>
@@ -114,24 +114,24 @@ export default function ForgotPasswordPage() {
           </div>
         )}
 
-        <Button type="submit" className="w-full mt-6" disabled={isLoading}>
+        <Button type="submit" className="w-full h-11 mt-6 rounded-xl font-bold transition-all active:scale-[0.97] shadow-sm" disabled={isLoading}>
           {isLoading ? (
             <div className="flex items-center gap-2">
-              <svg className="animate-spin h-4 w-4 text-primary-foreground" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+              <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
               <span>Envoi en cours...</span>
             </div>
           ) : (
             <>
               <Mail className="h-4 w-4 mr-2" />
-              Envoyer le lien de reinitialisation
+              Réinitialiser mon mot de passe
             </>
           )}
         </Button>
       </form>
 
-      <div className="text-center text-sm text-muted-foreground">
+      <div className="text-center text-sm text-ink4 mt-8">
         Vous vous souvenez de votre mot de passe ?{' '}
-        <Link href="/login" className="font-medium text-primary hover:underline">
+        <Link href="/login" className="font-bold text-violet hover:underline decoration-2 underline-offset-4">
           Se connecter
         </Link>
       </div>

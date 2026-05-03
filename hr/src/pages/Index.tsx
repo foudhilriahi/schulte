@@ -29,14 +29,14 @@ const Index = () => {
         <div className="mx-auto flex max-w-lg items-center gap-3 px-4 py-3">
           <img src={logo} alt="Schulte & Co" className="h-8" />
           <div>
-            <h1 className="text-sm font-bold text-foreground">Schulte Tunisia</h1>
+            <h1 className="text-sm font-semibold text-foreground">Schulte Tunisia</h1>
             <p className="text-[11px] text-muted-foreground">Portail Emploi</p>
           </div>
         </div>
       </header>
 
       <main className="mx-auto max-w-lg px-4 pt-4">
-        <h2 className="mb-3 text-lg font-bold text-foreground">Offres d'emploi</h2>
+        <h2 className="mb-3 text-lg font-semibold text-foreground">Offres d'emploi</h2>
         <FilterChips active={filter} onSelect={setFilter} />
 
         <div className="mt-4 space-y-3">

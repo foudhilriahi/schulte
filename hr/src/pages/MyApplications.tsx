@@ -6,7 +6,7 @@ const MyApplications = () => {
     <div className="min-h-screen bg-background pb-24">
       <header className="sticky top-0 z-40 border-b border-border bg-card/80 backdrop-blur-lg">
         <div className="mx-auto max-w-lg px-4 py-3">
-          <h1 className="text-lg font-bold text-foreground">Mes Candidatures</h1>
+          <h1 className="text-lg font-semibold text-foreground">Mes Candidatures</h1>
         </div>
       </header>
 
@@ -28,7 +28,7 @@ const MyApplications = () => {
               >
                 {app.city}
               </span>
-              <h3 className="text-sm font-bold text-card-foreground">{app.jobTitle}</h3>
+              <h3 className="text-sm font-semibold text-card-foreground">{app.jobTitle}</h3>
             </div>
             <ApplicationTimeline application={app} />
           </div>

@@ -5,11 +5,11 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-[13px] font-bold tracking-[0.01em] transition-[transform,background-color,border-color,box-shadow,color] duration-150 focus-visible:outline-none focus-visible:border-primary focus-visible:ring-[3px] focus-visible:ring-violetl disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-[13px] font-semibold tracking-[0.01em] transition-[transform,background-color,border-color,box-shadow,color] duration-150 focus-visible:outline-none focus-visible:border-v focus-visible:ring-[3px] focus-visible:ring-vl disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground shadow-[0_4px_16px_rgba(91,79,232,0.30)] hover:-translate-y-px hover:bg-violeth hover:shadow-[0_6px_20px_rgba(91,79,232,0.38)] active:scale-[0.96]",
+        default: "bg-v text-white shadow-[0_2px_10px_rgba(91,79,232,0.25)] hover:-translate-y-px hover:bg-vh hover:shadow-[0_4px_16px_rgba(91,79,232,0.32)] active:scale-[0.97]",
         destructive: "bg-errl border-[1.5px] border-[var(--err-b)] text-err hover:bg-errl active:scale-[0.96]",
         outline: "border-[1.5px] border-border bg-card text-ink2 hover:border-[var(--border2)] hover:bg-card2 active:scale-[0.96]",
         secondary: "border-[1.5px] border-border bg-card text-ink2 hover:border-[var(--border2)] hover:bg-card2 active:scale-[0.96]",

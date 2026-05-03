@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
 import DashboardLayout from '@/components/hr/DashboardLayout'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Plus, Pencil, KeyRound, UserX, UserCheck, Trash2 } from 'lucide-react'
@@ -237,9 +236,9 @@ const HRAccountsPage = () => {
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Rechercher par nom ou email..."
-            className="h-9 w-64 px-3 rounded-lg border border-input bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+            className="h-10 w-64 rounded-lg border-[1.5px] border-input bg-card px-3.5 text-[13px] text-ink placeholder:text-ink4 focus:outline-none focus:border-v focus:ring-[3px] focus:ring-vl"
           />
-          <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
+          <label className="flex cursor-pointer items-center gap-2 text-[11px] text-ink3">
             <input
               type="checkbox"
               checked={showInactive}
@@ -249,30 +248,29 @@ const HRAccountsPage = () => {
             Afficher inactifs
           </label>
         </div>
-        <Button onClick={() => { setForm({ name: '', email: '', password: '', site: 'bouarada' }); setCreateOpen(true) }} className="gap-2 bg-primary hover:bg-violeth">
+        <Button onClick={() => { setForm({ name: '', email: '', password: '', site: 'bouarada' }); setCreateOpen(true) }} className="gap-2">
           <Plus className="h-4 w-4" /> Creer un compte RH
         </Button>
       </div>
 
-      <Card className="rounded-md shadow-card">
-        <CardContent className="p-0">
+      <div className="overflow-hidden rounded-xl border border-border bg-card">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b">
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Name</th>
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Email</th>
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Site</th>
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Statut</th>
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Actions</th>
+                <th className="px-4 py-3 text-left text-[11px] font-medium uppercase tracking-[0.09em] text-ink3">Name</th>
+                <th className="px-4 py-3 text-left text-[11px] font-medium uppercase tracking-[0.09em] text-ink3">Email</th>
+                <th className="px-4 py-3 text-left text-[11px] font-medium uppercase tracking-[0.09em] text-ink3">Site</th>
+                <th className="px-4 py-3 text-left text-[11px] font-medium uppercase tracking-[0.09em] text-ink3">Statut</th>
+                <th className="px-4 py-3 text-left text-[11px] font-medium uppercase tracking-[0.09em] text-ink3">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {loading && <tr><td colSpan={5} className="px-4 py-6 text-center text-muted-foreground">Chargement...</td></tr>}
-              {!loading && filtered.length === 0 && <tr><td colSpan={5} className="px-4 py-6 text-center text-muted-foreground">Aucun compte RH trouve.</td></tr>}
+              {loading && <tr><td colSpan={5} className="px-4 py-6 text-center text-[12px] text-ink3">Chargement...</td></tr>}
+              {!loading && filtered.length === 0 && <tr><td colSpan={5} className="px-4 py-6 text-center text-[12px] text-ink3">Aucun compte RH trouve.</td></tr>}
               {filtered.map((a, i) => (
                 <tr key={a.id} className={`border-b hover:bg-card2 ${i % 2 === 0 ? '' : 'bg-card2/50'}`}>
                   <td className="px-4 py-3 font-medium">{a.name}</td>
-                  <td className="px-4 py-3 text-muted-foreground">{a.email}</td>
+                  <td className="px-4 py-3 text-[12px] text-ink3">{a.email}</td>
                   <td className="px-4 py-3">
                     <Badge variant="outline" className={`text-xs ${a.site === 'bouarada' ? 'bg-boul text-primary border-[var(--bou-b)]' : 'bg-zagl text-ok border-[var(--zag-b)]'}`}>
                       {a.site || '—'}
@@ -285,7 +283,7 @@ const HRAccountsPage = () => {
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-1">
-                      <Button variant="ghost" size="sm" onClick={() => {
+                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-ink3 hover:bg-card2 hover:text-ink" onClick={() => {
                         setSelected(a)
                         setForm({
                           ...form,
@@ -297,17 +295,17 @@ const HRAccountsPage = () => {
                       }}>
                         <Pencil className="h-3.5 w-3.5" />
                       </Button>
-                      <Button variant="ghost" size="sm" onClick={() => { setSelected(a); setResetOpen(true) }}>
+                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-ink3 hover:bg-card2 hover:text-ink" onClick={() => { setSelected(a); setResetOpen(true) }}>
                         <KeyRound className="h-3.5 w-3.5" />
                       </Button>
-                      <Button variant="ghost" size="sm" onClick={() => openDeactivateDialog(a)}>
+                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-ink3 hover:bg-card2 hover:text-err" onClick={() => openDeactivateDialog(a)}>
                         {a.isActive !== false
-                          ? <UserX className="h-3.5 w-3.5 text-err" />
-                          : <UserCheck className="h-3.5 w-3.5 text-ok" />}
+                          ? <UserX className="h-3.5 w-3.5" />
+                          : <UserCheck className="h-3.5 w-3.5" />}
                       </Button>
                       {a.isActive === false && (
-                        <Button variant="ghost" size="sm" onClick={() => openPermanentDeleteDialog(a)} title="Supprimer définitivement">
-                          <Trash2 className="h-3.5 w-3.5 text-err" />
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-ink3 hover:bg-card2 hover:text-err" onClick={() => openPermanentDeleteDialog(a)} title="Supprimer définitivement">
+                          <Trash2 className="h-3.5 w-3.5" />
                         </Button>
                       )}
                     </div>
@@ -316,8 +314,7 @@ const HRAccountsPage = () => {
               ))}
             </tbody>
           </table>
-        </CardContent>
-      </Card>
+      </div>
 
       {/* Create Modal */}
       <Dialog open={createOpen} onOpenChange={handleCreateOpenChange}>
@@ -326,7 +323,7 @@ const HRAccountsPage = () => {
           <div className="space-y-3">
             <div><Label>Nom complet</Label><Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></div>
             <div><Label>Email</Label><Input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} /></div>
-            <div><Label>Mot de passe</Label><Input type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} /><p className="text-[10px] text-muted-foreground mt-1">8 caracteres min, 1 chiffre</p></div>
+            <div><Label>Mot de passe</Label><Input type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} /><p className="mt-1 text-[10px] text-ink3">8 caracteres min, 1 chiffre</p></div>
             <div>
               <Label>Site</Label>
               <Select value={form.site} onValueChange={v => setForm({ ...form, site: v })}>
@@ -338,7 +335,7 @@ const HRAccountsPage = () => {
               </Select>
             </div>
           </div>
-          <DialogFooter><Button onClick={handleCreate} disabled={creatingAccount} className="bg-primary">{creatingAccount ? 'Creation...' : 'Creer'}</Button></DialogFooter>
+          <DialogFooter><Button onClick={handleCreate} disabled={creatingAccount}>{creatingAccount ? 'Creation...' : 'Creer'}</Button></DialogFooter>
         </DialogContent>
       </Dialog>
 
@@ -360,7 +357,7 @@ const HRAccountsPage = () => {
               </Select>
             </div>
           </div>
-          <DialogFooter><Button onClick={handleEdit} disabled={updatingAccount} className="bg-primary">{updatingAccount ? 'Enregistrement...' : 'Enregistrer'}</Button></DialogFooter>
+          <DialogFooter><Button onClick={handleEdit} disabled={updatingAccount}>{updatingAccount ? 'Enregistrement...' : 'Enregistrer'}</Button></DialogFooter>
         </DialogContent>
       </Dialog>
 
@@ -369,7 +366,7 @@ const HRAccountsPage = () => {
         <DialogContent>
           <DialogHeader><DialogTitle>Reinitialiser le mot de passe — {selected?.name}</DialogTitle></DialogHeader>
           <div><Label>Nouveau mot de passe</Label><Input type="password" value={resetPw} onChange={e => setResetPw(e.target.value)} /></div>
-          <DialogFooter><Button onClick={handleReset} disabled={resettingPassword} className="bg-primary">{resettingPassword ? 'Reinitialisation...' : 'Reinitialiser'}</Button></DialogFooter>
+          <DialogFooter><Button onClick={handleReset} disabled={resettingPassword}>{resettingPassword ? 'Reinitialisation...' : 'Reinitialiser'}</Button></DialogFooter>
         </DialogContent>
       </Dialog>
 

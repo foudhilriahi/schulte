@@ -5,6 +5,7 @@ import { TimelineStepper } from '@/components/timeline-stepper'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import type { Application } from '@/lib/types'
+import { ApplicationStatusPill } from '@/components/application-status-pill'
 
 interface ApplicationDetailScreenProps {
   application: Application
@@ -55,7 +56,10 @@ export function ApplicationDetailScreen({ application, onBack }: ApplicationDeta
 
       <main className="flex-1 px-4 py-4 space-y-6">
         <div className="mb-6">
-          <Badge className={cityColor}>{city}</Badge>
+          <div className="flex gap-2">
+            <Badge className={cityColor}>{city}</Badge>
+            <ApplicationStatusPill status={application.status} />
+          </div>
           <h1 className="text-xl font-semibold text-foreground mt-3">
             {application.offer?.title || 'Candidature'}
           </h1>

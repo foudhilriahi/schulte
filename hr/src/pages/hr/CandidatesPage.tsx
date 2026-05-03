@@ -83,7 +83,7 @@ const CandidatesPage = () => {
         <CardHeader>
           <div className="flex items-center justify-between gap-3">
             <CardTitle className="text-base">Tous les candidats</CardTitle>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-[11px] text-ink3">
               {applications.length} candidat{applications.length > 1 ? 's' : ''}
             </p>
           </div>
@@ -105,11 +105,11 @@ const CandidatesPage = () => {
               </div>
 
               {loading && (
-                <p className="px-4 py-6 text-center text-muted-foreground">Chargement...</p>
+                <p className="px-4 py-6 text-center text-[12px] text-ink3">Chargement...</p>
               )}
 
               {!loading && applications.length === 0 && (
-                <p className="px-4 py-6 text-center text-muted-foreground">Aucun candidat.</p>
+                <p className="px-4 py-6 text-center text-[12px] text-ink3">Aucun candidat.</p>
               )}
 
               {!loading && applications.length > 0 && (
@@ -146,7 +146,7 @@ const CandidatesPage = () => {
                               <Badge variant="outline" className="text-xs bg-card2 text-ink3 border-border">{c.contractType}</Badge>
                             </div>
                             <div>
-                              <span className={`inline-flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold ${
+                              <span className={`inline-flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold ${
                                 c.aiScore >= 75 ? 'bg-okl text-ok' :
                                 c.aiScore >= 40 ? 'bg-warnl text-warn' :
                                 'bg-errl text-err'
@@ -154,7 +154,7 @@ const CandidatesPage = () => {
                             </div>
                             <div className="flex gap-0.5">
                               {[1,2,3,4,5].map(s => (
-                                <Star key={s} className={`h-3.5 w-3.5 ${s <= c.starRating ? 'fill-violet text-violet' : 'text-ink4'}`} />
+                                <Star key={s} className={`h-3.5 w-3.5 ${s <= c.starRating ? 'fill-v text-v' : 'text-ink4'}`} />
                               ))}
                             </div>
                             <div>

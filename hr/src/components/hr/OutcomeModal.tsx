@@ -44,17 +44,17 @@ const OutcomeModal = ({
     <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) onClose() }}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-foreground">
+          <DialogTitle className="text-ink">
             Résultat de l&apos;entretien — {candidateName}
           </DialogTitle>
-          <p className="text-sm text-muted-foreground pt-1">
+          <p className="pt-1 text-[12px] text-ink3">
             Sélectionnez le résultat de l&apos;entretien
           </p>
         </DialogHeader>
 
         <div className="flex flex-col sm:flex-row gap-3 py-4">
           <Button
-            className="flex-1 bg-okl border border-[var(--ok-b)] text-ok text-sm font-semibold py-6 hover:bg-okl"
+            className="flex-1 border border-[var(--ok-b)] bg-okl py-6 text-[12px] text-ok hover:bg-okl"
             disabled={loading}
             onClick={() => handleOutcome('pass')}
           >
@@ -62,7 +62,7 @@ const OutcomeModal = ({
           </Button>
 
           <Button
-            className="flex-1 bg-errl border border-[var(--err-b)] text-err text-sm font-semibold py-6 hover:bg-errl"
+            className="flex-1 border border-[var(--err-b)] bg-errl py-6 text-[12px] text-err hover:bg-errl"
             disabled={loading}
             onClick={() => handleOutcome('fail')}
           >
@@ -70,7 +70,7 @@ const OutcomeModal = ({
           </Button>
 
           <Button
-            className="flex-1 bg-secondary border border-input text-muted-foreground text-sm font-semibold py-6 hover:bg-card2"
+            className="flex-1 border border-input bg-secondary py-6 text-[12px] text-ink3 hover:bg-card2"
             disabled={loading}
             onClick={() => handleOutcome('no_show')}
           >

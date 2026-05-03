@@ -9,9 +9,10 @@ interface JobCardProps {
   job: JobOffer
   hasApplied?: boolean
   onClick: () => void
+  index?: number
 }
 
-export function JobCard({ job, hasApplied = false, onClick }: JobCardProps) {
+export function JobCard({ job, hasApplied = false, onClick, index = 0 }: JobCardProps) {
   const cityColor = job.site === 'Bouarada'
     ? 'bg-boul border-[var(--bou-b)] text-primary'
     : 'bg-zagl border-[var(--zag-b)] text-ok'
@@ -30,10 +31,11 @@ export function JobCard({ job, hasApplied = false, onClick }: JobCardProps) {
 
   return (
     <Card 
-      className="group relative cursor-pointer touch-manipulation overflow-hidden border-border py-0 transition-[transform,box-shadow,border-color] duration-[220ms] ease-[cubic-bezier(.34,1.56,.64,1)] hover:-translate-y-[3px] hover:border-[var(--border2)] hover:shadow-hover"
+      className="group relative cursor-pointer touch-manipulation overflow-hidden border-border py-0 transition-all duration-200 active:scale-[0.98] animate-slide-up-fade hover:-translate-y-[2px] hover:border-[var(--border2)] hover:shadow-hover"
       onClick={onClick}
+      style={{ animationDelay: `${index * 50}ms` }}
     >
-      <span className={`absolute inset-y-0 left-0 w-1 ${job.site === 'Bouarada' ? 'bg-boul' : 'bg-zagl'}`} />
+      <span className={`absolute inset-y-0 left-0 w-[3px] opacity-80 ${job.site === 'Bouarada' ? 'bg-bou' : 'bg-zag'}`} />
       <CardContent className="p-5 pl-6">
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">

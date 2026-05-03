@@ -90,7 +90,7 @@ const ScheduleInterviewModal = ({
     <Dialog open={open} onOpenChange={open => { if (!open) handleClose() }}>
       <DialogContent className="sm:max-w-[480px]">
         <DialogHeader>
-          <DialogTitle className="text-foreground">
+          <DialogTitle className="text-ink">
             Planifier un entretien — {candidateName}
           </DialogTitle>
         </DialogHeader>
@@ -155,14 +155,14 @@ const ScheduleInterviewModal = ({
           {/* Notes */}
           <div className="space-y-1.5">
             <Label htmlFor="interview-notes">
-              Notes <span className="text-xs text-muted-foreground">(optionnel)</span>
+              Notes <span className="text-[10px] text-ink3">(optionnel)</span>
             </Label>
             <Textarea
               id="interview-notes"
               placeholder="Instructions pour le candidat, sujets à aborder..."
               value={notes}
               onChange={e => setNotes(e.target.value)}
-              className="min-h-[80px] text-sm resize-none"
+              className="min-h-[96px] resize-none text-[13px]"
             />
           </div>
         </div>
@@ -174,7 +174,6 @@ const ScheduleInterviewModal = ({
           <Button
             onClick={handleSubmit}
             disabled={loading}
-            className="bg-primary text-primary-foreground hover:bg-violeth"
           >
             {loading ? 'Planification...' : 'Planifier'}
           </Button>

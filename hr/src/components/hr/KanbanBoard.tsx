@@ -1,8 +1,11 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import { DragDropContext, DropResult } from "@hello-pangea/dnd";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import KanbanColumn from "./KanbanColumn";
 import CandidateDrawer from "./CandidateDrawer";
 import KanbanFilters from "./KanbanFilters";
+import ErrorState from "./ErrorState";
+import BatchActionBar from "./BatchActionBar";
 import ScheduleInterviewModal from "./ScheduleInterviewModal";
 import { api } from "@/lib/axios";
 import { getApplicationAnalysisText } from "@/lib/applicationText";
@@ -11,11 +14,11 @@ import type { KanbanStatus } from "@/data/hrMockData";
 import { useSocket } from "@/hooks/useSocket";
 
 const KANBAN_COLUMNS: { id: KanbanStatus; label: string }[] = [
-  { id: "new", label: "Nouvelles" },
-  { id: "review", label: "En examen" },
-  { id: "interview", label: "Entretien" },
-  { id: "accepted", label: "Acceptées" },
-  { id: "rejected", label: "Rejetées" },
+  { id: "new", label: "À trier" },
+  { id: "review", label: "En lecture" },
+  { id: "interview", label: "Convoqué" },
+  { id: "accepted", label: "Retenu" },
+  { id: "rejected", label: "Non retenu" },
 ];
 
 // Map backend statuses to kanban columns
@@ -42,18 +45,31 @@ interface PendingSchedule {
 
 const KanbanBoard = () => {
   const [applications, setApplications] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [pendingDragId, setPendingDragId] = useState<string | null>(null);
+  const [snapBackId, setSnapBackId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [selectedCandidate, setSelectedCandidate] = useState<any | null>(null);
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [splitOpen, setSplitOpen] = useState(false);
+  const [activeColumn, setActiveColumn] = useState<KanbanStatus | null>(null);
   const [filterCity, setFilterCity] = useState("Tous");
   const [filterContract, setFilterContract] = useState("Tous");
-  const [searchQuery, setSearchQuery] = useState("");
+  const [filterAiHigh, setFilterAiHigh] = useState(false);
+  const [searchParams] = useSearchParams();
+  const queryParam = searchParams.get("q") || "";
+  const initialQuery = queryParam;
+  const [searchQuery, setSearchQuery] = useState(initialQuery);
   const [sortBy, setSortBy] = useState<"recent" | "score" | "name">("recent");
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
   const [pendingSchedule, setPendingSchedule] =
     useState<PendingSchedule | null>(null);
   const { socket } = useSocket();
+  const navigate = useNavigate();
 
   const fetchApplications = useCallback(() => {
+    setLoading(true);
+    setError(false);
     api
       .get("/applications/by-site")
       .then((res) => {
@@ -83,7 +99,11 @@ const KanbanBoard = () => {
         setApplications(apps);
       })
       .catch(() => {
-        toast.error("Echec du chargement des candidatures");
+        setError(true);
+        toast.error("Échec — réessaie dans un instant.");
+      })
+      .finally(() => {
+        setLoading(false);
       });
   }, []);
 
@@ -95,7 +115,7 @@ const KanbanBoard = () => {
     if (!socket) return;
 
     const onApplicationNew = () => {
-      toast.info("Nouvelle candidature reçue !");
+      toast.info("Nouvelle candidature reçue.");
       fetchApplications();
     };
 
@@ -111,6 +131,10 @@ const KanbanBoard = () => {
       socket.off("application:analysed", onApplicationAnalysed);
     };
   }, [socket, fetchApplications]);
+
+  useEffect(() => {
+    setSearchQuery(queryParam);
+  }, [queryParam]);
 
   const handleDragEnd = useCallback(
     async (result: DropResult) => {
@@ -143,13 +167,14 @@ const KanbanBoard = () => {
         return;
       }
 
+      setPendingDragId(draggableId);
       // For all other columns: persist immediately
       try {
         const backendStatus = reverseStatusMap[toStatus];
         await api.patch(`/applications/${draggableId}/status`, {
           status: backendStatus,
         });
-        toast.success(`Statut mis à jour : "${toStatus}"`);
+        toast.success("Enregistré.");
       } catch {
         // Revert on failure
         setApplications((prev) =>
@@ -157,7 +182,11 @@ const KanbanBoard = () => {
             a.id === draggableId ? { ...a, status: fromStatus } : a,
           ),
         );
-        toast.error("Échec de la mise à jour. Annulation.");
+        toast.error("Échec — annulé.");
+        setSnapBackId(draggableId);
+        setTimeout(() => setSnapBackId(null), 300);
+      } finally {
+        setPendingDragId(null);
       }
     },
     [applications],
@@ -184,16 +213,25 @@ const KanbanBoard = () => {
         status: "interview",
       });
     } catch {
-      toast.error("Échec de la mise à jour du statut.");
+      toast.error("Échec — réessaie.");
     }
     fetchApplications();
     setPendingSchedule(null);
     setScheduleModalOpen(false);
   }, [pendingSchedule, fetchApplications]);
 
-  const handleCardClick = useCallback((candidate: any) => {
+  const handleCardClick = useCallback((candidate: any, e?: React.MouseEvent) => {
+    if (e && (e.metaKey || e.ctrlKey)) {
+      setSelectedIds((prev) =>
+        prev.includes(candidate.id)
+          ? prev.filter((id) => id !== candidate.id)
+          : [...prev, candidate.id]
+      );
+      return;
+    }
     setSelectedCandidate(candidate);
-    setDrawerOpen(true);
+    setActiveColumn(candidate.status as KanbanStatus);
+    setSplitOpen(true);
   }, []);
 
   const handleQuickStatusChange = useCallback(
@@ -206,14 +244,19 @@ const KanbanBoard = () => {
       if (nextStatus === "interview") {
         setSelectedCandidate(candidate);
       }
+      if (selectedCandidate?.id === candidate.id) {
+        setSelectedCandidate((prev: any) => prev ? { ...prev, status: nextStatus } : prev);
+        setActiveColumn(nextStatus as KanbanStatus);
+      }
     },
-    [],
+    [selectedCandidate],
   );
 
   const filtered = applications.filter((c) => {
     if (filterCity !== "Tous" && c.city !== filterCity) return false;
     if (filterContract !== "Tous" && c.contractType !== filterContract)
       return false;
+    if (filterAiHigh && (c.aiScore || 0) <= 70) return false;
     const q = searchQuery.trim().toLowerCase();
     if (q) {
       const haystack = [
@@ -243,33 +286,182 @@ const KanbanBoard = () => {
     );
   };
 
+  const activeColumnLabel = useMemo(() => {
+    if (!activeColumn) return "";
+    return KANBAN_COLUMNS.find((col) => col.id === activeColumn)?.label || "";
+  }, [activeColumn]);
+
+  const activeCandidates = useMemo(() => {
+    if (!activeColumn) return [];
+    return getCandidatesForColumn(activeColumn);
+  }, [activeColumn, filtered, sortBy]);
+
+  const closeSplit = useCallback(() => {
+    setSplitOpen(false);
+    setSelectedCandidate(null);
+    setActiveColumn(null);
+  }, []);
+
+  const handleBatchAction = async (action: string) => {
+    if (selectedIds.length === 0) return;
+    const oldApps = [...applications];
+    try {
+      const promises = selectedIds.map(id => {
+        if (action === "delete") {
+          return api.delete(`/applications/${id}`);
+        } else {
+          return api.patch(`/applications/${id}/status`, { status: reverseStatusMap[action] || action });
+        }
+      });
+      await Promise.all(promises);
+      toast.success(`${selectedIds.length} candidats mis à jour.`);
+      setSelectedIds([]);
+      fetchApplications();
+    } catch (err) {
+      toast.error("Erreur lors de l'action par lot.");
+      setApplications(oldApps);
+    }
+  };
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        if (selectedIds.length > 0) {
+          event.preventDefault();
+          setSelectedIds([]);
+        } else if (splitOpen) {
+          event.preventDefault();
+          closeSplit();
+        }
+      } else if (splitOpen && activeCandidates.length > 0 && selectedCandidate) {
+        if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+          event.preventDefault();
+          const currentIndex = activeCandidates.findIndex(c => c.id === selectedCandidate.id);
+          if (currentIndex === -1) return;
+          
+          let nextIndex = event.key === "ArrowDown" ? currentIndex + 1 : currentIndex - 1;
+          if (nextIndex >= 0 && nextIndex < activeCandidates.length) {
+            setSelectedCandidate(activeCandidates[nextIndex]);
+          }
+        }
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [splitOpen, closeSplit, selectedIds.length, activeCandidates, selectedCandidate]);
+
+  useEffect(() => {
+    if (!splitOpen || !selectedCandidate) return;
+    const stillVisible = filtered.some((c) => c.id === selectedCandidate.id);
+    if (!stillVisible) closeSplit();
+  }, [filtered, splitOpen, selectedCandidate, closeSplit]);
+
+  const getScoreColor = (score: number) => {
+    if (score >= 75) return "bg-zagl border-[var(--zagb)] text-[#0a8a5a]";
+    if (score >= 40) return "bg-warnl border-[var(--warnb)] text-[#9a6210]";
+    return "bg-errl border-[var(--errb)] text-[#a02020]";
+  };
+
   return (
-    <div className="space-y-4">
+    <div className="flex flex-col gap-0">
       <KanbanFilters
         filterCity={filterCity}
         filterContract={filterContract}
+        filterAiHigh={filterAiHigh}
         searchQuery={searchQuery}
-        sortBy={sortBy}
         totalVisible={filtered.length}
         onCityChange={setFilterCity}
         onContractChange={setFilterContract}
+        onAiHighChange={setFilterAiHigh}
         onSearchChange={setSearchQuery}
-        onSortChange={setSortBy}
+        onNewOffer={() => navigate("/offers/new")}
       />
 
-      <DragDropContext onDragEnd={handleDragEnd}>
-        <div className="flex gap-4 overflow-x-auto pb-4 items-stretch">
-          {KANBAN_COLUMNS.map((col) => (
-            <KanbanColumn
-              key={col.id}
-              id={col.id}
-              label={col.label}
-              candidates={getCandidatesForColumn(col.id)}
-              onCardClick={handleCardClick}
-            />
-          ))}
+      {error && applications.length === 0 ? (
+        <div className="flex h-[540px] items-center justify-center border-b border-border bg-page">
+          <ErrorState variant="server" onRetry={fetchApplications} />
         </div>
-      </DragDropContext>
+      ) : splitOpen && selectedCandidate ? (
+        <div className="flex min-h-[540px] border-b border-border bg-card">
+          <div className="w-[260px] border-r border-border bg-card2">
+            <div className="flex items-center justify-between border-b border-border px-3 py-2">
+              <p className="text-[11px] font-semibold text-ink">{activeColumnLabel}</p>
+              <span className="rounded-full border border-border bg-card px-2 py-[1px] text-[10px] font-mono text-ink3">
+                {activeCandidates.length}
+              </span>
+            </div>
+            <div className="max-h-[calc(100vh-260px)] overflow-y-auto p-2">
+              {activeCandidates.map((candidate) => {
+                const initials = candidate.name
+                  ? candidate.name.split(" ").map((n: string) => n[0]).join("")
+                  : "?";
+                const isActive = selectedCandidate?.id === candidate.id;
+                return (
+                  <button
+                    key={candidate.id}
+                    type="button"
+                    onClick={() => setSelectedCandidate(candidate)}
+                    className={`flex w-full items-center gap-2 rounded-md px-2 py-2 text-left transition-colors ${
+                      isActive ? "bg-vl" : "hover:bg-card"
+                    }`}
+                  >
+                    <div className={`flex h-7 w-7 items-center justify-center rounded-full text-[10px] font-semibold ${
+                      isActive ? "bg-vl text-v" : "bg-card text-ink3"
+                    }`}>
+                      {initials}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className={`truncate text-[12px] font-semibold ${isActive ? "text-v" : "text-ink"}`}>
+                        {candidate.name}
+                      </p>
+                      <p className="truncate text-[10px] font-mono text-ink4">
+                        {candidate.phone}
+                      </p>
+                    </div>
+                    <span className={`shrink-0 rounded-full border px-2 py-1 text-[10px] font-mono ${getScoreColor(candidate.aiScore)}`}>
+                      {candidate.aiScore}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          <div className="flex-1 min-w-0">
+            <CandidateDrawer
+              candidate={selectedCandidate}
+              open={splitOpen}
+              onClose={closeSplit}
+              onQuickStatusChange={handleQuickStatusChange}
+            />
+          </div>
+        </div>
+      ) : (
+        <DragDropContext onDragEnd={handleDragEnd}>
+          <div className="flex min-h-[540px] w-full overflow-x-auto border-b border-border bg-page">
+            {KANBAN_COLUMNS.map((col, index) => (
+              <KanbanColumn
+                key={col.id}
+                id={col.id}
+                label={col.label}
+                candidates={getCandidatesForColumn(col.id)}
+                onCardClick={handleCardClick}
+                isLast={index === KANBAN_COLUMNS.length - 1}
+                selectedId={selectedCandidate?.id}
+                loading={loading}
+                pendingDragId={pendingDragId}
+                snapBackId={snapBackId}
+                selectedIds={selectedIds}
+              />
+            ))}
+          </div>
+        </DragDropContext>
+      )}
+
+      <BatchActionBar 
+        count={selectedIds.length} 
+        onClear={() => setSelectedIds([])} 
+        onAction={handleBatchAction} 
+      />
 
       <ScheduleInterviewModal
         open={scheduleModalOpen}
@@ -279,12 +471,6 @@ const KanbanBoard = () => {
         onSuccess={handleScheduleSuccess}
       />
 
-      <CandidateDrawer
-        candidate={selectedCandidate}
-        open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
-        onQuickStatusChange={handleQuickStatusChange}
-      />
     </div>
   );
 };

@@ -19,7 +19,7 @@ const StepProgressBar = ({ currentStep, totalSteps, labels }: StepProgressBarPro
                 />
               )}
               <div
-                className={`relative z-10 flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold ${
+                className={`relative z-10 flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold ${
                   index < currentStep
                     ? "bg-primary text-primary-foreground"
                     : index === currentStep

@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { PwaInstallHint } from '@/components/pwa-install-hint';
+
 import { api } from '@/lib/axios';
 import { useAuthStore } from '@/store/auth';
 import { useRouterWithLoader } from '@/hooks/use-router-with-loader';
@@ -85,15 +85,16 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex flex-col gap-6 w-full animate-in fade-in duration-200">
-      <div className="flex flex-col items-center text-center">
-        <h1 className="text-2xl font-semibold tracking-tight">Bon retour</h1>
-        <p className="text-sm text-muted-foreground mt-2">
-          Entrez vos identifiants pour acceder a votre espace candidat
+    <div className="flex flex-col w-full animate-in fade-in duration-300">
+      <div className="flex flex-col mb-4">
+        <h2 className="text-2xl font-bold tracking-tight text-ink">Bon retour</h2>
+        <p className="text-sm text-ink3 mt-1.5 leading-relaxed">
+          Accédez à votre espace candidat pour suivre vos candidatures.
         </p>
       </div>
 
       <form onSubmit={onSubmit} className="space-y-4">
+        {/* ... existing form content ... */}
         <div className="space-y-2 relative">
           <Label htmlFor="email">Email</Label>
           <Input
@@ -105,7 +106,7 @@ export default function LoginPage() {
             autoCorrect="off"
             value={values.email}
             onChange={(event) => setValues((prev) => ({ ...prev, email: event.target.value }))}
-            className={`bg-background transition-shadow duration-300 focus-visible:ring-primary/50 ${errors.email ? 'border-err focus-visible:ring-destructive/50' : ''}`}
+            className={`h-11 bg-card border-border transition-all duration-200 focus-visible:ring-[3px] focus-visible:ring-[var(--violet-b)] focus-visible:border-violet ${errors.email ? 'border-err focus-visible:ring-err/20' : ''}`}
           />
           {errors.email && (
             <span className="text-xs text-err absolute -bottom-5 left-0">{errors.email}</span>
@@ -125,7 +126,7 @@ export default function LoginPage() {
             autoComplete="current-password"
             value={values.password}
             onChange={(event) => setValues((prev) => ({ ...prev, password: event.target.value }))}
-            className={`bg-background transition-shadow duration-300 focus-visible:ring-primary/50 ${errors.password ? 'border-err focus-visible:ring-destructive/50' : ''}`}
+            className={`h-11 bg-card border-border transition-all duration-200 focus-visible:ring-[3px] focus-visible:ring-[var(--violet-b)] focus-visible:border-violet ${errors.password ? 'border-err focus-visible:ring-err/20' : ''}`}
           />
           {errors.password && (
             <span className="text-xs text-err absolute -bottom-5 left-0">{errors.password}</span>
@@ -138,11 +139,11 @@ export default function LoginPage() {
           </div>
         )}
 
-        <Button type="submit" className="w-full mt-6" disabled={isLoading}>
+        <Button type="submit" className="w-full h-11 mt-6 rounded-xl font-bold transition-all active:scale-[0.97] shadow-sm" disabled={isLoading}>
           {isLoading ? (
             <div className="flex items-center gap-2">
-              <svg className="animate-spin h-4 w-4 text-primary-foreground" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-              <span>Connexion...</span>
+              <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+              <span>Connexion en cours...</span>
             </div>
           ) : (
             'Se connecter'
@@ -150,12 +151,10 @@ export default function LoginPage() {
         </Button>
       </form>
 
-      <PwaInstallHint />
-
-      <div className="text-center text-sm text-muted-foreground">
+      <div className="text-center text-sm text-ink4 mt-8">
         Pas encore de compte ?{' '}
-        <Link href="/register" className="font-medium text-primary hover:underline">
-          Inscrivez-vous
+        <Link href="/register" className="font-bold text-violet hover:underline decoration-2 underline-offset-4">
+          S'inscrire
         </Link>
       </div>
     </div>
