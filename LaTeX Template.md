@@ -622,550 +622,799 @@ la conception et l'architecture detaillee de la solution.
 
 \newpage
 
-% ════════════════════════════════════════════════════════════════
-%  CHAPITRE 3 — CONCEPTION ET ARCHITECTURE
-% ════════════════════════════════════════════════════════════════
+% % CHAPITRE 3 — version dediee
 \chapter{Conception et Architecture de la Solution}
+\graphicspath{{Isipfe/Figures/}{diagramms/}}
 
-\section{Introduction de la conception}
+\section{Introduction}
 
-Ce chapitre porte le coeur de notre travail technique. Nous avons transforme
-un besoin metier concret observe a Bouarada et Zaghouan en une conception
-argumentee, testable et directement exploitable pendant la realisation.
-Notre enchainement est volontairement strict : exigences, UML des flux, architecture,
-modele de donnees, securite, puis organisation des composants backend et frontends.
+Ce chapitre formalise la conception de la plateforme de recrutement en reliant chaque besoin metier a une decision technique verifiable. Le travail de conception a ete mene sur les deux sites de l'entreprise (Bouarada et Zaghouan), avec un meme objectif: obtenir un systeme unique, securise, et exploitable sans divergence de regles entre acteurs.
 
-\subsection{Demarche methodologique retenue}
+La structure du chapitre suit une progression logique: planification et conduite Agile, cadrage des exigences, modelisation UML des flux, architecture logicielle, securite, donnees, puis gouvernance et automatisations. Chaque section ne decrit pas seulement un choix de conception; elle precise aussi les garde-fous retenus pour traiter les cas limites observes pendant le developpement.
 
-Nous avons construit la conception comme une suite de decisions verifiables.
-Nous avons d'abord collecte les contraintes reelles avec l'equipe RH, puis
-nous avons formalise les cas d'usage prioritaires, dessine les diagrammes UML,
-valide la faisabilite sur les points risques (temps reel, IA, isolation multi-site),
-et enfin fige les choix avant implementation. Cette methode nous a evite une
-architecture theorique deconnectee de l'usage, et elle a reduit les retours
-arriere pendant le developpement des trois applications (PWA candidat, RH, admin).
+\section{Demarche de conception et planification}
 
-\subsection{Critere de qualite de la conception}
-
-Nous avons retenu un filtre de qualite simple. Chaque choix devait respecter
-la realite metier RH, garantir la securite des donnees, rester maintenable,
-et conserver un cout de mise en oeuvre compatible avec le contexte PFE.
-Ce filtre explique nos compromis : analyse IA asynchrone pour proteger la
-fluidite candidat, et centralisation des regles d'autorisation dans l'API
-pour eviter les ecarts entre interfaces.
-
-\section{Modelisation des exigences et du perimetre}
-
-\subsection{Structure globale des exigences}
-
-Nous avons commence par construire une arborescence d'exigences claire pour
-eviter les ambiguities entre besoins metier et decisions techniques. Le premier
-niveau separe les exigences candidates, RH, administration et exigences
-transversales. Nous avons ensuite relie chaque exigence a un livrable concret :
-endpoint backend, ecran front, regle de validation ou evenement Socket.io.
+La conception a commence par une phase de planification pour eviter les iterations non maitrisees. Le cadrage a fixe un ordre de travail clair: collecte terrain, modelisation, validation technique, puis consolidation. A chaque etape, un livrable etait valide (diagrammes, decisions d'architecture, regles de gestion) avant le passage a la suivante.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{Isipfe/Figures/vue_globale_exigence_racine_categories.png}
+\includegraphics[width=0.86\textwidth]{gantt_mois_1_2.jpg}
+\caption{Planification de conception -- Mois 1 et 2}
+\end{figure}
+
+Le premier Gantt couvre le cadrage : collecte des besoins, premiers modeles UML et validation des scenarios metier critiques.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.86\textwidth]{gantt_mois_3_4.jpg}
+\caption{Planification de conception -- Mois 3 et 4}
+\end{figure}
+
+Le second Gantt couvre la consolidation : finalisation de l'architecture, verrouillage du schema de donnees et preparation de la realisation.
+
+\section{Conduite Agile du projet}
+
+\subsection{Cadre Agile adopte}
+
+Le cadre Scrum a ete adapte a l'echelle du projet PFE. Le product backlog a ete maintenu avec l'equipe RH, la planification s'est faite en cycles courts, et chaque sprint s'est termine par une revue fonctionnelle suivie d'une retrospective. Ce rythme a permis de corriger rapidement les ecarts entre maquette, logique metier et comportement reel de l'application.
+
+\begin{table}[H]
+\centering
+\caption{Organisation Agile du chapitre de conception}
+\begin{tabularx}{\textwidth}{|l|X|X|}
+\hline
+\textbf{Release} & \textbf{But} & \textbf{Sprints couverts} \\
+\hline
+Release 1 & Construire le flux recrutement de bout en bout (authentification, candidature, traitement RH) & S1, S2, S3, S4 \\
+\hline
+Release 2 & Stabiliser la gouvernance, la securite operationnelle et l'exploitation & S5, S6 \\
+\hline
+\end{tabularx}
+\end{table}
+
+\subsection{Sprint 1 -- Initiation et authentification}
+
+\textbf{Vue technique} : ce sprint s'appuie sur les diagrammes d'inscription, verification email, connexion, generation des jetons et rotation des refresh tokens.
+
+\begin{table}[H]
+\centering
+\caption{Backlog du sprint 1}
+\begin{tabularx}{\textwidth}{|l|X|l|X|}
+\hline
+\textbf{ID} & \textbf{User story} & \textbf{Priorite} & \textbf{Critere d'acceptation} \\
+\hline
+S1-US1 & En tant que candidat, je cree un compte avec email valide. & Haute & Compte cree, verification requise avant connexion. \\
+\hline
+S1-US2 & En tant que candidat, je recois et renvoie un code de verification. & Haute & Verification email reussie, gestion expiration/rate-limit. \\
+\hline
+S1-US3 & En tant qu'utilisateur authentifie, je dispose d'un acces securise via JWT + refresh token. & Haute & Login, refresh, rotation et revocation fonctionnels. \\
+\hline
+\end{tabularx}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Tableau de taches du sprint 1}
+\begin{tabularx}{\textwidth}{|l|X|l|X|}
+\hline
+\textbf{Tache} & \textbf{Description} & \textbf{Charge} & \textbf{Sortie} \\
+\hline
+S1-T1 & Endpoints \texttt{/auth/login}, \texttt{/auth/verify-email}, \texttt{/auth/resend}. & 2 j.h & API d'authentification candidate. \\
+\hline
+S1-T2 & Middleware de controle role/session + gestion cookies securises. & 1.5 j.h & Controle d'acces unifie RH/Admin/Candidat. \\
+\hline
+S1-T3 & Rotation refresh token + invalidation immediate compte inactif. & 1.5 j.h & Chaine de session robuste. \\
+\hline
+\end{tabularx}
+\end{table}
+
+\subsection{Sprint 2 -- Parcours candidat et depot de candidature}
+
+\textbf{Vue technique} : ce sprint est aligne sur les diagrammes de creation CV (upload/builder), selection de CV et depot de candidature.
+
+\begin{table}[H]
+\centering
+\caption{Backlog du sprint 2}
+\begin{tabularx}{\textwidth}{|l|X|l|X|}
+\hline
+\textbf{ID} & \textbf{User story} & \textbf{Priorite} & \textbf{Critere d'acceptation} \\
+\hline
+S2-US1 & En tant que candidat, je gere ma bibliotheque de CV. & Haute & Upload PDF + builder + selection CV actifs. \\
+\hline
+S2-US2 & En tant que candidat, je postule a une offre avec un CV choisi. & Haute & Depot en base + accuse de prise en compte. \\
+\hline
+S2-US3 & En tant que systeme, je bloque les doublons candidat/offre. & Haute & Refus metier si candidature deja existante. \\
+\hline
+\end{tabularx}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Tableau de taches du sprint 2}
+\begin{tabularx}{\textwidth}{|l|X|l|X|}
+\hline
+\textbf{Tache} & \textbf{Description} & \textbf{Charge} & \textbf{Sortie} \\
+\hline
+S2-T1 & Module CV: upload, extraction texte et mode builder. & 2.5 j.h & Donnees CV reutilisables dans le dossier candidat. \\
+\hline
+S2-T2 & Endpoint de soumission candidature avec validations metier. & 2 j.h & Depot candidature fiable et trace. \\
+\hline
+S2-T3 & Regle d'unicite candidature par offre. & 1 j.h & Prevention des dossiers redondants. \\
+\hline
+\end{tabularx}
+\end{table}
+
+\subsection{Sprint 3 -- Traitement RH, statuts et entretiens}
+
+\textbf{Vue technique} : ce sprint mobilise les diagrammes de transitions Kanban, planification et outcome d'entretien.
+
+\begin{table}[H]
+\centering
+\caption{Backlog du sprint 3}
+\begin{tabularx}{\textwidth}{|l|X|l|X|}
+\hline
+\textbf{ID} & \textbf{User story} & \textbf{Priorite} & \textbf{Critere d'acceptation} \\
+\hline
+S3-US1 & En tant que RH, je deplace une candidature entre statuts valides. & Haute & Transitions controlees sans etat incoherent. \\
+\hline
+S3-US2 & En tant que RH, je planifie un entretien et je peux le replanifier. & Haute & Dates/horaires persistants et historises. \\
+\hline
+S3-US3 & En tant que RH, je saisis un resultat d'entretien. & Haute & Outcome (\texttt{pass}/\texttt{fail}/\texttt{no\_show}) enregistre et exploite. \\
+\hline
+\end{tabularx}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Tableau de taches du sprint 3}
+\begin{tabularx}{\textwidth}{|l|X|l|X|}
+\hline
+\textbf{Tache} & \textbf{Description} & \textbf{Charge} & \textbf{Sortie} \\
+\hline
+S3-T1 & API de mise a jour statut avec normalisation des valeurs UI. & 1.5 j.h & Cycle d'etat coherent (\texttt{new} vers \texttt{reviewing}, etc.). \\
+\hline
+S3-T2 & Module planification entretien + edition/replanification. & 2 j.h & Workflow entretien complet. \\
+\hline
+S3-T3 & Enregistrement outcome et propagation metier. & 1.5 j.h & Decision RH tracee jusqu'aux etats finaux. \\
+\hline
+\end{tabularx}
+\end{table}
+
+\subsection{Sprint 4 -- Analyse IA dual-provider et temps reel}
+
+\textbf{Vue technique} : ce sprint suit les diagrammes Puter.js, Gemini, fusion IA, normalisation backend et emission Socket.io.
+
+\begin{table}[H]
+\centering
+\caption{Backlog du sprint 4}
+\begin{tabularx}{\textwidth}{|l|X|l|X|}
+\hline
+\textbf{ID} & \textbf{User story} & \textbf{Priorite} & \textbf{Critere d'acceptation} \\
+\hline
+S4-US1 & En tant que RH, je lance une analyse IA sans bloquer le flux candidat. & Haute & Analyse asynchrone fonctionnelle. \\
+\hline
+S4-US2 & En tant que RH, je consulte un resultat fusionne et lisible. & Haute & Score + recommandation + justification coherents. \\
+\hline
+S4-US3 & En tant qu'utilisateur, je vois les mises a jour en temps reel. & Haute & Evenements Socket propages aux bons clients. \\
+\hline
+\end{tabularx}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Tableau de taches du sprint 4}
+\begin{tabularx}{\textwidth}{|l|X|l|X|}
+\hline
+\textbf{Tache} & \textbf{Description} & \textbf{Charge} & \textbf{Sortie} \\
+\hline
+S4-T1 & Pipeline asynchrone IA cote backend + snapshot candidature. & 2 j.h & Analyse declenchee sans ralentir le depot. \\
+\hline
+S4-T2 & Fusion des resultats Puter.js/Gemini et persistance finale. & 2 j.h & Resultat IA unifie et exploitable RH. \\
+\hline
+S4-T3 & Evenements Socket (\texttt{status:changed}, \texttt{ai:analysis\_complete}). & 1.5 j.h & Synchronisation RH/candidat en temps reel. \\
+\hline
+\end{tabularx}
+\end{table}
+
+\subsection{Sprint 5 -- Gouvernance administrative}
+
+\textbf{Vue technique} : ce sprint couvre la creation des comptes RH, leur cycle de vie, la gestion des templates et le broadcast admin.
+
+\begin{table}[H]
+\centering
+\caption{Backlog du sprint 5}
+\begin{tabularx}{\textwidth}{|l|X|l|X|}
+\hline
+\textbf{ID} & \textbf{User story} & \textbf{Priorite} & \textbf{Critere d'acceptation} \\
+\hline
+S5-US1 & En tant qu'admin, je cree et maintiens les comptes RH. & Haute & Creation, activation, desactivation et suppression maitrisees. \\
+\hline
+S5-US2 & En tant qu'admin, je gere les templates d'offres. & Moyenne & Templates reutilisables et edition centralisee. \\
+\hline
+S5-US3 & En tant qu'admin, je diffuse une information globale aux RH. & Moyenne & Message broadcast visible sur tableaux RH. \\
+\hline
+\end{tabularx}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Tableau de taches du sprint 5}
+\begin{tabularx}{\textwidth}{|l|X|l|X|}
+\hline
+\textbf{Tache} & \textbf{Description} & \textbf{Charge} & \textbf{Sortie} \\
+\hline
+S5-T1 & Controleur admin pour comptes RH (CRUD logique + suppression definitive). & 2 j.h & Gouvernance comptes stabilisee. \\
+\hline
+S5-T2 & Gestion centralisee templates et publication guidee. & 1.5 j.h & Homogeneite de redaction des offres. \\
+\hline
+S5-T3 & Mecanisme broadcast admin vers rooms RH. & 1 j.h & Communication transversale fiabilisee. \\
+\hline
+\end{tabularx}
+\end{table}
+
+\subsection{Sprint 6 -- Stabilisation securite et exploitation}
+
+\textbf{Vue technique} : ce sprint mobilise les diagrammes de rappels automatiques, notifications et architecture de securite en production.
+
+\begin{table}[H]
+\centering
+\caption{Backlog du sprint 6}
+\begin{tabularx}{\textwidth}{|l|X|l|X|}
+\hline
+\textbf{ID} & \textbf{User story} & \textbf{Priorite} & \textbf{Critere d'acceptation} \\
+\hline
+S6-US1 & En tant que RH, je recois des rappels automatiques fiables. & Moyenne & Rappels entretien emis a temps. \\
+\hline
+S6-US2 & En tant qu'equipe projet, nous fiabilisons les erreurs de flux. & Haute & Rollback UI/API propre et messages explicites. \\
+\hline
+S6-US3 & En tant qu'administrateur, je maitrise les acces sensibles. & Haute & Controles role/site et revocation effectifs. \\
+\hline
+\end{tabularx}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Tableau de taches du sprint 6}
+\begin{tabularx}{\textwidth}{|l|X|l|X|}
+\hline
+\textbf{Tache} & \textbf{Description} & \textbf{Charge} & \textbf{Sortie} \\
+\hline
+S6-T1 & Cron de rappel entretien + marquage \texttt{reminderSent}. & 1 j.h & Rappels idempotents et tracables. \\
+\hline
+S6-T2 & Durcissement des routes sensibles (site ownership, role checks). & 1.5 j.h & Surface d'erreur securite reduite. \\
+\hline
+S6-T3 & Nettoyage des transitions et retours d'erreur front/backend. & 1.5 j.h & Comportements plus previsibles en exploitation. \\
+\hline
+\end{tabularx}
+\end{table}
+
+\subsection{Retrospective de release}
+
+La retrospective montre que le decoupage en sprints a reduit les retours arriere tardifs. Les sprints 1 a 4 ont produit le flux metier principal (authentification, candidature, traitement RH, analyse), tandis que les sprints 5 et 6 ont porte la stabilisation operationnelle (gouvernance, securite, comportement en erreur). Cette repartition explique pourquoi la charge de fin de cycle reste moderee malgre l'ajout de contraintes de robustesse.
+
+\begin{table}[H]
+\centering
+\caption{Synthese retrospective des sprints}
+\begin{tabularx}{\textwidth}{|l|l|l|X|}
+\hline
+\textbf{Sprint} & \textbf{Charge prevue} & \textbf{Charge realisee} & \textbf{Observation} \\
+\hline
+S1 & 5 j.h & 5.5 j.h & Surcout leger du au durcissement de la securite session/token. \\
+\hline
+S2 & 5.5 j.h & 5 j.h & Bonne cadence grace au perimetre bien decoupe cote candidat. \\
+\hline
+S3 & 5 j.h & 5.5 j.h & Ajustements supplementaires sur transitions et outcomes entretien. \\
+\hline
+S4 & 5.5 j.h & 6 j.h & Complexite de fusion IA plus elevee que prevu. \\
+\hline
+S5 & 4.5 j.h & 4.5 j.h & Gouvernance admin stable, peu de reprises. \\
+\hline
+S6 & 4 j.h & 4.5 j.h & Stabilisation et tests de fiabilite plus longs en fin de cycle. \\
+\hline
+\end{tabularx}
+\end{table}
+
+\section{Cadrage des exigences}
+
+\subsection{Structure des besoins}
+
+Les besoins ont ete organises en quatre blocs: candidat, RH, administration et exigences transversales. Cette decomposition evite de confondre besoin metier et choix d'implementation.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{vue_globale_exigence_racine_categories.jpg}
 \caption{Vue globale des exigences fonctionnelles et transversales}
 \end{figure}
+
+Le schema racine fixe le perimetre du produit. Nous y separons clairement ce qui est inclus et ce qui reste hors scope.
+
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{Isipfe/Figures/exigences_candidat_req.png}
+\includegraphics[width=\textwidth]{exigences_candidat_req.jpg}
 \caption{Detail des exigences du module Candidat}
 \end{figure}
+
+Le diagramme candidat couvre toute la chaine : creation de compte, verification email, gestion des CV, depot puis suivi.
+
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{Isipfe/Figures/exigences_rh_req.png}
+\includegraphics[width=\textwidth]{exigences_rh_req.jpg}
 \caption{Detail des exigences du module RH}
 \end{figure}
+
+Le diagramme RH formalise le cycle metier : tri, changement de statut, planification d'entretien, puis decision finale.
+
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{Isipfe/Figures/exigences_admin_transversales.png}
+\includegraphics[width=\textwidth]{exigences_admin_transversales.jpg}
 \caption{Detail des exigences Administration et contraintes transversales}
 \end{figure}
 
-\subsection{Acteurs et responsabilites}
+Le diagramme admin regroupe la gouvernance (comptes RH, templates, diffusion) et les contraintes globales de securite et de tracabilite.
 
-Le systeme est structure autour de trois acteurs principaux :
-\textbf{Candidat}, \textbf{RH} et \textbf{Administrateur}. Chaque acteur opere
-sur un perimetre explicite, avec des responsabilites non superposees. Nous avons
-evite les droits implicites et nous avons impose une verification role/site
-cote API pour toute operation sensible. Concretement, un RH rattache a un site
-ne peut pas agir sur les candidatures de l'autre site, meme si l'URL est connue.
+\subsection{Acteurs et priorites}
 
-\subsection{Priorisation des exigences}
+Le systeme repose sur trois acteurs: candidat, RH et administrateur. La separation des roles est stricte, avec isolation multi-site des actions RH. La priorisation suit le chemin critique metier: authentification, candidature, suivi RH, puis automatisations.
 
-Toutes les exigences n'ont pas le meme poids. Nous avons donc structure le
-perimetre en priorites pour proteger le chemin critique de livraison :
-\textbf{priorite haute} (authentification, candidature, suivi RH),
-\textbf{priorite moyenne} (notifications enrichies, automatisations),
-\textbf{priorite evolutive} (extensions analytiques et tableaux avances).
-Ce decoupage rend la trajectoire projet lisible devant le jury : ce qui est
-essentiel au metier est garanti en premier, puis complete de facon incrementale.
-Nous avons ainsi securise d'abord le cycle principal ``Nouveau -> En examen ->
-Entretien programme -> Accepte/Rejete'' avant d'etendre les fonctions annexes.
+\section{Conception architecturale}
 
-\section{Architecture logique et technique}
+\subsection{Vue globale et decomposition technique}
 
-\subsection{Vue d'architecture globale}
-
-Nous avons retenu une architecture en trois couches : presentation, logique
-metier et persistance. L'objectif etait de separer ce qui change souvent
-(interfaces) de ce qui doit rester stable (regles metier, integrite de donnees).
-Cette separation a facilite les evolutions simultanees sur `3000` (candidat),
-`3002` (RH), `3001` (admin) et `4000` (API) sans casser le noyau metier.
+L'architecture retenue est en couches (presentation, metier, persistance). Ce choix permet de faire evoluer les frontends sans destabiliser les regles metier.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{Isipfe/Figures/architecture_globale.png}
+\includegraphics[width=\textwidth]{architecture_globale.jpg}
 \caption{Architecture globale de la solution}
 \end{figure}
+
+La vue globale montre les trois applications et le backend central. Les flux principaux passent en HTTPS REST/JWT, puis en Socket.io pour les mises a jour temps reel.
+
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{Isipfe/Figures/architecture_frontends.png}
+\includegraphics[width=\textwidth]{architecture_frontends.jpg}
 \caption{Architecture des frontends (PWA candidat et interface RH/Admin)}
 \end{figure}
+
+La separation des interfaces par usage (PWA candidat, dashboard RH, dashboard admin) reduit la complexite fonctionnelle de chaque ecran.
+
+Sur le plan client, les deux frontends n'appliquent pas la meme strategie de session. La PWA candidat utilise un intercepteur Axios avec file d'attente de rafraichissement (\texttt{refreshPromise}) afin qu'en cas de plusieurs erreurs \texttt{401} simultanees, une seule requete \texttt{/auth/refresh} soit envoyee avant rejeu des requetes en attente. L'interface RH privilegie une session par onglet via \texttt{sessionStorage} (avec fallback), ce qui limite les collisions d'etat quand plusieurs comptes sont ouverts sur le meme navigateur.
+
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{Isipfe/Figures/architecture_backend.png}
+\includegraphics[width=\textwidth]{architecture_backend.jpg}
 \caption{Architecture du backend Node.js/Express}
 \end{figure}
+
+Le backend concentre l'autorisation, la validation metier et l'orchestration des traitements asynchrones (analyse IA, notifications, rappels).
+
+Cette couche centralise aussi des protections transverses: normalisation des statuts entrants (\texttt{review -> reviewing}), verification role/site/propriete sur les routes sensibles, limitation des mises a jour en lot, et validation de formats (date entretien, payload analyse). La centralisation evite des ecarts de comportement entre interfaces RH, admin et candidat.
+
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{Isipfe/Figures/architecture_temps_reel_socket_services_externes.png}
+\includegraphics[width=\textwidth]{architecture_temps_reel_socket_services_externes.jpg}
 \caption{Architecture temps reel et services externes}
 \end{figure}
 
-\subsection{Principes d'organisation retenus}
+Le schema detaille les flux Socket.io (\texttt{status:changed}, \texttt{interview:scheduled}, \texttt{interview:reminder}) et les integrations externes (Gemini, Puter.js, SMTP).
 
-Nous avons applique quatre principes structurants :
-\begin{enumerate}
-  \item \textbf{Centralisation des regles metier} dans le backend,
-  \item \textbf{Separation stricte des couches} (UI, API, DB),
-  \item \textbf{Isolation multi-site} (Bouarada/Zaghouan),
-  \item \textbf{Traitement asynchrone} des operations non bloquantes (analyse IA, rappels).
-\end{enumerate}
+L'implementation Socket repose sur des rooms a granularite metier: \texttt{user:\{id\}}, \texttt{candidate:\{id\}}, \texttt{hr:\{id\}}, \texttt{site:\{site\}} et \texttt{admin}. La connexion est authentifiee par JWT des le handshake; un jeton invalide bloque l'ouverture du canal. Ce choix limite les broadcasts globaux et reduit le risque de diffusion d'evenements hors perimetre.
 
-Cette organisation nous a permis de garder une base coherente malgre la presence
-de plusieurs interfaces et d'un flux metier evolutif. Nous avons aussi limite
-les duplications de logique en interdisant les decisions metier critiques cote
-frontend sans validation serveur.
+\subsection{Principes retenus}
 
-\subsection{Decisions d'architecture structurantes}
+Quatre principes structurent la conception: regles metier centralisees cote API, separation stricte des couches, isolation des donnees par site, et traitement asynchrone pour les operations longues.
 
-Trois decisions ont fortement influence la robustesse de la solution.
-Premiere decision : \textbf{backend autoritaire} sur toutes les regles metier
-(aucune regle critique n'est laissee uniquement au frontend). Deuxieme decision :
-\textbf{multi-frontends specialises} plutot qu'une interface unique, afin de
-conserver une experience adaptee au contexte de chaque acteur. Troisieme decision :
-\textbf{conception orientee evenements} pour les notifications temps reel, ce qui
-reduit les latences percues et evite la surcharge par polling intensif.
-Nous avons exploite des rooms Socket explicites (`offers:public`, `site:{site}`,
-`hr:{id}`, `candidate:{id}`, `admin`) pour diffuser uniquement l'information utile
-a chaque acteur.
+\section{Conception dynamique du processus de recrutement}
 
-\subsection{Compromis techniques assumes}
-
-Nous avons accepte certains compromis pour rester aligns avec le contexte reel
-de l'entreprise. L'usage de deux voies IA (backend + navigateur RH) apporte une
-redondance utile mais augmente la complexite de fusion des resultats. Le choix
-Socket.io simplifie le temps reel mais impose une gestion stricte des sessions et
-de la revocation de jetons. Ces compromis sont documentes et maitrises, car ils
-repondent a des besoins metier explicites. Nous avons privilegie la fiabilite
-metier plutot qu'une simplification artificielle de l'architecture.
-
-\section{Conception dynamique UML des processus}
-
-\subsection{Flux candidat de bout en bout}
-
-Nous avons modelise le parcours candidat comme une sequence composee de verifications,
-d'actions de persistance, puis de notifications. Le candidat depose sa candidature
-sans attendre la fin du calcul IA pour conserver une experience fluide.
-Nous avons maintenu une contrainte forte : aucune candidature en double pour le
-meme couple candidat/offre.
+\subsection{Parcours candidat}
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{Isipfe/Figures/inscription_candidat.png}
+\includegraphics[width=\textwidth]{inscription_candidat.jpg}
 \caption{Sequence d'inscription candidat}
 \end{figure}
+
+Ce diagramme decrit la creation de compte et les validations prealables a l'activation.
+
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{Isipfe/Figures/tentative_connexion_avant_verification.png}
+\includegraphics[width=\textwidth]{tentative_connexion_avant_verification.jpg}
 \caption{Tentative de connexion avant verification email}
 \end{figure}
+
+Le flux de connexion avant verification montre le blocage volontaire de l'acces tant que l'email n'est pas confirme.
+
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{Isipfe/Figures/verification_email_premiere_connexion.png}
+\includegraphics[width=\textwidth]{verification_email_premiere_connexion.jpg}
 \caption{Verification email et premiere connexion}
 \end{figure}
+
+Cette etape ferme la boucle d'activation du compte candidat.
+
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{Isipfe/Figures/renvoi_code_verification.png}
+\includegraphics[width=\textwidth]{renvoi_code_verification.jpg}
 \caption{Renvoi du code de verification}
 \end{figure}
+
+Le renvoi de code limite la perte de candidatures quand le mail de verification n'est pas recu ou expire.
+
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{Isipfe/Figures/creation_cv_upload_builder.png}
+\includegraphics[width=\textwidth]{creation_cv_upload_builder.jpg}
 \caption{Creation d'un CV (upload PDF ou formulaire)}
 \end{figure}
+
+Le candidat peut importer un CV PDF ou produire un CV via le builder. Les validations client et serveur reduisent les dossiers incomplets.
+
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{Isipfe/Figures/selection_cv_soumission_candidature.png}
+\includegraphics[width=\textwidth]{selection_cv_soumission_candidature.jpg}
 \caption{Selection du CV puis soumission}
 \end{figure}
+
+Le choix du CV a ete separe de la soumission pour limiter les erreurs de dossier.
+
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{Isipfe/Figures/depot_candidature_analyse_ia.png}
+\includegraphics[width=\textwidth]{depot_candidature_analyse_ia.jpg}
 \caption{Depot de candidature et lancement de l'analyse IA}
 \end{figure}
 
+La candidature est enregistree immediatement (\texttt{201 Created}) ; l'analyse IA continue ensuite en arriere-plan.
+
+Au moment du depot, le texte CV est fige dans un instantane (\texttt{cvTextSnapshot}) pour decoupler l'analyse du contenu evolutif de la bibliotheque CV. Cette decision garantit la reproductibilite: une meme candidature est evaluee sur la meme base textuelle, meme si le candidat modifie son CV apres soumission.
+
 \subsection{Orchestration de l'analyse IA}
 
-Nous avons detaille la logique IA en plusieurs etapes pour clarifier le partage
-des responsabilites entre backend et analyse declenchee cote interface RH.
-Le backend traite l'analyse automatique initiale, puis l'interface RH peut
-declencher une re-analyse/fusion selon le contexte de revue. Dans notre
-implementation, nous utilisons Puter.js (GPT-4o gratuit) et Gemini 1.5 Flash,
-puis nous consolidons score, recommandation et justification pour offrir une
-lecture exploitable par les RH.
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{analyse_ia_async_notifications_socket.jpg}
+\caption{Analyse IA asynchrone et notification temps reel}
+\end{figure}
+
+Ce flux montre le decouplage entre depot de candidature et calcul IA, puis la notification automatique du RH.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{Isipfe/Figures/analyse_ia_async_notifications_socket.png}
-\caption{Analyse IA asynchrone et notification temps reel}
-\end{figure}
-\begin{figure}[H]
-\centering
-\includegraphics[width=\textwidth]{Isipfe/Figures/analyse_backend_gemini.png}
+\includegraphics[width=\textwidth]{analyse_backend_gemini.jpg}
 \caption{Analyse IA cote backend (Gemini)}
 \end{figure}
+
+Le backend produit une premiere evaluation standardisee a partir du meme prompt partage.
+
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{Isipfe/Figures/analyse_puterjs.png}
+\includegraphics[width=\textwidth]{analyse_puterjs.jpg}
 \caption{Analyse IA cote navigateur RH (Puter.js)}
 \end{figure}
+
+La voie Puter.js permet une relecture dynamique au moment de l'examen RH, sans bloquer le depot initial.
+
+Le module RH de double analyse applique des gardes techniques explicites: nettoyage des sorties IA (\texttt{parseRawJSON}) pour retirer les enveloppes Markdown, parsing tolerant des anciens formats stockes, et fallback backend si Puter.js est indisponible. Si une analyse backend valide est deja presente dans \texttt{aiAnalysis}, elle est rehydratee pour eviter des appels externes inutiles.
+
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{Isipfe/Figures/fusion_resultats_persistance.png}
+\includegraphics[width=\textwidth]{fusion_resultats_persistance.jpg}
 \caption{Fusion des resultats IA et persistance}
 \end{figure}
+
+Les sorties IA sont fusionnees (score moyen, recommandation prudente) pour produire un resultat exploitable et trace.
+
+La fusion applique une logique conservative sur la recommandation: en cas de divergence, l'ordre de priorite retenu est \texttt{Reject < Request More Info < Interview < Hire}. Cette regle minimise les faux positifs et preserve une marge de decision humaine sur les dossiers ambigus.
+
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{Isipfe/Figures/mise_a_jour_backend_normalisation_notifications.png}
+\includegraphics[width=\textwidth]{mise_a_jour_backend_normalisation_notifications.jpg}
 \caption{Normalisation backend et diffusion des mises a jour}
 \end{figure}
 
-\subsection{Flux RH et cycle d'entretien}
+Le backend normalise les donnees (ex. conversion des statuts UI) puis notifie les clients concernes en temps reel.
 
-Le parcours RH est pilote par le Kanban de candidatures et les actions de
-qualification. Nous avons modelise les transitions de statut et la partie
-entretien pour eviter les transitions incoherentes et assurer la tracabilite
-des decisions. Nous avons aussi fixe des preconditions strictes avant
-planification pour empecher les erreurs de workflow.
+\subsection{Cycle RH et entretien}
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{Isipfe/Figures/changement_statut_candidature.png}
+\includegraphics[width=\textwidth]{changement_statut_candidature.jpg}
 \caption{Flux de changement de statut d'une candidature}
 \end{figure}
+
+Ce diagramme formalise les transitions autorisees dans le Kanban RH.
+
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{Isipfe/Figures/action_rh_planification_statut_interview.png}
+\includegraphics[width=\textwidth]{action_rh_planification_statut_interview.jpg}
 \caption{Action RH et declenchement de planification}
 \end{figure}
+
+La planification n'est autorisee qu'apres passage dans l'etat approprie (\texttt{interview}).
+
+La route de planification verifie aussi des preconditions metier strictes: date valide, appartenance site pour les RH, et blocage des candidatures deja finalisees (\texttt{accepted}/\texttt{rejected}). En cas de replanification, l'entretien existant est mis a jour et le drapeau \texttt{reminderSent} est reinitialise afin de relancer proprement le cycle de rappel.
+
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{Isipfe/Figures/planification_entretien_initiale.png}
+\includegraphics[width=\textwidth]{planification_entretien_initiale.jpg}
 \caption{Planification initiale d'un entretien}
 \end{figure}
+
+Nous y decrivons la creation d'un rendez-vous avec ses contraintes de base (date, heure, lien ou salle, message).
+
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{Isipfe/Figures/planification_entretien_maj.png}
+\includegraphics[width=\textwidth]{planification_entretien_maj.jpg}
 \caption{Mise a jour ou replanification d'entretien}
 \end{figure}
+
+Le flux de replanification preserve l'historique pour garder la tracabilite.
+
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{Isipfe/Figures/enregistrement_resultat_entretien.png}
+\includegraphics[width=\textwidth]{enregistrement_resultat_entretien.jpg}
 \caption{Enregistrement du resultat d'entretien}
 \end{figure}
 
-\subsection{Modelisation des etats candidature}
+La decision d'entretien (\texttt{pass}, \texttt{fail}, \texttt{no\_show}) alimente ensuite la transition vers les etats de fin.
 
-Nous avons decoupe le cycle d'etat pour rendre explicite le comportement du
-systeme depuis le statut initial jusqu'aux etats terminaux. Ce choix rend les
-regles de transition auditables et facilite les tests de non-regression.
+\subsection{Machine a etats candidature}
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{Isipfe/Figures/vue_ensemble_etats_principaux.png}
+\includegraphics[width=\textwidth]{vue_ensemble_etats_principaux.jpg}
 \caption{Vue d'ensemble des etats candidature}
 \end{figure}
+
+Le diagramme fixe le cycle complet, du statut initial aux statuts terminaux.
+
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{Isipfe/Figures/detail_etapes_initiales_nouvelle_ia_enexamen.png}
+\includegraphics[width=\textwidth]{detail_etapes_initiales_nouvelle_ia_enexamen.jpg}
 \caption{Detail des etapes initiales}
 \end{figure}
+
+Nous y precisons la progression controlee entre reception, analyse et examen RH (\texttt{new -> reviewing}).
+
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{Isipfe/Figures/detail_etats_entretien_resultat_fin.png}
+\includegraphics[width=\textwidth]{detail_etats_entretien_resultat_fin.jpg}
 \caption{Detail des etats entretien et fin de cycle}
 \end{figure}
+
+Cette partie explicite les decisions finales et leur impact metier.
+
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{Isipfe/Figures/details_transitions_notifications.png}
+\includegraphics[width=\textwidth]{details_transitions_notifications.jpg}
 \caption{Transitions d'etat et notifications associees}
 \end{figure}
 
-\subsection{Regles anti-incoherence des processus}
+Chaque transition importante declenche une notification ciblee pour le bon acteur.
 
-La modelisation UML ne se limite pas a decrire des flux ; elle fixe aussi les
-interdictions de transition. Une candidature en etat terminal ne peut pas etre
-reinjectee dans un cycle actif sans action explicite de correction. De meme, la
-planification d'entretien est conditionnee par l'etat metier et par le perimetre
-site du RH. Cette formalisation est essentielle pour garantir l'integrite des
-decisions de recrutement et limiter les erreurs operationnelles. Nous avons
-ainsi transforme des regles informelles en contraintes techniques executables.
+Pour la consultation RH/Admin, les entretiens sont exposes avec pagination par \texttt{limit} et \texttt{cursor} temporel (\texttt{scheduledAt}). Cette strategie limite les chargements volumineux et facilite un rafraichissement progressif des tableaux de suivi.
 
-\section{Conception de la securite et de l'identite}
+\subsection{Cas limites et scenarios d'erreur traites}
+
+La conception dynamique a integre des cas limites reels observes dans le code applicatif, afin d'eviter des incoherences fonctionnelles en production. Le tableau suivant resume les protections principales.
+
+\begin{table}[H]
+\centering
+\caption{Cas limites integres a la conception dynamique}
+\begin{tabularx}{\textwidth}{|l|X|X|}
+\hline
+\textbf{Cas limite} & \textbf{Regle de conception} & \textbf{Comportement attendu} \\
+\hline
+Acces RH hors site sur candidature ou entretien & Verification role + site avant lecture/modification & Rejet explicite en \texttt{403} (interdiction inter-site). \\
+\hline
+Planification d'entretien sur dossier deja finalise & Blocage des statuts terminaux \texttt{accepted}/\texttt{rejected} & Rejet metier en \texttt{409} pour eviter une reouverture implicite. \\
+\hline
+Soumission de candidature en doublon & Unicite candidat/offre verifiee avant creation & Rejet en \texttt{409} avec message de doublon. \\
+\hline
+Mise a jour de statut en lot non maitrisee & Limite de taille de lot + transaction atomique & Rejet au dela du seuil; sinon mise a jour coherente de tout le lot. \\
+\hline
+CV insuffisant ou invalide & Validation de contenu (taille texte, structure formulaire) & Rejet en \texttt{400} avant persistance d'une candidature exploitable. \\
+\hline
+\end{tabularx}
+\end{table}
+
+\section{Conception de la securite}
 
 \subsection{Authentification et cycle des jetons}
 
-Nous avons structure la securite autour de JWT d'acces a courte duree et de
-refresh tokens persistants avec rotation. Ce choix reduit la fenetre de risque
-en cas de vol de jeton et permet une experience utilisateur stable.
-Nous gardons la session active sans sacrifier le controle de securite.
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{authentification_generation_jetons.jpg}
+\caption{Authentification et generation des jetons}
+\end{figure}
+
+Ce diagramme presente l'emission du token d'acces et du refresh token.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{Isipfe/Figures/authentification_generation_jetons.png}
-\caption{Authentification et generation des jetons}
-\end{figure}
-\begin{figure}[H]
-\centering
-\includegraphics[width=\textwidth]{Isipfe/Figures/rotation_refresh_token.png}
+\includegraphics[width=\textwidth]{rotation_refresh_token.jpg}
 \caption{Rotation du refresh token}
 \end{figure}
+
+La rotation limite l'impact d'un jeton compromis sur une longue duree.
+
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{Isipfe/Figures/acces_securise_revocation_websockets.png}
+\includegraphics[width=\textwidth]{acces_securise_revocation_websockets.jpg}
 \caption{Acces securise, revocation et controle WebSocket}
 \end{figure}
 
+Nous appliquons le meme principe de controle sur HTTP et WebSocket: verification du jeton, revocation immediate des comptes inactifs, et diffusion ciblee selon le role et le site. Le mecanisme de session repose sur un acces token court et un refresh token en rotation, avec invalidation de l'ancien jeton apres renouvellement.
+
+Le refresh token n'est pas stocke en clair: seule une empreinte SHA-256 est persistee en base. Cote navigateur, il est place en cookie \texttt{HttpOnly}, borne au chemin \texttt{/api/auth/refresh}, avec \texttt{sameSite=lax} et \texttt{secure} en production. Ce parametrage reduit les risques d'exfiltration JavaScript et restreint l'usage du cookie au seul endpoint de renouvellement.
+
 \subsection{Comportements de securite applicative}
 
-Nous avons complete ce modele avec des regles de verification metier : obligation
-de verification email pour les candidats, gestion explicite des erreurs de connexion,
-et reinitialisation de mot de passe pour limiter les blocages operationnels.
-Nous avons ajoute une sanitisation defensive des charges utiles pour ne jamais
-exposer de donnees sensibles dans les reponses.
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{connexion_rh.jpg}
+\caption{Connexion RH}
+\end{figure}
+
+Le flux RH inclut verification de role et perimetre de site.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{Isipfe/Figures/connexion_rh.png}
-\caption{Connexion RH}
-\end{figure}
-\begin{figure}[H]
-\centering
-\includegraphics[width=\textwidth]{Isipfe/Figures/connexion_admin.png}
+\includegraphics[width=\textwidth]{connexion_admin.jpg}
 \caption{Connexion Admin}
 \end{figure}
+
+Le flux admin separe les privileges de gouvernance des operations RH.
+
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{Isipfe/Figures/reset_mot_de_passe_rh.png}
+\includegraphics[width=\textwidth]{reset_mot_de_passe_rh.jpg}
 \caption{Reset de mot de passe RH}
 \end{figure}
 
-\subsection{Defense en profondeur}
+Cette procedure permet la reprise rapide d'acces sans contournement de securite.
 
-La securite de la solution repose sur des controles complementaires et non sur
-une barriere unique. La premiere couche est l'authentification. La deuxieme est
-l'autorisation contextuelle (role + site + propriete metier). La troisieme est
-la sanitisation des reponses pour eviter l'exposition de champs sensibles.
-La quatrieme est la journalisation des actions critiques pour audit interne.
-Cette defense en profondeur reduit l'impact d'une erreur locale et ameliore la
-confiance globale du systeme. Elle nous donne aussi un argument fort devant
-jury : la securite est un systeme de couches, pas un seul mecanisme.
+En complement, le front RH traite explicitement les etats de session corrompus (payload utilisateur invalide en stockage local) en nettoyant la session et en revenant a un etat non authentifie. Ce choix evite les ecrans incoherents apres fermeture navigateur ou donnees partielles.
+
+Le controle des origines reseau suit la meme logique defensive: allowlist explicite des URLs clientes, avec options locales strictement controlees pour \texttt{localhost} et les requetes sans en-tete \texttt{Origin}. Ainsi, l'environnement de production reste ferme par defaut, tout en preservant la capacite de test en developpement.
 
 \section{Conception des donnees}
 
-\subsection{Vision metier des entites}
+\subsection{Modele metier}
 
-Le modele de donnees traduit directement le metier recrutement :
-utilisateurs, offres, candidatures, entretiens, notifications et sessions.
-Nous avons ajoute une entite de bibliotheque CV pour couvrir le besoin reel
-de reutilisation des CV par les candidats. Le schema final reste lisible
-autour de sept tables pivots : `Users`, `OfferTemplates`, `JobOffers`,
-`Applications`, `Interviews`, `Notifications`, `RefreshTokens`.
+Le modele de donnees est centre sur sept tables pivots : \texttt{Users}, \texttt{OfferTemplates}, \texttt{JobOffers}, \texttt{Applications}, \texttt{Interviews}, \texttt{Notifications}, \texttt{RefreshTokens}.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{Isipfe/Figures/diagramme_entites_metier.png}
+\includegraphics[width=\textwidth]{diagramme_entites_metier.jpg}
 \caption{Diagramme des entites metier}
 \end{figure}
+
+Le diagramme mappe les objets metier et leurs relations principales.
+
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{Isipfe/Figures/er_utilisateurs_offres.png}
+\includegraphics[width=\textwidth]{er_utilisateurs_offres.jpg}
 \caption{Sous-modele E-R utilisateurs et offres}
 \end{figure}
+
+Nous y isolons la relation entre comptes, roles et publication d'offres.
+
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{Isipfe/Figures/er_candidatures_cv_entretiens_notifications.png}
+\includegraphics[width=\textwidth]{er_candidatures_cv_entretiens_notifications.jpg}
 \caption{Sous-modele E-R candidatures, CV, entretiens et notifications}
 \end{figure}
 
-\subsection{Regles de coherence des donnees}
+Ce sous-modele formalise le coeur du cycle de recrutement et du suivi candidat.
 
-Nous avons impose des contraintes d'integrite pour proteger la validite du
-processus :
-\begin{itemize}
-  \item unicite candidature par couple candidat/offre,
-  \item relation 1--1 candidature/entretien,
-  \item rattachement d'offre a un site unique,
-  \item conservation de la trace statutaire et des analyses IA associees.
-\end{itemize}
-Nous avons prefere des contraintes explicites en base et en service metier
-pour empecher les etats invalides des leur creation.
+\subsection{Regles d'integrite}
 
-\subsection{Traçabilite et auditabilite des donnees}
+Les regles d'integrite retenues sont explicites: unicite candidature candidat/offre, relation 1--1 candidature/entretien, rattachement d'offre a un site unique, et conservation des traces de transitions.
 
-Dans un contexte RH, la valeur d'une donnee depend aussi de sa traçabilite.
-Nous avons donc preserve l'historique utile : statut precedent, date de mise a
-jour, acteur initiateur de l'action, et metadonnees d'analyse IA. Cette approche
-permet de reconstituer le parcours d'une candidature en cas de litige, d'audit
-qualite ou de question du management. Nous pouvons ainsi expliquer chaque
-decision RH avec des preuves techniques et temporelles.
+Un point sensible concerne le cycle de vie des CV rattaches aux candidatures. Le schema autorise la mise a \texttt{NULL} de la reference CV supprimee, mais la couche metier interdit la suppression d'un CV encore lie a une candidature active. Cette double protection (schema + regle metier) preserve a la fois l'integrite relationnelle et la coherence fonctionnelle.
+
+La datation metier repose sur \texttt{appliedAt} pour l'ordre de traitement RH, complete par \texttt{createdAt}/\texttt{updatedAt} pour la tracabilite technique. Cote candidat, l'affichage applique un fallback robuste (\texttt{appliedAt} puis \texttt{createdAt}) avec verification de validite des dates pour eviter les rendus incoherents.
 
 \section{Conception des composants backend}
 
-\subsection{Organisation des repositories}
-
-Nous avons isole l'acces donnees dans des repositories dedies. Cette separation
-evite de disperser la logique Prisma dans les controleurs et simplifie les
-evolutions futures. En pratique, cette organisation a reduit le couplage et
-accelere la correction des anomalies sans effet domino.
-
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{Isipfe/Figures/diagramme_repositories.png}
+\includegraphics[width=\textwidth]{diagramme_repositories.jpg}
 \caption{Organisation des repositories backend}
 \end{figure}
 
-\subsection{Services, patterns et controleurs}
-
-Nous avons organise les services autour de responsabilites claires :
-authentification, notifications, sockets, IA, cron, upload. Cette structure
-est completee par des patterns de decouplage pour conserver une base maintenable.
-Nous avons privilegie des services courts, testables, et alignes sur une seule
-responsabilite metier.
+Le diagramme repositories montre la separation entre acces aux donnees et logique metier.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{Isipfe/Figures/diagramme_services_patterns_conception.png}
+\includegraphics[width=\textwidth]{diagramme_services_patterns_conception.jpg}
 \caption{Services applicatifs et patterns de conception}
 \end{figure}
+
+Les services sont organises par responsabilite: auth, notifications, IA, cron, upload.
+
+La couche repository applique des selections defensives du profil candidat (\texttt{candidateSafeSelect}) pour exclure les attributs sensibles des objets retournes aux ecrans RH/Admin. Cette pratique complete l'autorisation: meme en cas d'acces valide, seules les donnees necessaires au cas d'usage sont exposees.
+
+Pour les operations de masse, la conception impose des garde-fous explicites: validation des identifiants, dedoublonnage, plafond de taille de lot, verification de perimetre site pour les RH, puis execution transactionnelle. Cette sequence evite les mises a jour partielles et limite les effets de bord sur les campagnes de tri en volume.
+
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{Isipfe/Figures/diagramme_controleur_admincontroller.png}
+\includegraphics[width=\textwidth]{diagramme_controleur_admincontroller.jpg}
 \caption{Conception detaillee du controleur d'administration}
 \end{figure}
 
-\subsection{Contrat entre couches}
+La vue du controleur admin illustre l'orchestration des operations de gouvernance : comptes RH, templates, suppression logique ou definitive, et broadcast.
 
-Chaque couche expose un contrat explicite : le controleur orchestre, le service
-porte la regle metier, le repository garantit l'acces persistant. Cette separation
-evite les effets de bord frequents dans les projets CRUD rapides, notamment la
-duplication de regles et les validations incoherentes entre endpoints.
-Nous avons ainsi garde un point unique de verite pour les decisions critiques.
+La conception backend applique aussi une sanitisation explicite des objets candidats selon le contexte de consultation (liste, entretien, detail), afin d'eviter toute fuite de champs sensibles dans les reponses API.
 
-\section{Conception des interactions RH/Admin}
+Sur les endpoints lourds (offres, entretiens), la pagination (\texttt{limit} + \texttt{cursor}) est integree des la conception backend. L'objectif est double: contenir le cout des requetes volumineuses et permettre un chargement incrementiel stable cote frontend, sans rupture de compatibilite quand les parametres sont absents.
 
-\subsection{Gouvernance des comptes RH}
-
-Nous avons formalise le cycle de vie d'un compte RH pour encadrer creation,
-activation, desactivation et suppression. Cette partie est critique car elle
-impacte la securite et la segregation operationnelle. Nous avons fixe des
-regles de gouvernance explicites pour eviter qu'un compte desactive conserve
-des droits d'action implicites.
+\section{Conception RH/Admin et gouvernance}
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{Isipfe/Figures/creation_compte_rh.png}
+\includegraphics[width=\textwidth]{creation_compte_rh.jpg}
 \caption{Creation d'un compte RH}
 \end{figure}
+
+La creation de compte RH est reservee a l'administration avec contraintes de role et controle d'unicite email.
+
+Le perimetre RH est ensuite contraint par site: un RH ne peut agir que sur les offres et candidatures de son site. Cote creation d'offre, l'utilisation d'un template actif est imposee pour les comptes RH, ce qui garantit un cadre de publication homogene et controle par l'administration.
+
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{Isipfe/Figures/cycle_vie_compte_rh.png}
+\includegraphics[width=\textwidth]{cycle_vie_compte_rh.jpg}
 \caption{Cycle de vie d'un compte RH}
 \end{figure}
+
+Le cycle RH formalise activation, desactivation et reactivation pour eviter les etats implicites.
+
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{Isipfe/Figures/flux_suppression_compte.png}
+\includegraphics[width=\textwidth]{flux_suppression_compte.jpg}
 \caption{Flux de suppression de compte RH}
 \end{figure}
 
-\subsection{Pilotage administratif et diffusion}
-
-Les fonctions d'administration incluent la gestion des templates et la
-diffusion de messages vers les equipes RH, notamment pour les changements
-organisationnels ou les consignes transversales. Nous avons garde ces
-fonctions separees des operations RH quotidiennes pour limiter le risque
-d'erreur de perimetre.
+La suppression suit un flux controle pour conserver la coherence des donnees dependantes.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{Isipfe/Figures/gestion_templates.png}
+\includegraphics[width=\textwidth]{gestion_templates.jpg}
 \caption{Gestion des templates d'offres}
 \end{figure}
+
+Les templates accelerent la publication tout en gardant un cadre commun entre sites.
+
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{Isipfe/Figures/broadcast_admin_vers_rh.png}
+\includegraphics[width=\textwidth]{broadcast_admin_vers_rh.jpg}
 \caption{Broadcast admin vers RH}
 \end{figure}
 
-\subsection{Segregation des privileges}
+Ce flux couvre la diffusion d'informations transversales vers les equipes RH.
 
-Les fonctions admin et RH partagent certains ecrans de pilotage, mais leurs
-privileges ne sont pas equivalentes. L'administrateur gouverne les comptes,
-les templates globaux et la diffusion transverse ; le RH opere sur le cycle
-de recrutement dans son perimetre autorise. Cette segregation limite le risque
-d'actions non conformes et facilite la gouvernance interne. Nous defendons ce
-choix car il traduit directement la separation des responsabilites terrain.
-
-\section{Conception des notifications et automatisations}
-
-Les notifications servent d'axe transversal entre candidature, suivi RH et
-communication candidat. Nous avons combine notifications en base, diffusion
-Socket.io et rappels automatiques planifies pour maintenir la reactivite.
-L'objectif est simple : aucune etape critique ne doit rester invisible.
+\section{Notifications et automatisation}
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{Isipfe/Figures/notifications_rappel_automatique.png}
+\includegraphics[width=\textwidth]{notifications_rappel_automatique.jpg}
 \caption{Conception des notifications et rappels}
 \end{figure}
+
+Nous combinons notifications metier immediates et rappels planifies pour eviter les oublis operatoires.
+
+La chaine de notification est bi-canal: persistance en base (historique, non-lus) puis emission Socket ciblee vers l'acteur concerne. Si le client est temporairement hors ligne, l'etat reste recuperable via l'API \texttt{/notifications}, dont la reponse est bornee par un \texttt{limit} pour maitriser la charge.
+
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{Isipfe/Figures/rappel_automatique_entretien.png}
+\includegraphics[width=\textwidth]{rappel_automatique_entretien.jpg}
 \caption{Rappel automatique d'entretien}
 \end{figure}
 
-\subsection{Qualite de service des notifications}
+Le rappel d'entretien est planifie automatiquement (cron) pour fiabiliser la presence aux rendez-vous.
 
-Nous avons defini une politique de qualite de service simple : notification
-immediate pour les evenements critiques (statut, entretien), notification
-regroupee pour les messages informatifs, et mecanisme de relance pour reduire
-les oublis operatoires. Cette politique limite le bruit utilisateur tout en
-preservant la reactivite metier. Nous avons ainsi equilibre rapidite d'information
-et charge cognitive des utilisateurs.
+Du cote client candidat, les actions de lecture/suppression de notifications utilisent un mecanisme d'optimistic update avec rollback en cas d'echec API. Cette decision de conception maintient une interface reactive sans sacrifier la coherence finale des donnees affichees.
 
-\section{Traçabilite exigences vers architecture UML}
-
-Pour renforcer la defendabilite du chapitre, nous relions explicitement les
-exigences critiques aux decisions de conception, aux diagrammes UML et aux
-composants responsables. Cette table rend notre argumentation auditable :
-le jury peut suivre le passage ``besoin -> modele -> composant -> comportement''.
+\section{Synthese des choix de conception}
 
 \begin{table}[H]
 \centering
@@ -1174,67 +1423,61 @@ le jury peut suivre le passage ``besoin -> modele -> composant -> comportement''
 \hline
 \textbf{Exigence} & \textbf{Traduction conception} & \textbf{Preuve UML / composant} \\
 \hline
-Depot candidature fluide & Soumission asynchrone + analyse IA en arriere-plan & Diagrammes ``Depot de candidature'', ``Analyse IA asynchrone'', service IA \\
+Depot candidature fluide & Soumission asynchrone + analyse IA en arriere-plan & Diagrammes de depot, analyse asynchrone et normalisation \\
 \hline
-Isolement multi-site RH & Verification role/site sur routes sensibles & Diagrammes ``Action RH'', ``Planification'', middleware auth/authorization \\
+Isolement multi-site RH & Verification role/site sur routes sensibles & Diagrammes RH, entretiens et couche d'autorisation \\
 \hline
-Suivi temps reel & Bus Socket.io + events metier normalises & Diagrammes ``Mise a jour backend...'', module notifications/socket \\
+Suivi temps reel & Diffusion Socket.io ciblee & Architecture temps reel + diagrammes de transitions \\
 \hline
-Cycle entretien traçable & Etats metier explicites + transitions controlees & Diagrammes d'etats candidature + flux d'entretien \\
+Cycle entretien traçable & Etats explicites + transitions controlees & Diagrammes d'etats et d'entretien \\
 \hline
-Securite d'acces & JWT court + refresh rotation + revocation & Diagrammes ``Authentification'', ``Rotation'', ``Acces securise'' \\
+Securite d'acces & JWT court + refresh rotation + revocation & Diagrammes d'authentification et de revocation \\
 \hline
 \end{tabularx}
 \end{table}
 
-\section{Risques de conception et mesures de mitigation}
+\subsection{Verification croisee conception-code}
 
-\subsection{Risques identifies}
+Pour limiter l'ecart entre la conception et l'implementation reelle, nous avons aligne les decisions d'architecture sur des points de controle observables dans le code. Cette verification croisee rend les choix defendables, car chaque principe peut etre rattache a un mecanisme concret.
 
-Les risques majeurs identifies sont : collisions de statut lors d'actions RH
-simultanees, incoherence potentielle entre analyses IA, et surcharge sur les
-endpoints de listing en croissance volumetrique. Nous avons aussi retenu le
-risque de confusion inter-site comme risque metier prioritaire.
-
-\subsection{Mesures de mitigation prevues}
-
-Pour ces risques, nous avons prevu des garde-fous : verifications d'etat avant
-transition, strategie de fusion prudente des scores IA, et pagination progressive
-des endpoints lourds. En complement, la journalisation des actions critiques
-permet une detection rapide des anomalies et une correction guidee.
-Nous avons privilegie des mitigations simples a executer plutot que des
-mecanismes complexes difficiles a maintenir en contexte industriel.
-
-\section{Planification de la conception}
-
-Nous avons structure la phase conception sur quatre mois pour garder une
-progression maitrisee entre cadrage, modelisation, conception detaillee et
-stabilisation. Cette planification nous a permis de conserver un rythme stable
-et d'integrer les validations terrain sans bloquer l'avancement global.
-
-\begin{figure}[H]
+\begin{table}[H]
 \centering
-\includegraphics[width=0.86\textwidth]{Isipfe/Figures/gantt_mois_1_2.png}
-\caption{Planification de conception -- Mois 1 et 2}
-\end{figure}
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.86\textwidth]{Isipfe/Figures/gantt_mois_3_4.png}
-\caption{Planification de conception -- Mois 3 et 4}
-\end{figure}
+\caption{Matrice de verification conception -> implementation}
+\begin{tabularx}{\textwidth}{|l|X|X|}
+\hline
+\textbf{Axe} & \textbf{Choix de conception} & \textbf{Mecanisme implemente} \\
+\hline
+Session securisee & Acces court + refresh avec rotation & Suppression de l'ancien refresh token, emission d'un nouveau, cookie \texttt{HttpOnly} borne a \texttt{/api/auth/refresh}. \\
+\hline
+Isolement multi-site & RH limite a son perimetre & Verifications role/site sur lectures et actions sensibles; rejet explicite des acces inter-site. \\
+\hline
+Coherence des statuts & Transitions maitrisees & Normalisation \texttt{review -> reviewing}, blocage des cas terminaux pour la planification, et controles en lot transactionnels. \\
+\hline
+Temps reel fiable & Notification ciblee par acteur & Rooms Socket par role/site/utilisateur, plus persistance DB pour reprise apres deconnexion client. \\
+\hline
+Scalabilite lecture & Limiter les charges volumineuses & Parametres \texttt{limit}/\texttt{cursor} sur endpoints lourds (offres, entretiens, notifications). \\
+\hline
+\end{tabularx}
+\end{table}
 
-\section{Conclusion du chapitre}
+\subsection{Hypotheses et limites de conception}
 
-Ce chapitre presente une conception complete, coherente et reliee au terrain
-de Schulte Tunisia. Nous avons couvert le perimetre exigences, la modelisation
-dynamique UML, l'architecture logicielle, la securite, la persistance, les
-composants backend, les interactions RH/Admin, puis la strategie de notification
-et d'automatisation. L'ensemble constitue un socle technique defendable devant
-jury, et prepare directement le chapitre suivant consacre a la realisation
-effective et aux validations experimentales. Notre objectif etait de montrer
-une conception qui tient en revue academique mais surtout en usage reel.
+La conception retenue est adaptee au contexte actuel du projet et de l'entreprise. Elle repose sur des hypotheses explicites, qui delimitent aussi ses limites:
+\begin{itemize}
+  \item le perimetre metier cible deux sites (Bouarada et Zaghouan) avec des roles RH/Admin/Candidat bien separes;
+  \item la plateforme privilegie la cohesion fonctionnelle d'un backend central, sans decomposition microservices;
+  \item l'analyse IA reste un outil d'aide a la decision, et non un mecanisme de decision automatique;
+  \item la strategie temps reel est basee sur Socket.io, sans ajout d'un bus de messages externe dans cette phase;
+  \item la robustesse en echec est traitee au niveau applicatif (fallbacks, rollback UI, validations), sans infrastructure distribuee additionnelle.
+\end{itemize}
 
-\newpage
+Ces limites sont assumees dans la phase PFE pour conserver un niveau de complexite compatible avec les objectifs academiques et les contraintes de delai, tout en garantissant une base evolutive pour les perspectives du chapitre suivant.
+
+\section{Conclusion}
+
+Ce chapitre a etabli une conception complete de la solution, depuis la planification jusqu'aux choix d'architecture et de securite. Les modeles UML, les tableaux Agile et les regles d'integrite presentes ici ont servi de cadre de reference pour la realisation.
+
+L'apport principal de cette conception tient a la formalisation des cas limites: isolation inter-site, protection des etats terminaux, validation stricte des CV, gestion transactionnelle des actions en lot, et comportement robuste en cas d'erreur de session ou de notification. Le chapitre suivant presente la mise en oeuvre de ces choix et les validations obtenues en execution.
 
 % ════════════════════════════════════════════════════════════════
 %  CHAPITRE 4 — REALISATION ET TESTS

@@ -1,0 +1,415 @@
+% ════════════════════════════════════════════════════════════════
+%  CHAPITRE 1 — CADRE GÉNÉRAL DU PROJET
+% ════════════════════════════════════════════════════════════════
+
+\chapter{Cadre général du projet}
+
+% ── Introduction du chapitre ────────────────────────────────────
+\section*{Introduction}
+\addcontentsline{toc}{section}{Introduction}
+
+Avant de concevoir une solution technique, il est essentiel de comprendre
+le contexte dans lequel elle s'inscrit. Ce premier chapitre pose les bases
+de notre projet en présentant l'organisme d'accueil, en analysant le
+processus de recrutement tel qu'il existait avant notre intervention, et en
+formalisant les besoins qui ont orienté nos choix de conception. Nous
+décrivons également la méthodologie de travail adoptée pour structurer le
+développement de la plateforme.
+
+% ════════════════════════════════════════════════════════════════
+\section{Présentation de l'organisme d'accueil}
+% ════════════════════════════════════════════════════════════════
+
+\subsection{Le groupe Schulte \& Co. GmbH}
+
+Schulte \& Co. GmbH est un groupe industriel allemand fondé à Lüdenscheid,
+spécialisé dans la fabrication de composants électriques et électroniques
+destinés à l'industrie automobile. Ses domaines de production couvrent
+notamment les assemblages de câbles, les barres omnibus, et les systèmes
+de connexion intégrés dans les véhicules de constructeurs européens majeurs.
+
+Le groupe opère dans un environnement industriel à haute exigence, soumis
+à des normes strictes de qualité et de traçabilité. Il est certifié selon
+les référentiels suivants :
+
+\begin{itemize}
+  \item \textbf{ISO 9001} — Système de management de la qualité
+  \item \textbf{IATF 16949} — Standard qualité spécifique à l'industrie automobile,
+        exigé par les constructeurs tels que Volkswagen et BMW
+  \item \textbf{ISO 14001} — Management environnemental
+  \item \textbf{ISO 45001} — Santé et sécurité au travail
+\end{itemize}
+
+La certification IATF 16949 est particulièrement structurante : elle impose
+une traçabilité complète des processus, y compris les processus de
+ressources humaines. C'est dans ce cadre que s'inscrit la nécessité d'un
+système de recrutement documenté et maîtrisé.
+
+\subsection{Schulte Automotive Tunisia Sarl}
+
+Schulte Automotive Tunisia Sarl est la filiale tunisienne du groupe.
+Elle a été créée pour répondre à la demande croissante en composants câblés,
+en s'appuyant sur les avantages compétitifs du marché tunisien : proximité
+géographique avec l'Europe, main-d'œuvre qualifiée dans le secteur du
+câblage, et coûts de production compétitifs.
+
+L'entreprise opère sur deux sites de production distincts, chacun ayant
+sa propre organisation et ses propres équipes RH :
+
+\begin{table}[H]
+\centering
+\caption{Présentation des sites de production de Schulte Tunisia}
+\begin{tabularx}{\textwidth}{|l|X|X|}
+\hline
+\textbf{Critère} & \textbf{Site de Bouarada} & \textbf{Site de Zaghouan} \\
+\hline
+Localisation & Bouarada, gouvernorat de Siliana & Zaghouan \\
+\hline
+Année de création & 2012 & 2016 \\
+\hline
+Effectif approximatif & $\sim$180 employés & $\sim$120 employés \\
+\hline
+Activité principale & Assemblage de câbles haute tension & Production de faisceaux \\
+\hline
+\end{tabularx}
+\end{table}
+
+Cette configuration multi-sites est un élément central de notre projet.
+Les deux usines recrutent de manière indépendante, avec des profils de
+postes qui peuvent se ressembler mais des équipes RH différentes. Il était
+donc impératif que la plateforme que nous développions garantisse une
+séparation stricte des données entre les deux sites : un responsable RH de
+Bouarada ne doit jamais voir les candidatures gérées à Zaghouan, et
+vice-versa.
+
+\subsection{Département d'accueil et périmètre du stage}
+
+Notre stage s'est déroulé au sein du département des Ressources Humaines
+de Schulte Automotive Tunisia. La mission qui nous a été confiée portait
+sur la digitalisation complète du processus de recrutement local.
+
+L'objectif n'était pas de créer une simple interface de dépôt de CV, mais
+de reconstruire une chaîne métier de bout en bout : diffusion d'offres
+adaptées au contexte tunisien, traitement numérique des candidatures,
+suivi de l'état d'avancement pour les candidats, planification des
+entretiens, et notification automatique de toutes les parties prenantes.
+
+% ════════════════════════════════════════════════════════════════
+\section{Présentation du projet}
+% ════════════════════════════════════════════════════════════════
+
+\subsection{Contexte et problématique}
+
+Au démarrage du projet, nous avons mené une analyse directe du processus
+de recrutement en place. Cette analyse a mis en évidence deux problèmes
+fondamentaux, distincts mais liés.
+
+\textbf{Premier problème — Absence de canal numérique local.}
+Schulte Tunisia ne disposait d'aucun outil numérique pour recevoir et
+traiter les candidatures issues du marché local. En pratique, les candidats
+qui souhaitaient postuler à un poste dans l'une des deux usines n'avaient
+d'autre choix que de se déplacer physiquement ou d'envoyer leur CV par
+courrier postal via La Poste Tunisienne. Dans ce schéma, le candidat
+n'obtenait ni accusé de réception, ni mise à jour de l'état de sa demande,
+ni retour formel sur l'issue de sa candidature. Le processus était opaque
+pour les deux parties : le candidat ne savait pas si son dossier avait été
+reçu, et le service RH gérait des dossiers papier sans outil de suivi.
+
+\textbf{Deuxième problème — Site web du groupe non orienté vers la Tunisie.}
+Le site web officiel de Schulte \& Co. GmbH propose bien une rubrique
+emploi. Cependant, les offres publiées et les liens de candidature pointent
+exclusivement vers les opérations européennes. Aucune offre ne référence les
+usines tunisiennes de Bouarada ou de Zaghouan. Les formulaires de
+candidature en ligne mentionnent des institutions administratives allemandes
+--- notamment l'\textit{Agentur für Arbeit} et le \textit{Jobcenter} ---
+qui n'ont aucun équivalent en Tunisie. Un candidat tunisien qui accède à
+ce portail ne trouve rien qui lui corresponde.
+
+La conjonction de ces deux problèmes a pour effet d'isoler complètement
+le bassin de candidats tunisiens du processus de recrutement de Schulte.
+Les profils qualifiés qui auraient pu rejoindre l'entreprise n'avaient
+aucun moyen simple et structuré de le faire.
+
+\subsection{Périmètre de la solution}
+
+Face à ce constat, notre projet a pour périmètre la conception et le
+développement d'une plateforme de recrutement dédiée à Schulte Automotive
+Tunisia, couvrant les deux usines. Cette plateforme est composée de
+trois applications complémentaires qui partagent un même backend :
+
+\begin{itemize}
+  \item Une \textbf{application web RH} permettant aux responsables RH
+        de chaque site de publier des offres, gérer les candidatures et
+        planifier les entretiens.
+  \item Une \textbf{interface d'administration} permettant au développeur
+        responsable du système de gérer les comptes RH et les modèles
+        d'offres.
+  \item Une \textbf{application mobile progressive (PWA)} permettant aux
+        candidats de consulter les offres, postuler depuis leur smartphone,
+        et suivre l'état de leur candidature en temps réel.
+\end{itemize}
+
+\subsection{Analyse de l'existant}
+
+Avant notre intervention, le fonctionnement du recrutement à Schulte Tunisia
+pouvait se résumer de la manière suivante.
+
+Du côté \textbf{candidat} : une personne intéressée par un poste à Bouarada
+ou à Zaghouan devait soit se présenter directement à l'usine avec son CV,
+soit l'envoyer par voie postale. Il n'existait pas de formulaire en ligne,
+pas de portail de dépôt numérique, et pas de canal de communication
+permettant au candidat de connaître l'état de traitement de son dossier.
+
+Du côté \textbf{équipe RH} : la réception des candidatures se faisait par
+email ou en format papier. Les dossiers étaient classés manuellement, sans
+outil de suivi centralisé. La priorisation des candidats, la planification
+des entretiens et la communication des décisions étaient gérées de manière
+informelle, avec un risque réel de perte d'information et de traitement
+inégal des dossiers.
+
+Ce mode de fonctionnement présentait des limites importantes, que nous
+détaillons dans la section suivante.
+
+\subsection{Critique de l'existant}
+
+L'analyse du processus existant a révélé six limites majeures :
+
+\begin{enumerate}
+  \item \textbf{Absence de visibilité pour le candidat.} Une fois le CV
+        envoyé par courrier, le candidat n'avait aucun moyen de savoir si
+        son dossier avait été reçu, lu, ou traité. Cette opacité génère
+        de la frustration et décourage les candidatures.
+
+  \item \textbf{Inadaptation linguistique et culturelle.} Le seul canal
+        numérique existant --- le site du groupe allemand --- était rédigé
+        en allemand et référençait des institutions administratives sans
+        équivalent en Tunisie. Ce canal n'était pas accessible aux candidats
+        locaux.
+
+  \item \textbf{Absence d'un circuit RH local structuré.} Les candidatures
+        tunisiennes n'étaient pas traitées dans un pipeline RH dédié. Il n'y
+        avait ni étapes formalisées, ni états de progression, ni traçabilité
+        des décisions prises sur chaque dossier.
+
+  \item \textbf{Charge opérationnelle élevée pour les RH.} En l'absence
+        d'outil de gestion, les responsables RH devaient organiser eux-mêmes
+        le tri, la relance et le classement des candidatures. Cette charge
+        manuelle limitait leur capacité à gérer un volume important de
+        dossiers simultanément.
+
+  \item \textbf{Absence de séparation des données entre les deux sites.}
+        Les deux usines fonctionnaient sans outil commun permettant de
+        distinguer clairement les candidatures de Bouarada de celles de
+        Zaghouan. Cette absence de cloisonnement compliquait la gestion
+        RH et le reporting.
+
+  \item \textbf{Risque de perte de profils qualifiés.} Un candidat
+        compétent qui ne recevait aucun retour après l'envoi de son CV
+        pouvait conclure que son profil n'intéressait pas l'entreprise et
+        se tourner vers un autre employeur. La plateforme que nous avons
+        développée vise à éliminer ce risque en rendant le processus
+        transparent et réactif.
+\end{enumerate}
+
+\subsection{Solution proposée}
+
+Pour répondre à ces six limites, nous avons développé une plateforme
+numérique de recrutement accessible depuis un navigateur web ou un
+smartphone. Le principe directeur est simple : rétablir une chaîne de
+recrutement locale, lisible et traçable, adaptée aux candidats tunisiens
+et aux usines de Bouarada et de Zaghouan.
+
+La plateforme repose sur une architecture trois applications / un backend :
+
+\begin{itemize}
+  \item Les candidats accèdent à une PWA installable sur Android.
+        Ils peuvent consulter les offres disponibles, postuler en
+        téléchargeant leur CV ou en remplissant un formulaire structuré,
+        générer leur CV au format PDF directement depuis l'application, et
+        suivre en temps réel l'état de leur candidature via un fil de
+        progression animé.
+
+  \item Les responsables RH accèdent à un tableau de bord web. Ils
+        publient les offres depuis des modèles prédéfinis, examinent les
+        candidatures via un tableau Kanban glissé-déposé, consultent
+        l'analyse IA de chaque profil, et planifient les entretiens avec
+        notification automatique des candidats.
+
+  \item L'administrateur (développeur) gère les comptes RH et les modèles
+        d'offres depuis une interface dédiée.
+\end{itemize}
+
+% ════════════════════════════════════════════════════════════════
+\section{Spécification des besoins}
+% ════════════════════════════════════════════════════════════════
+
+\subsection{Besoins fonctionnels}
+
+Les besoins fonctionnels ont été définis à partir de l'analyse de l'existant
+et des échanges avec l'équipe RH de Schulte Tunisia. Ils couvrent les
+trois profils d'utilisateurs de la plateforme.
+
+\textbf{Besoins liés au candidat :}
+\begin{enumerate}
+  \item Consulter les offres d'emploi disponibles pour les sites de Bouarada
+        et de Zaghouan, depuis un smartphone ou un navigateur.
+  \item Postuler à une offre en téléchargeant un CV au format PDF ou en
+        remplissant un formulaire structuré multi-étapes.
+  \item Générer un CV mis en forme au format PDF directement depuis
+        l'application, sans logiciel externe.
+  \item Suivre l'état de sa candidature (reçue, en examen, entretien
+        planifié, acceptée, refusée) avec une mise à jour en temps réel.
+  \item Recevoir les détails d'un entretien (date, heure, lieu, notes de
+        préparation) directement dans l'application.
+  \item Gérer une bibliothèque personnelle de CVs, afin de choisir quel
+        document soumettre pour chaque candidature.
+\end{enumerate}
+
+\textbf{Besoins liés au responsable RH :}
+\begin{enumerate}
+  \item Créer et publier des offres d'emploi à partir de modèles prédéfinis
+        ou de zéro, avec assignation automatique au site de l'utilisateur.
+  \item Gérer le pipeline de recrutement via un tableau Kanban avec
+        déplacement des candidatures entre les étapes par glisser-déposer.
+  \item Consulter le profil complet d'un candidat (CV, données du formulaire,
+        analyse IA) depuis un panneau de révision dédié.
+  \item Déclencher une analyse IA du CV par rapport au poste, avec un score
+        de correspondance, des points forts, des lacunes identifiées et une
+        recommandation argumentée.
+  \item Planifier un entretien (date, heure, lieu, notes pour le candidat)
+        avec envoi automatique d'une notification et d'un fichier calendrier
+        (.ics) au candidat.
+  \item Ajouter des notes privées, une évaluation par étoiles et des
+        étiquettes sur chaque dossier candidat.
+\end{enumerate}
+
+\textbf{Besoins liés à l'administrateur :}
+\begin{enumerate}
+  \item Créer, modifier et désactiver les comptes des responsables RH avec
+        assignation à un site (Bouarada ou Zaghouan).
+  \item Gérer la bibliothèque de modèles d'offres correspondant aux postes
+        récurrents de l'entreprise.
+  \item Consulter une vue d'ensemble des statistiques du système (candidatures,
+        offres actives, entretiens planifiés).
+\end{enumerate}
+
+\subsection{Besoins non fonctionnels}
+
+En complément des fonctionnalités métier, la solution devait satisfaire
+des exigences transverses déterminantes pour son adoption et sa pérennité.
+
+\begin{table}[H]
+\centering
+\caption{Besoins non fonctionnels de la plateforme}
+\begin{tabularx}{\textwidth}{|l|X|}
+\hline
+\textbf{Critère} & \textbf{Exigence} \\
+\hline
+Sécurité & Authentification par JWT avec refresh token de 30 jours, contrôle
+           d'accès par rôle (Admin, RH, Candidat) et par site, protection
+           contre les attaques OWASP Top 10. \\
+\hline
+Performance & Temps de compilation inférieur à 10 secondes en développement,
+             bundle JavaScript initial inférieur à 200 ko compressé sur la PWA. \\
+\hline
+Accessibilité mobile & PWA installable sur Android sans passer par le
+                      Play Store, fonctionnement partiel en mode hors ligne. \\
+\hline
+Maintenabilité & Code TypeScript strict, architecture en couches
+                (Repository, Service, Controller), patterns de conception
+                documentés. \\
+\hline
+Évolutivité & Architecture multi-sites extensible à de nouvelles usines
+             sans refonte de la base, modèles d'offres administrables
+             sans redéploiement. \\
+\hline
+Fiabilité IA & Pipeline d'analyse avec plusieurs fournisseurs IA en cascade,
+              résultat toujours disponible même si un fournisseur est
+              indisponible. \\
+\hline
+\end{tabularx}
+\end{table}
+
+% ════════════════════════════════════════════════════════════════
+\section{Méthodologie de travail}
+% ════════════════════════════════════════════════════════════════
+
+\subsection{Choix de la méthode agile Scrum}
+
+Pour conduire ce projet en solo dans un délai de quatre mois, nous avons
+adopté une démarche inspirée de la méthode agile Scrum. Ce choix se justifie
+par la nature du projet : les besoins étaient identifiés dans leurs grandes
+lignes au départ, mais les détails fonctionnels ont évolué au fil des
+retours obtenus lors de l'avancement du développement. Une approche en
+cycle de vie en cascade aurait rendu difficile l'intégration de ces
+ajustements.
+
+Scrum repose sur trois piliers : la transparence (chaque partie du processus
+est visible et partagée), l'inspection (le travail produit est régulièrement
+évalué), et l'adaptation (les priorités sont ajustées en fonction des
+retours). Ces principes se sont traduits concrètement dans notre organisation.
+
+\subsection{Adaptation du cadre Scrum}
+
+Dans une configuration classique, Scrum implique plusieurs rôles distincts :
+Product Owner, Scrum Master, et équipe de développement. Dans le cadre de
+ce PFE en développement solo, ces rôles ont été regroupés de la manière
+suivante :
+
+\begin{itemize}
+  \item Le \textbf{Product Owner} était représenté par l'encadrant
+        académique et, ponctuellement, par l'équipe RH de Schulte Tunisia,
+        qui validaient les fonctionnalités réalisées.
+  \item Le \textbf{Scrum Master} et l'\textbf{équipe de développement}
+        étaient assurés par l'étudiant.
+\end{itemize}
+
+\subsection{Organisation en sprints}
+
+Le développement a été organisé en trois releases successives, chacune
+correspondant à un périmètre fonctionnel cohérent.
+
+\begin{table}[H]
+\centering
+\caption{Organisation du développement en releases}
+\begin{tabularx}{\textwidth}{|l|l|X|}
+\hline
+\textbf{Release} & \textbf{Durée} & \textbf{Périmètre} \\
+\hline
+Release 1 & Mois 1 & Fondations : authentification, gestion des comptes RH,
+            publication d'offres, navigation candidat, communication
+            temps réel de base. \\
+\hline
+Release 2 & Mois 2 & Flux de candidature : dépôt de CV, formulaire
+            multi-étapes, bibliothèque de CVs, pipeline Kanban,
+            analyse IA automatique à la soumission. \\
+\hline
+Release 3 & Mois 3--4 & Fonctionnalités avancées : analyse IA manuelle
+            double-fournisseur, planification d'entretiens, notifications
+            par email, rappels automatiques, PWA installable,
+            sécurisation OWASP. \\
+\hline
+\end{tabularx}
+\end{table}
+
+Les artefacts Scrum utilisés comprenaient un backlog produit (liste de toutes
+les user stories priorisées), un backlog de sprint (subset sélectionné pour
+chaque release), et un tableau de suivi d'avancement mis à jour
+quotidiennement.
+
+% ── Conclusion du chapitre ──────────────────────────────────────
+\section*{Conclusion}
+\addcontentsline{toc}{section}{Conclusion}
+
+Ce chapitre a posé le cadre général de notre projet. Nous avons présenté
+Schulte Automotive Tunisia et son contexte industriel, analysé les
+défaillances du processus de recrutement existant --- notamment l'absence
+totale de canal numérique local et le manque de visibilité pour les candidats
+--- et formalisé les besoins fonctionnels et non fonctionnels qui ont guidé
+nos choix de conception. Nous avons également décrit la méthodologie Scrum
+adaptée à notre contexte de développement solo.
+
+Le chapitre suivant présentera l'état de l'art des systèmes de gestion de
+candidatures, comparera les solutions existantes sur le marché, et justifiera
+les choix technologiques retenus pour répondre aux exigences identifiées
+dans ce chapitre.

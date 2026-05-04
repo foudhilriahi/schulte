@@ -63,9 +63,7 @@ const LoginPage = () => {
             Gérer l'excellence <br />
             <span className="text-violet">industrielle.</span>
           </h2>
-          <p className="text-xl text-ink4 max-w-md leading-relaxed font-medium">
-            Accédez au centre de commandement RH de Schulte Tunisie pour piloter vos recrutements et vos talents.
-          </p>
+
 
           {/* Bottom Info Bar */}
           <div className="absolute bottom-0 left-0 p-12 flex gap-12 border-t border-white/10 w-full">
@@ -82,12 +80,12 @@ const LoginPage = () => {
         <div className="w-full max-w-[360px] animate-slide-up-fade" style={{ animationDelay: '100ms' }}>
           <div className="mb-12">
             <h1 className="text-4xl font-bold text-ink mb-3 tracking-tight">Connexion RH</h1>
-            <p className="text-ink3 text-sm font-semibold opacity-70">Entrez vos accès privilégiés ci-dessous.</p>
+            <p className="text-ink3 text-sm font-semibold">Entrez vos accès privilégiés ci-dessous.</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-7">
             <div className="space-y-2.5">
-              <label className="text-[12px] font-black text-ink px-1 uppercase tracking-widest opacity-50">Email Professionnel</label>
+              <label className="text-[12px] font-black text-ink px-1 uppercase tracking-widest">Email Professionnel</label>
               <input
                 type="email"
                 value={email}
@@ -100,7 +98,7 @@ const LoginPage = () => {
 
             <div className="space-y-2.5">
               <div className="flex justify-between items-center px-1">
-                <label className="text-[12px] font-black text-ink uppercase tracking-widest opacity-50">Mot de passe</label>
+                <label className="text-[12px] font-black text-ink uppercase tracking-widest">Mot de passe</label>
               </div>
               <div className="relative">
                 <input

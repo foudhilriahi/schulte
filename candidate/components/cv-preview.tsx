@@ -38,7 +38,7 @@ export function CVPreview({ data, template }: CVPreviewProps) {
         {coverNote && (
           <div className="mb-6">
             <h2 className="text-sm font-bold uppercase border-b border-gray-300 mb-2 pb-1">Profil</h2>
-            <p className="text-xs leading-relaxed text-gray-700 whitespace-pre-wrap">{coverNote}</p>
+            <p className="text-xs leading-relaxed text-slate-900 whitespace-pre-wrap">{coverNote}</p>
           </div>
         )}
 
@@ -53,7 +53,7 @@ export function CVPreview({ data, template }: CVPreviewProps) {
                     <span className="text-xs font-semibold whitespace-nowrap">{exp.duration || 'Durée'}</span>
                   </div>
                   {exp.description && (
-                    <p className="text-xs text-gray-700 leading-relaxed whitespace-pre-wrap pl-4 border-l-2 border-gray-200">{exp.description}</p>
+                    <p className="text-xs text-slate-900 leading-relaxed whitespace-pre-wrap pl-4 border-l-2 border-slate-200">{exp.description}</p>
                   )}
                 </div>
               ))}
@@ -69,7 +69,7 @@ export function CVPreview({ data, template }: CVPreviewProps) {
                 <div key={edu.id || i} className="flex justify-between items-baseline">
                   <div>
                     <h3 className="font-bold text-sm">{edu.degree || 'Diplôme'} {edu.field && `en ${edu.field}`}</h3>
-                    <p className="text-xs text-gray-600 italic">{edu.institution || 'Établissement'}</p>
+                    <p className="text-xs text-black italic">{edu.institution || 'Établissement'}</p>
                   </div>
                   <span className="text-xs font-semibold">{edu.year || 'Année'}</span>
                 </div>
@@ -82,7 +82,7 @@ export function CVPreview({ data, template }: CVPreviewProps) {
           {skills && skills.length > 0 && (
             <div>
               <h2 className="text-sm font-bold uppercase border-b border-gray-300 mb-2 pb-1">Compétences</h2>
-              <ul className="list-disc list-inside text-xs space-y-1 text-gray-700">
+              <ul className="list-disc list-inside text-xs space-y-1 text-slate-900">
                 {skills.map((skill: string, i: number) => (
                   <li key={i}>{skill}</li>
                 ))}
@@ -92,7 +92,7 @@ export function CVPreview({ data, template }: CVPreviewProps) {
           {languages && languages.length > 0 && (
             <div>
               <h2 className="text-sm font-bold uppercase border-b border-gray-300 mb-2 pb-1">Langues</h2>
-              <ul className="text-xs space-y-1 text-gray-700">
+              <ul className="text-xs space-y-1 text-slate-900">
                 {languages.map((lang: any, i: number) => (
                   <li key={i} className="flex justify-between">
                     <span className="font-semibold">{lang.name || 'Langue'}</span>
@@ -109,7 +109,7 @@ export function CVPreview({ data, template }: CVPreviewProps) {
 
   // Modern Template
   return (
-    <div className="w-full bg-white text-slate-800 min-h-[800px] shadow-sm border font-sans text-sm flex flex-col">
+    <div className="w-full bg-white text-black min-h-[800px] shadow-sm border font-sans text-sm flex flex-col">
       <div className="bg-[#1e293b] text-white p-8">
         <h1 className="text-4xl font-extrabold tracking-tight mb-2">{name}</h1>
         <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-slate-300 text-xs mt-4">
@@ -136,7 +136,7 @@ export function CVPreview({ data, template }: CVPreviewProps) {
               <h2 className="text-sm font-bold uppercase tracking-wider text-slate-900 mb-3 flex items-center gap-2">
                 <span className="w-6 h-px bg-blue-500"></span> Profil
               </h2>
-              <p className="text-xs leading-relaxed text-slate-600 whitespace-pre-wrap">{coverNote}</p>
+              <p className="text-xs leading-relaxed text-slate-900 whitespace-pre-wrap">{coverNote}</p>
             </div>
           )}
 
@@ -149,13 +149,13 @@ export function CVPreview({ data, template }: CVPreviewProps) {
                 {experience.map((exp: any, i: number) => (
                   <div key={exp.id || i} className="relative pl-4 border-l-2 border-slate-200">
                     <div className="absolute w-2 h-2 bg-blue-500 rounded-full -left-[5px] top-1.5"></div>
-                    <h3 className="font-bold text-sm text-slate-800">{exp.title || 'Poste'}</h3>
+                    <h3 className="font-bold text-sm text-black">{exp.title || 'Poste'}</h3>
                     <div className="flex justify-between items-center mb-2">
                       <span className="text-xs font-semibold text-blue-600">{exp.company || 'Entreprise'}</span>
-                      <span className="text-[10px] uppercase font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded">{exp.duration || 'Durée'}</span>
+                      <span className="text-[10px] uppercase font-bold text-black bg-slate-100 px-2 py-0.5 rounded">{exp.duration || 'Durée'}</span>
                     </div>
                     {exp.description && (
-                      <p className="text-xs text-slate-600 leading-relaxed whitespace-pre-wrap">{exp.description}</p>
+                      <p className="text-xs text-slate-900 leading-relaxed whitespace-pre-wrap">{exp.description}</p>
                     )}
                   </div>
                 ))}
@@ -171,7 +171,7 @@ export function CVPreview({ data, template }: CVPreviewProps) {
               <h2 className="text-xs font-bold uppercase tracking-wider text-slate-900 mb-3 border-b border-slate-200 pb-2">Compétences</h2>
               <div className="flex flex-wrap gap-1.5">
                 {skills.map((skill: string, i: number) => (
-                  <span key={i} className="bg-white border border-slate-200 text-slate-700 px-2 py-1 text-[10px] font-medium rounded-md">
+                  <span key={i} className="bg-white border border-slate-200 text-black px-2 py-1 text-[10px] font-medium rounded-md">
                     {skill}
                   </span>
                 ))}
@@ -185,9 +185,9 @@ export function CVPreview({ data, template }: CVPreviewProps) {
               <div className="space-y-4">
                 {education.map((edu: any, i: number) => (
                   <div key={edu.id || i}>
-                    <h3 className="font-bold text-xs text-slate-800">{edu.degree || 'Diplôme'}</h3>
-                    <p className="text-[10px] text-slate-500 font-medium">{edu.field && `${edu.field}`}</p>
-                    <p className="text-[10px] text-slate-400 mt-1">{edu.institution || 'Établissement'}</p>
+                    <h3 className="font-bold text-xs text-black">{edu.degree || 'Diplôme'}</h3>
+                    <p className="text-[10px] text-black font-medium">{edu.field && `${edu.field}`}</p>
+                    <p className="text-[10px] text-black mt-1">{edu.institution || 'Établissement'}</p>
                     <p className="text-[10px] text-blue-500 font-bold mt-0.5">{edu.year || 'Année'}</p>
                   </div>
                 ))}
@@ -201,8 +201,8 @@ export function CVPreview({ data, template }: CVPreviewProps) {
               <ul className="text-[11px] space-y-2">
                 {languages.map((lang: any, i: number) => (
                   <li key={i} className="flex justify-between items-center border-b border-slate-200/50 pb-1 last:border-0">
-                    <span className="font-semibold text-slate-700">{lang.name || 'Langue'}</span>
-                    <span className="text-slate-500">{lang.level || 'Niveau'}</span>
+                    <span className="font-semibold text-black">{lang.name || 'Langue'}</span>
+                    <span className="text-black">{lang.level || 'Niveau'}</span>
                   </li>
                 ))}
               </ul>

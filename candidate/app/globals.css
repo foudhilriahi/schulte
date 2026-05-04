@@ -10,10 +10,10 @@
   --border: rgba(18, 16, 42, 0.08);
   --border2: rgba(18, 16, 42, 0.14);
 
-  --ink: #12102a;
-  --ink2: #4a4668;
-  --ink3: #8b87a8;
-  --ink4: #c0bdce;
+  --ink: #000000;
+  --ink2: #000000;
+  --ink3: #000000;
+  --ink4: #000000;
 
   --violet: #5b4fe8;
   --violet-l: #eef0ff;
@@ -51,7 +51,7 @@
   --secondary: var(--card2);
   --secondary-foreground: var(--ink2);
   --muted: var(--card2);
-  --muted-foreground: var(--ink3);
+  --muted-foreground: var(--ink);
   --accent: var(--card2);
   --accent-foreground: var(--ink);
   --destructive: var(--err);
