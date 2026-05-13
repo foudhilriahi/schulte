@@ -1,0 +1,315 @@
+% ════════════════════════════════════════════════════════════════
+%  CHAPITRE 5 — TESTS ET VALIDATION
+% ════════════════════════════════════════════════════════════════
+
+\chapter{Tests et validation}
+\graphicspath{{Isipfe/Figures/}}
+
+% ── Introduction du chapitre ────────────────────────────────────
+\section*{Introduction}
+\addcontentsline{toc}{section}{Introduction}
+
+Ce chapitre présente la démarche de test appliquée à la plateforme :
+stratégie, environnement, cas de test, résultats et validation finale du
+système.
+
+L'objectif est de vérifier que la solution est correcte, stable et conforme
+aux besoins exprimés dans les chapitres précédents.
+
+
+% ════════════════════════════════════════════════════════════════
+\section{Stratégie de test}
+% ════════════════════════════════════════════════════════════════
+
+La stratégie de test suit une logique progressive : tester d'abord les
+composants de base, puis les interactions entre modules, et enfin le
+comportement global côté utilisateur.
+
+\textbf{Types de tests retenus :}
+\begin{itemize}
+    \item \textbf{Tests unitaires} : validation automatisée de fonctions
+    ciblées (principalement côté interface RH, via Vitest).
+    \item \textbf{Tests d'intégration} : vérification des échanges entre
+    API, base de données, notifications et services externes.
+    \item \textbf{Tests fonctionnels} : validation des scénarios métier
+    complets (candidat, RH, administrateur).
+\end{itemize}
+
+Cette combinaison réduit le risque de régression et garantit que le
+comportement final reste cohérent avec les exigences métier.
+
+% ════════════════════════════════════════════════════════════════
+\section{Environnement de test}
+% ════════════════════════════════════════════════════════════════
+
+\subsection{Outils}
+
+Les outils mobilisés pour la phase de test sont les suivants :
+\begin{itemize}
+    \item \textbf{curl} : tests des endpoints REST et capture des codes
+    HTTP pour les preuves.
+    \item \textbf{Vitest} : tests unitaires cibles sur l'interface RH.
+    \item \textbf{Navigateur (Chrome/Firefox)} : vérification des parcours
+    fonctionnels sur interfaces web.
+    \item \textbf{Android (PWA)} : validation du comportement mobile et de
+    l'installation de l'application.
+    \item \textbf{Prisma Studio / PostgreSQL} : contrôle des données
+    persistées après exécution des scénarios.
+\end{itemize}
+
+\textit{Remarque :} l'automatisation est volontairement ciblée (Vitest),
+tandis que les validations fonctionnelles et d'intégration sont effectuées
+pas à pas via curl et les interfaces.
+
+\subsection{Configuration}
+
+Les tests ont été exécutés dans un environnement local proche des conditions
+réelles :
+\begin{itemize}
+    \item backend Node.js/Express connecté à PostgreSQL ;
+    \item interface candidat (PWA), interface RH et interface Admin ;
+    \item communication temps réel via Socket.io ;
+    \item envoi email activé pour les scénarios d'entretien.
+\end{itemize}
+
+Cette configuration a permis de vérifier les flux de bout en bout, sans
+simuler artificiellement les interactions principales du système.
+
+% ════════════════════════════════════════════════════════════════
+\section{Conception des cas de test}
+% ════════════════════════════════════════════════════════════════
+
+\subsection{Méthodes (équivalence, limites)}
+
+La conception des cas de test repose sur deux méthodes simples et efficaces :
+\begin{itemize}
+    \item \textbf{Partition d'équivalence} : regroupement des entrées
+    valides et invalides (ex. formats email, types de fichiers CV).
+    \item \textbf{Analyse des valeurs limites} : vérification des bornes
+    (ex. nombre maximal de tentatives, transitions d'état terminales).
+\end{itemize}
+
+Ces méthodes permettent de couvrir les scénarios critiques sans multiplier
+inutilement les cas de test.
+
+\subsection{Tableaux de test}
+
+\begin{table}[H]
+\centering
+\caption{Cas de test --- authentification et candidature}
+\begin{tabularx}{\textwidth}{|X|X|l|}
+\hline
+\textbf{Cas de test} & \textbf{Résultat attendu} & \textbf{Statut} \\
+\hline
+Inscription avec email invalide & Rejet avec message explicite &
+\textcolor{green!60!black}{OK} \\
+\hline
+Connexion avant vérification email & Accès refusé &
+\textcolor{green!60!black}{OK} \\
+\hline
+Upload CV non PDF & Fichier rejeté avant stockage &
+\textcolor{green!60!black}{OK} \\
+\hline
+Candidature en doublon (même offre) & Réponse \texttt{409} &
+\textcolor{green!60!black}{OK} \\
+\hline
+\end{tabularx}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Cas de test --- RH, workflow et sécurité}
+\begin{tabularx}{\textwidth}{|X|X|l|}
+\hline
+\textbf{Cas de test} & \textbf{Résultat attendu} & \textbf{Statut} \\
+\hline
+Changement de statut depuis Kanban & Mise à jour en base + notification &
+\textcolor{green!60!black}{OK} \\
+\hline
+Planification d'entretien sur dossier finalisé & Opération bloquée
+(\texttt{409}) & \textcolor{green!60!black}{OK} \\
+\hline
+Accès RH à un dossier d'un autre site & Accès interdit (\texttt{403}) &
+\textcolor{green!60!black}{OK} \\
+\hline
+Route admin appelée par un RH & Accès interdit (\texttt{403}) &
+\textcolor{green!60!black}{OK} \\
+\hline
+\end{tabularx}
+\end{table}
+
+% ════════════════════════════════════════════════════════════════
+\section{Exécution des tests}
+% ════════════════════════════════════════════════════════════════
+
+\subsection{Résultats}
+
+L'exécution des tests montre que les scénarios métiers principaux sont
+validés. Les flux candidat, RH et administrateur se comportent
+conformément aux attentes dans les cas testés.
+
+Les vérifications de sécurité (rôles, isolation par site, accès ressources)
+ont également donné des résultats satisfaisants.
+
+Les tests unitaires automatisés sont présents de manière ciblée sur des
+modules RH (authentification locale, analyse duale). Les appels curl
+confirment les retours attendus (200/401/403/409) sur les cas critiques.
+
+\subsection{Analyse}
+
+L'analyse des résultats confirme trois points importants :
+\begin{itemize}
+    \item la plateforme reste cohérente même en présence d'entrées
+    invalides ;
+    \item les règles métier critiques sont correctement appliquées ;
+    \item la traçabilité des actions facilite la détection d'écarts.
+\end{itemize}
+
+Les scénarios négatifs validés (accès interdit, doublon, vérification email)
+montrent que le système applique des contraintes d'ingénierie, et pas
+seulement des parcours nominaux.
+
+Quelques ajustements mineurs d'interface ont été observés pendant les tests
+(formatage d'affichage, messages utilisateur), puis corrigés dans la même
+itération.
+
+\subsection{Traces d'exécution}
+
+Les captures suivantes proviennent d'appels curl (codes HTTP) et de Vitest.
+Elles couvrent la santé API, le contrôle d'accès, les doublons et la
+gouvernance admin, avec des résultats observables.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.90\textwidth]{proof1.jpg}
+\caption{Santé de l'API (HTTP 200)}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.90\textwidth]{proof2.jpg}
+\caption{Route protégée sans jeton (HTTP 401)}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.90\textwidth]{proof3.jpg}
+\caption{Authentification candidat (HTTP 200)}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.90\textwidth]{proof4.jpg}
+\caption{Accès admin interdit au candidat (HTTP 403)}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.90\textwidth]{proof5.jpg}
+\caption{Candidature en doublon (HTTP 409)}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.90\textwidth]{proof6.jpg}
+\caption{E-mail déjà enregistré (HTTP 409)}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.90\textwidth]{proof7.jpg}
+\caption{Accès RH par site (HTTP 200)}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.90\textwidth]{proof8.jpg}
+\caption{Gouvernance admin (HTTP 200)}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.90\textwidth]{vitest.jpg}
+\caption{Tests unitaires (Vitest)}
+\end{figure}
+
+% ════════════════════════════════════════════════════════════════
+\section{Validation du système}
+% ════════════════════════════════════════════════════════════════
+
+\subsection{Vérification des exigences}
+
+Le tableau ci-dessous synthétise la correspondance entre exigences
+fonctionnelles et fonctionnalités livrées.
+
+\begin{table}[H]
+\centering
+\caption{Vérification des exigences fonctionnelles}
+\begin{tabularx}{\textwidth}{|X|l|}
+\hline
+\textbf{Exigence} & \textbf{Validation} \\
+\hline
+Consulter les offres depuis mobile & \textcolor{green!60!black}{Validée} \\
+\hline
+Soumettre une candidature avec CV & \textcolor{green!60!black}{Validée} \\
+\hline
+Suivre l'évolution de candidature & \textcolor{green!60!black}{Validée} \\
+\hline
+Traiter les dossiers via pipeline RH & \textcolor{green!60!black}{Validée} \\
+\hline
+Planifier un entretien avec notification & \textcolor{green!60!black}{Validée} \\
+\hline
+Gérer les comptes RH côté admin & \textcolor{green!60!black}{Validée} \\
+\hline
+\end{tabularx}
+\end{table}
+
+\subsection{Traçabilité exigences-tests}
+
+Pour renforcer la validation, le tableau suivant relie chaque exigence
+à la méthode de test appliquée et à l'élément vérifié.
+
+\begin{table}[H]
+\centering
+\caption{Traçabilité entre exigences et vérifications}
+\begin{tabularx}{\textwidth}{|X|l|X|}
+\hline
+\textbf{Exigence} & \textbf{Type de test} & \textbf{Élément de validation} \\
+\hline
+Authentification sécurisée & Fonctionnel + intégration & Blocage avant vérification email, contrôle des rôles et réponses \texttt{403}. \\
+\hline
+Soumission de candidature fiable & Fonctionnel & Rejet des fichiers invalides, gestion du doublon (\texttt{409}), persistance correcte en base. \\
+\hline
+Suivi RH du pipeline & Intégration & Changement de statut répercuté en base et propagation des notifications. \\
+\hline
+Planification d'entretien & Fonctionnel + intégration & Création/replanification avec contrôle des états métier et notifications associées. \\
+\hline
+Isolation multi-site & Sécurité + intégration & Interdiction d'accès aux données hors périmètre site. \\
+\hline
+\end{tabularx}
+\end{table}
+
+\subsection{Conformité aux besoins}
+
+Le système est globalement conforme aux besoins définis dans l'analyse :
+\begin{itemize}
+    \item besoin de digitalisation du recrutement ;
+    \item besoin de transparence pour les candidats ;
+    \item besoin de structuration et de traçabilité côté RH ;
+    \item besoin d'isolation des données entre les sites.
+\end{itemize}
+
+Cette conformité confirme que la solution répond au problème initial posé
+par l'entreprise, dans le périmètre défini pour ce projet de fin d'études.
+
+% ── Conclusion du chapitre ──────────────────────────────────────
+\section*{Conclusion du chapitre 5}
+\addcontentsline{toc}{section}{Conclusion du chapitre 5}
+
+Ce chapitre a présenté la stratégie de test, les outils utilisés, la
+conception des cas, l'exécution et la validation du système.
+Les résultats obtenus confirment une solution fonctionnelle, cohérente et
+conforme aux besoins principaux dans le périmètre du projet.
+
+Cette étape de validation clôt la partie technique et prépare la conclusion
+générale du rapport.

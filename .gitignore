@@ -123,3 +123,7 @@ cli-commands-rapport.md
 candidate/public/workbox-*.js
 candidate/public/fallback-*.js
 candidate/public/sw.js
+
+screenshots
+diagramms
+*.md
