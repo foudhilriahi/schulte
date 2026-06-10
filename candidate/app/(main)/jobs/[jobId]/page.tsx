@@ -1,23 +1,12 @@
 'use client'
 
-import { use } from 'react'
+import { use, useState, useEffect } from 'react'
 import { useRouterWithLoader } from '@/hooks/use-router-with-loader'
 import { useOffer } from '@/hooks/useOffers'
 import { useMyApplications } from '@/hooks/useApplications'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Card, CardContent } from '@/components/ui/card'
-import { 
-  ArrowLeft, 
-  MapPin, 
-  Calendar, 
-  Briefcase, 
-  Users, 
-  Clock,
-  CheckCircle2,
-  Building
-} from 'lucide-react'
+import { ArrowLeft, CheckCircle2, Clock } from 'lucide-react'
+import { SiteBadge, ContractBadge } from '@/components/job-card'
 
 interface JobDetailsPageProps {
   params: Promise<{ jobId: string }>
@@ -25,26 +14,34 @@ interface JobDetailsPageProps {
 
 function LoadingSkeleton() {
   return (
-    <div className="flex flex-col min-h-screen pb-20 bg-background">
-      <header className="sticky top-0 bg-background/95 backdrop-blur-sm border-b border-border z-40 safe-area-pt">
-        <div className="px-4 py-3">
-          <Skeleton className="h-10 w-20" />
-        </div>
+    <div className="flex flex-col min-h-screen pb-20 bg-page pt-[52px]">
+      <header className="fixed top-0 left-0 right-0 h-[52px] bg-card border-b border-solid border-border px-4 flex items-center z-50">
+        <Skeleton className="h-6 w-20 bg-card2" />
       </header>
       <main className="flex-1 px-4 py-6 max-w-md mx-auto w-full">
         <div className="space-y-6">
           <div className="space-y-3">
-            <Skeleton className="h-8 w-3/4" />
+            <Skeleton className="h-8 w-3/4 bg-card2" />
             <div className="flex gap-2">
-              <Skeleton className="h-6 w-20" />
-              <Skeleton className="h-6 w-16" />
+              <Skeleton className="h-6 w-20 bg-card2 animate-pulse" />
+              <Skeleton className="h-6 w-16 bg-card2 animate-pulse" />
             </div>
           </div>
-          <Skeleton className="h-32 w-full" />
-          <Skeleton className="h-24 w-full" />
-          <Skeleton className="h-12 w-full" />
+          <div className="bg-card border border-solid border-border rounded-xl h-48 w-full" />
         </div>
       </main>
+    </div>
+  )
+}
+
+function DetailRow({ label, value, hint }: { label: string; value: string; hint?: string }) {
+  return (
+    <div className="flex items-center justify-between px-4 py-3.5 border-b border-solid border-border last:border-b-0 select-none">
+      <div className="flex-1 min-w-0">
+        <p className="text-[11px] text-ink4 mb-0.5 uppercase tracking-[0.09em] font-semibold">{label}</p>
+        <p className="text-[13px] text-ink font-semibold truncate">{value}</p>
+        {hint && <p className="text-[10px] text-v mt-0.5 font-medium">{hint}</p>}
+      </div>
     </div>
   )
 }
@@ -56,22 +53,31 @@ export default function JobDetailsPage({ params }: JobDetailsPageProps) {
   const { data: job, isLoading: loadingOffer } = useOffer(jobId)
   const { data: myApps = [], isLoading: loadingApps } = useMyApplications()
 
+  const [isScrolled, setIsScrolled] = useState(false)
+  
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 60)
+    }
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
   if (loadingOffer || loadingApps) {
     return <LoadingSkeleton />
   }
 
   if (!job) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen pb-20 px-4">
-        <h1 className="text-lg font-semibold text-foreground">Offre introuvable</h1>
-        <p className="text-sm text-muted-foreground mt-2">Cette offre a peut-etre ete supprimee.</p>
-        <Button
-          variant="outline"
+      <div className="flex flex-col items-center justify-center min-h-screen pb-20 bg-page px-4 select-none">
+        <h1 className="text-[15px] font-semibold text-ink">Offre introuvable</h1>
+        <p className="text-[13px] text-ink3 mt-2">Cette offre a peut-être été supprimée.</p>
+        <button
           onClick={() => router.push('/')}
-          className="mt-4"
+          className="mt-6 px-6 py-2.5 bg-card border border-solid border-border rounded-xl text-[12px] font-semibold text-ink active:scale-[0.97] transition-transform"
         >
           Retour aux offres
-        </Button>
+        </button>
       </div>
     )
   }
@@ -79,35 +85,25 @@ export default function JobDetailsPage({ params }: JobDetailsPageProps) {
   // Check if offer is closed
   if (job.status !== 'open') {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen pb-20 px-4">
-        <div className="w-16 h-16 bg-errl text-err rounded-full border border-[var(--err-b)] flex items-center justify-center mb-4">
+      <div className="flex flex-col items-center justify-center min-h-screen pb-20 bg-page px-4 select-none">
+        <div className="w-16 h-16 bg-warnl text-warn rounded-full border border-solid border-[var(--warnb)] flex items-center justify-center mb-4">
           <Clock className="h-8 w-8" />
         </div>
-        <h1 className="text-lg font-semibold text-foreground">Offre fermee</h1>
-        <p className="text-sm text-muted-foreground mt-2 text-center max-w-sm">
+        <h1 className="text-[15px] font-semibold text-ink">Offre fermée</h1>
+        <p className="text-[13px] text-ink3 mt-2 text-center max-w-sm">
           Cette offre n'accepte plus de candidatures.
         </p>
-        <Button
+        <button
           onClick={() => router.push('/')}
-          className="mt-6"
+          className="mt-6 px-6 py-3 bg-card border border-solid border-border rounded-xl text-[12px] font-semibold text-ink active:scale-[0.97] transition-transform"
         >
           Voir les offres ouvertes
-        </Button>
+        </button>
       </div>
     )
   }
 
   const hasApplied = myApps.some(app => app.offerId === jobId)
-  
-  const siteColor = job.site === 'Bouarada' 
-    ? 'bg-boul border-[var(--bou-b)] text-primary'
-    : 'bg-zagl border-[var(--zag-b)] text-ok'
-
-  const contractColors: Record<string, string> = {
-    CDI: 'bg-okl border-[var(--ok-b)] text-ok',
-    CDD: 'bg-warnl border-[var(--warn-b)] text-warn',
-    Stage: 'bg-card2 border-border text-ink3'
-  }
 
   const formatDeadline = (deadline: string) => {
     const date = new Date(deadline)
@@ -115,7 +111,7 @@ export default function JobDetailsPage({ params }: JobDetailsPageProps) {
     const diffTime = date.getTime() - now.getTime()
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
     
-    if (diffDays < 0) return 'Expiree'
+    if (diffDays < 0) return 'Expirée'
     if (diffDays === 0) return "Aujourd'hui"
     if (diffDays === 1) return 'Demain'
     if (diffDays <= 7) return `${diffDays} jours restants`
@@ -128,176 +124,134 @@ export default function JobDetailsPage({ params }: JobDetailsPageProps) {
   }
 
   return (
-    <div className="flex flex-col min-h-screen pb-20 bg-background">
-      <header className="sticky top-0 bg-background/95 backdrop-blur-sm border-b border-border z-40 safe-area-pt">
-        <div className="px-4 py-3">
-          <button
-            onClick={() => router.push('/')}
-            className="flex items-center gap-2 text-muted-foreground min-h-[44px] touch-manipulation -ml-1"
-          >
-            <ArrowLeft className="h-5 w-5" />
-            <span className="text-sm">Retour</span>
-          </button>
+    <div className="flex flex-col min-h-screen bg-page pt-[52px]">
+      {/* Dynamic scrolling header */}
+      <header className={`fixed top-0 left-0 right-0 h-[52px] z-50 px-4 flex items-center justify-between select-none transition-all duration-200 backdrop-blur ${
+        isScrolled 
+          ? 'bg-card border-b border-solid border-border' 
+          : 'bg-transparent'
+      }`}>
+        <button
+          onClick={() => router.push('/')}
+          className="flex items-center gap-1 text-ink3 hover:text-ink active:scale-95 transition-transform cursor-pointer p-1 -ml-1 touch-manipulation"
+          style={{ WebkitTapHighlightColor: 'transparent' }}
+        >
+          <ArrowLeft size={16} />
+          <span className="text-[11px] font-semibold">Retour</span>
+        </button>
+
+        {isScrolled && (
+          <span className="font-sans font-semibold text-[13px] text-ink truncate max-w-[200px] animate-slide-up-fade">
+            {job.title}
+          </span>
+        )}
+
+        <div className="w-12 flex justify-end">
+          <SiteBadge site={job.site} />
         </div>
       </header>
-      
-      <main className="flex-1 px-4 py-6 max-w-md mx-auto w-full">
-        <div className="space-y-6">
-          {/* Job Header */}
-          <div className="space-y-4">
-            <div className="flex items-start gap-3">
-              <div className="flex-1 min-w-0">
-                <h1 className="text-[24px] font-bold tracking-[-0.02em] text-ink mb-3 leading-tight">
-                  {job.title}
-                </h1>
-                <div className="flex flex-wrap gap-2 mb-4">
-                  <Badge className={siteColor}>
-                    <MapPin className="h-3 w-3 mr-1" />
-                    {job.site}
-                  </Badge>
-                  <Badge variant="secondary" className={contractColors[job.contractType]}>
-                    <Briefcase className="h-3 w-3 mr-1" />
-                    {job.contractType}
-                  </Badge>
-                  {hasApplied && (
-                    <Badge variant="outline" className="bg-okl border-[var(--ok-b)] text-ok">
-                      <CheckCircle2 className="h-3 w-3 mr-1" />
-                      Candidature envoyee
-                    </Badge>
-                  )}
-                </div>
-              </div>
-            </div>
 
-            {/* Job Info Cards */}
-            <div className="grid grid-cols-2 gap-3">
-              <Card>
-                <CardContent className="p-3">
-                  <div className="flex items-center gap-2 text-sm">
-                    <Users className="h-4 w-4 text-muted-foreground" />
-                    <div>
-                      <p className="text-xs text-muted-foreground">Postes</p>
-                      <p className="font-medium">{job.seats || 1}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardContent className="p-3">
-                  <div className="flex items-center gap-2 text-sm">
-                    <Building className="h-4 w-4 text-muted-foreground" />
-                    <div>
-                      <p className="text-xs text-muted-foreground">Departement</p>
-                      <p className="font-medium">{job.department}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {job.experienceYears !== undefined && job.experienceYears > 0 && (
-                <Card>
-                  <CardContent className="p-3">
-                    <div className="flex items-center gap-2 text-sm">
-                      <Clock className="h-4 w-4 text-muted-foreground" />
-                      <div>
-                        <p className="text-xs text-muted-foreground">Experience</p>
-                        <p className="font-medium">{job.experienceYears}+ ans</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              {job.showSalary && job.salaryRange && (
-                <Card className="border-[var(--ok-b)] bg-okl">
-                  <CardContent className="p-3">
-                    <div className="flex items-center gap-2 text-sm">
-                      <Briefcase className="h-4 w-4 text-ok" />
-                      <div>
-                        <p className="text-xs text-ok">Fourchette salariale</p>
-                        <p className="font-medium text-ink">{job.salaryRange}</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+      {/* Main content */}
+      <main 
+        className="flex-1 px-4 py-4 max-w-md mx-auto w-full select-none"
+        style={{
+          paddingBottom: hasApplied 
+            ? 'calc(140px + env(safe-area-inset-bottom))' 
+            : 'calc(80px + env(safe-area-inset-bottom))'
+        }}
+      >
+        <div className="space-y-5 animate-slide-up-fade">
+          {/* Header titles */}
+          <div>
+            <h1 className="text-[20px] font-semibold tracking-[-0.02em] text-ink leading-tight mb-3">
+              {job.title}
+            </h1>
+            <div className="flex items-center gap-2 flex-wrap select-none">
+              <SiteBadge site={job.site} />
+              <ContractBadge type={job.contractType} />
+              {hasApplied && (
+                <span className="bg-okl border border-solid border-okb text-[#0A8A5A] font-sans text-[10px] font-semibold px-2.5 py-[3px] rounded-full">
+                  Candidature envoyée
+                </span>
               )}
             </div>
-
-            {/* Deadline */}
-            <Card className="border-[var(--warn-b)] bg-warnl">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <Calendar className="h-5 w-5 text-warn" />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-ink">Date limite de candidature</p>
-                    <p className="text-sm text-warn">{formatDeadline(job.deadline)}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
           </div>
 
-          {/* Job Description */}
-          <Card>
-            <CardContent className="p-4">
-              <h2 className="font-semibold text-foreground mb-3">Description du poste</h2>
-              <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">
-                {job.description}
-              </p>
-            </CardContent>
-          </Card>
+          {/* Details list inside flat box */}
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.09em] text-ink4 mb-2 select-none">
+              Détails du poste
+            </p>
+            <div className="bg-card border border-solid border-border rounded-xl overflow-hidden shadow-[0_1px_3px_rgba(15,13,28,0.05)]">
+              <DetailRow label="Département" value={job.department} />
+              <DetailRow label="Postes ouverts" value={`${job.seats || 1} poste(s)`} />
+              {job.experienceYears !== undefined && job.experienceYears > 0 && (
+                <DetailRow label="Expérience minimale" value={`${job.experienceYears}+ ans`} />
+              )}
+              {job.showSalary && job.salaryRange && (
+                <DetailRow label="Fourchette salariale" value={job.salaryRange} hint="TND net / mois" />
+              )}
+              <DetailRow 
+                label="Date limite" 
+                value={formatDeadline(job.deadline)} 
+                hint={new Date(job.deadline).toLocaleDateString('fr-TN', { day: 'numeric', month: 'long', year: 'numeric' })} 
+              />
+            </div>
+          </div>
+
+          {/* Description */}
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.09em] text-ink4 mb-2 mt-4 select-none">
+              Description du poste
+            </p>
+            <div className="bg-card border border-solid border-border rounded-xl p-4 shadow-[0_1px_3px_rgba(15,13,28,0.05)] text-[13px] text-ink2 leading-relaxed whitespace-pre-line font-sans">
+              {job.description}
+            </div>
+          </div>
 
           {/* Required Skills */}
           {job.requiredSkills && job.requiredSkills.length > 0 && (
-            <Card>
-              <CardContent className="p-4">
-                <h2 className="font-semibold text-foreground mb-3">Competences requises</h2>
-                <div className="flex flex-wrap gap-2">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.09em] text-ink4 mb-2 mt-4 select-none">
+                Compétences requises
+              </p>
+              <div className="bg-card border border-solid border-border rounded-xl p-4 shadow-[0_1px_3px_rgba(15,13,28,0.05)]">
+                <div className="flex flex-wrap gap-1.5">
                   {job.requiredSkills.map((skill, index) => (
                     <span
                       key={index}
-                      className="px-3 py-1.5 text-sm bg-card2 text-muted-foreground rounded-sm border border-border"
+                      className="bg-card2 border border-solid border-border text-ink3 font-sans text-[11px] px-2 py-[2px] rounded-[4px]"
                     >
                       {skill}
                     </span>
                   ))}
                 </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Apply Button */}
-          <div className="sticky bottom-4 pt-4">
-            {hasApplied ? (
-              <div className="space-y-3">
-                <Button
-                  variant="outline"
-                  className="w-full h-12 text-ok border-[var(--ok-b)] bg-okl"
-                  disabled
-                >
-                  <CheckCircle2 className="h-4 w-4 mr-2" />
-                  Candidature envoyee
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => router.push('/applications')}
-                  className="w-full"
-                >
-                  Suivre ma candidature
-                </Button>
               </div>
-            ) : (
-              <Button
-                onClick={() => router.push(`/apply/${jobId}`)}
-                className="w-full h-12"
-              >
-                Postuler a cette offre
-              </Button>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </main>
+
+      {/* Sticky footer apply action */}
+      <div className="fixed bottom-[calc(58px+env(safe-area-inset-bottom))] left-0 right-0 px-4 pb-3 bg-gradient-to-t from-page via-page to-transparent pt-4 pointer-events-none z-40">
+        <div className="max-w-md mx-auto w-full">
+          {hasApplied ? (
+            <div className="flex items-center justify-center">
+              <span className="bg-okl border border-solid border-okb text-[#0A8A5A] font-sans text-[13px] font-semibold px-4 py-2.5 rounded-full">
+                Candidature envoyée
+              </span>
+            </div>
+          ) : (
+            <button
+              onClick={() => router.push(`/apply/${job.id}`)}
+              className="w-full pointer-events-auto bg-v text-white rounded-xl py-3.5 text-[14px] font-semibold font-sans shadow-[0_4px_16px_rgba(91,79,232,.32)] active:scale-[0.97] transition-transform duration-100"
+              style={{ WebkitTapHighlightColor: 'transparent' }}
+            >
+              Postuler maintenant
+            </button>
+          )}
+        </div>
+      </div>
     </div>
   )
 }

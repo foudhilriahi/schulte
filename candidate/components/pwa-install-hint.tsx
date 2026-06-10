@@ -79,10 +79,10 @@ export function PwaInstallHint() {
 
   const steps = useMemo(() => {
     if (platform === "ios") {
-      return "Sur Safari iPhone: bouton Partager puis Sur l'ecran d'accueil.";
+      return "Sur Safari iPhone : bouton Partager puis Sur l'écran d'accueil.";
     }
     if (platform === "android") {
-      return "Sur Chrome Android: menu puis Installer l'application ou Ajouter a l'ecran d'accueil.";
+      return "Sur Chrome Android : menu puis Installer l'application ou Ajouter à l'écran d'accueil.";
     }
     return "Ouvrez le menu du navigateur puis choisissez Installer l'application.";
   }, [platform]);
@@ -90,22 +90,22 @@ export function PwaInstallHint() {
   if (!visible) return null;
 
   return (
-    <div className="rounded-md border border-[var(--bou-b)] bg-boul px-3 py-3">
+    <div className="rounded-xl border border-[var(--border)] bg-card px-3 py-3">
       <div className="flex items-start gap-2">
-        <Download className="mt-0.5 h-4 w-4 text-primary" />
+        <Download className="mt-0.5 h-4 w-4 text-bou" />
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold text-foreground">Installer l'app mobile</p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Ajoutez cette app a l'ecran d'accueil pour un mode plein ecran plus rapide.
+          <p className="text-[13px] font-semibold text-ink">Installer l'app mobile</p>
+          <p className="mt-1 text-[12px] text-ink3">
+            Ajoutez cette app à l'écran d'accueil pour un mode plein écran plus rapide.
           </p>
-          <p className="mt-2 text-xs text-foreground">{steps}</p>
+          <p className="mt-2 text-[12px] text-ink">{steps}</p>
           <div className="mt-2 flex items-center gap-2">
             {deferredPrompt && (
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
-                className="h-7 px-2 text-xs"
+                className="h-7 px-2 text-[11px]"
                 onClick={() => {
                   void handleInstallNow();
                 }}
@@ -117,7 +117,7 @@ export function PwaInstallHint() {
               type="button"
               variant="ghost"
               size="sm"
-              className="h-7 px-2 text-xs text-muted-foreground"
+              className="h-7 px-2 text-[11px] text-ink3"
               onClick={handleDismiss}
             >
               Masquer
@@ -127,7 +127,7 @@ export function PwaInstallHint() {
         <button
           type="button"
           aria-label="Fermer le rappel d'installation"
-          className="rounded p-1 text-muted-foreground hover:bg-card2"
+          className="rounded-lg p-1 text-ink3 hover:bg-card2"
           onClick={handleDismiss}
         >
           <X className="h-3.5 w-3.5" />

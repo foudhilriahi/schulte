@@ -4,6 +4,7 @@ import { Application } from '@/lib/types';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/store/auth';
 import { candidateQueryKeys } from '@/lib/queryKeys';
+import { messages } from '@/lib/messages';
 
 const makeIdempotencyKey = () => {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -21,6 +22,22 @@ export function useMyApplications() {
     enabled: isAuthenticated,
     queryFn: async () => {
       const res = await api.get('/applications/mine');
+      return res.data;
+    },
+  });
+}
+
+export function useApplicationById(applicationId?: string) {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+
+  return useQuery<Application>({
+    queryKey: applicationId
+      ? candidateQueryKeys.application(applicationId)
+      : ["candidate", "applications", "missing-id"],
+    enabled: isAuthenticated && Boolean(applicationId),
+    staleTime: 15 * 1000,
+    queryFn: async () => {
+      const res = await api.get(`/applications/${applicationId}`);
       return res.data;
     },
   });
@@ -47,7 +64,7 @@ export function useSubmitPDFApplication() {
       return res.data;
     },
     onSuccess: () => {
-      toast.success('Candidature envoyée avec succès !');
+      toast.success(messages.apply.sent);
       queryClient.invalidateQueries({ queryKey: candidateQueryKeys.applicationsMine });
     },
     onError: (error: any) => {
@@ -69,7 +86,7 @@ export function useSubmitFormApplication() {
       return res.data;
     },
     onSuccess: () => {
-      toast.success('Candidature envoyée avec succès !');
+      toast.success(messages.apply.sent);
       queryClient.invalidateQueries({ queryKey: candidateQueryKeys.applicationsMine });
     },
     onError: (error: any) => {
@@ -91,7 +108,7 @@ export function useSubmitSavedCVApplication() {
       return res.data;
     },
     onSuccess: () => {
-      toast.success('Candidature envoyee avec succes !');
+      toast.success(messages.apply.sent);
       queryClient.invalidateQueries({ queryKey: candidateQueryKeys.applicationsMine });
     },
     onError: (error: any) => {

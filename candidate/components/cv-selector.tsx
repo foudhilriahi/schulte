@@ -1,11 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Drawer, DrawerContent, DrawerTitle, DrawerDescription } from '@/components/ui/drawer'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { FileText, Star, Upload, Plus } from 'lucide-react'
+import { FileText, Star, Upload, Plus, X } from 'lucide-react'
 import { useAuthStore } from '@/store/auth'
 import { api } from '@/lib/axios'
 
@@ -84,133 +82,118 @@ export function CVSelector({ open, onClose, onSelectCV, onUploadNew, allowCreate
   }
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <FileText className="h-5 w-5 text-primary" />
-            Choisir votre CV
-          </DialogTitle>
-          <p className="text-sm text-muted-foreground">
-            Selectionnez le CV a utiliser pour cette candidature
-          </p>
-        </DialogHeader>
-
-        <div className="space-y-4">
-          {/* Existing CVs */}
-          {cvs.length > 0 ? (
+    <Drawer open={open} onOpenChange={(nextOpen) => !nextOpen && onClose()}>
+      <DrawerContent className="max-h-[85vh] overflow-hidden">
+        <div className="px-5 pb-5">
+          <div className="flex items-start justify-between gap-3 pt-2">
             <div>
-              <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
-                <FileText className="h-4 w-4" />
-                Vos CV ({cvs.length})
-              </h3>
-              
+              <DrawerTitle className="text-[15px] font-semibold text-ink">
+                Choisir votre CV
+              </DrawerTitle>
+              <DrawerDescription className="text-[12px] text-ink3">
+                Selectionnez le CV a utiliser pour cette candidature
+              </DrawerDescription>
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-lg p-1.5 text-ink3 hover:bg-card2 transition-colors"
+              aria-label="Fermer"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+
+          <div className="space-y-3 pt-4">
+            {cvs.length > 0 ? (
               <div className="space-y-2">
                 {cvs.map((cv) => (
-                  <Card 
+                  <button
                     key={cv.id}
-                    className="cursor-pointer border-border transition-[transform,border-color,box-shadow] duration-200 ease-[cubic-bezier(.34,1.56,.64,1)] hover:-translate-y-[3px] hover:border-[var(--border2)] hover:shadow-hover"
+                    className="w-full text-left bg-card border border-solid border-border rounded-xl p-4 active:scale-[0.98] transition-transform duration-100"
                     onClick={() => handleSelectCV(cv)}
                   >
-                    <CardContent className="p-4">
-                      <div className="flex items-center gap-3">
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                          cv.type === 'uploaded' 
-                            ? 'bg-okl text-ok' 
-                            : 'bg-boul text-primary'
-                        }`}>
-                          <FileText className="h-5 w-5" />
+                    <div className="flex items-start gap-3">
+                      <FileText className="h-4 w-4 text-ink3 mt-0.5" />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className="text-[13px] font-semibold text-ink truncate">{cv.name}</p>
+                          {cv.isDefault && (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-mono text-ink4">
+                              <Star className="h-3 w-3 text-warn" />
+                              Par défaut
+                            </span>
+                          )}
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <h4 className="font-medium text-foreground truncate">{cv.name}</h4>
-                            {cv.isDefault && (
-                              <Star className="h-3 w-3 fill-current text-warn flex-shrink-0" />
-                            )}
-                          </div>
-                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                            <Badge 
-                              variant={cv.type === 'uploaded' ? 'default' : 'secondary'} 
-                              className="text-xs"
-                            >
-                              {cv.type === 'uploaded' ? 'Televerse' : 'Genere'}
-                            </Badge>
-                            <span>•</span>
-                            <span>{formatDate(cv.createdAt)}</span>
-                            {cv.size && (
-                              <>
-                                <span>•</span>
-                                <span>{formatFileSize(cv.size)}</span>
-                              </>
-                            )}
-                          </div>
-                        </div>
+                        <p className="text-[11px] text-ink3 mt-0.5">
+                          {cv.type === 'uploaded' ? 'Televerse' : 'Genere'}
+                          {' • '}
+                          {formatDate(cv.createdAt)}
+                          {cv.size ? ` • ${formatFileSize(cv.size)}` : ''}
+                        </p>
                       </div>
-                    </CardContent>
-                  </Card>
+                    </div>
+                  </button>
                 ))}
               </div>
-            </div>
-          ) : (
-            <div className="text-center py-8">
-              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-card2 text-ink4">
-                <FileText className="h-8 w-8" />
+            ) : (
+              <div className="text-center py-8">
+                <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-card2 text-ink4">
+                  <FileText className="h-6 w-6" />
+                </div>
+                <h3 className="text-[13px] font-semibold text-ink mb-2">Aucun CV disponible</h3>
+                <p className="text-[12px] text-ink3">
+                  Vous devez d'abord créer ou téléverser un CV.
+                </p>
               </div>
-              <h3 className="font-semibold text-foreground mb-2">Aucun CV disponible</h3>
-              <p className="text-sm text-muted-foreground">
-                Vous devez d'abord creer ou televerser un CV.
-              </p>
-            </div>
-          )}
+            )}
+          </div>
 
-          {/* Create New Options */}
           {allowCreateNew && (
-            <div className="space-y-3 pt-4 border-t">
-              <h3 className="text-sm font-semibold text-foreground">Creer nouveau</h3>
-              
-              <Card 
-                className="cursor-pointer border-2 border-dashed border-[var(--bou-b)] transition-[transform,border-color,box-shadow] duration-200 ease-[cubic-bezier(.34,1.56,.64,1)] hover:-translate-y-[2px] hover:border-[var(--bou)] hover:shadow-card"
+            <div className="space-y-3 pt-4 mt-4 border-t border-solid border-border">
+              <p className="text-[11px] font-medium uppercase tracking-[0.09em] text-ink4">
+                Creer nouveau
+              </p>
+
+              <button
+                className="w-full text-left bg-card border-[1.5px] border-solid border-border rounded-xl p-4 active:scale-[0.98] transition-transform duration-100"
                 onClick={handleCreateNew}
               >
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-boul text-primary">
-                      <Plus className="h-5 w-5" />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="font-medium text-foreground">Creer un nouveau CV</h3>
-                      <p className="text-sm text-muted-foreground">Remplir le formulaire de candidature</p>
-                    </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-vl flex items-center justify-center">
+                    <Plus className="h-4 w-4 text-v" />
                   </div>
-                </CardContent>
-              </Card>
+                  <div>
+                    <p className="text-[13px] font-semibold text-ink">Creer un nouveau CV</p>
+                    <p className="text-[11px] text-ink3">Remplir le formulaire de candidature</p>
+                  </div>
+                </div>
+              </button>
 
-              <Card 
-                className="cursor-pointer border-2 border-dashed border-border transition-[transform,border-color,box-shadow] duration-200 ease-[cubic-bezier(.34,1.56,.64,1)] hover:-translate-y-[2px] hover:border-[var(--violet-b)] hover:shadow-card"
+              <button
+                className="w-full text-left bg-card border-[1.5px] border-solid border-border rounded-xl p-4 active:scale-[0.98] transition-transform duration-100"
                 onClick={handleUploadNew}
               >
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-card2 text-ink4">
-                      <Upload className="h-5 w-5" />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="font-medium text-foreground">Televerser un PDF</h3>
-                      <p className="text-sm text-muted-foreground">Utiliser un CV PDF existant</p>
-                    </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-vl flex items-center justify-center">
+                    <Upload className="h-4 w-4 text-v" />
                   </div>
-                </CardContent>
-              </Card>
+                  <div>
+                    <p className="text-[13px] font-semibold text-ink">Televerser un PDF</p>
+                    <p className="text-[11px] text-ink3">Utiliser un CV PDF existant</p>
+                  </div>
+                </div>
+              </button>
             </div>
           )}
-        </div>
 
-        <div className="flex justify-end gap-3 pt-4 border-t">
-          <Button variant="outline" onClick={onClose}>
-            Annuler
-          </Button>
+          <div className="pt-4">
+            <Button variant="outline" onClick={onClose} className="w-full">
+              Annuler
+            </Button>
+          </div>
         </div>
-      </DialogContent>
-    </Dialog>
+      </DrawerContent>
+    </Drawer>
   )
 }

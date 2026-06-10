@@ -4,23 +4,6 @@ import { GlobalNetworkLoader } from "@/components/global-network-loader";
 import { RouteActivitySync } from "@/components/route-activity-sync";
 import "./globals.css";
 
-const plusJakartaSans = localFont({
-  src: [
-    {
-      path: "./fonts/NotoSans-Regular.ttf",
-      weight: "400",
-      style: "normal",
-    },
-    {
-      path: "./fonts/NotoSans-Bold.ttf",
-      weight: "700",
-      style: "normal",
-    },
-  ],
-  variable: "--font-plus-jakarta-sans",
-  display: "swap",
-});
-
 const jetBrainsMono = localFont({
   src: [
     {
@@ -73,7 +56,7 @@ export default function RootLayout({
   return (
     <html lang="fr" suppressHydrationWarning>
       <body
-        className={`${plusJakartaSans.variable} ${jetBrainsMono.variable} font-sans antialiased`}
+        className={`${jetBrainsMono.variable} font-sans antialiased`}
         suppressHydrationWarning
       >
         <RouteActivitySync />
@@ -83,3 +66,4 @@ export default function RootLayout({
     </html>
   );
 }
+

@@ -2,46 +2,63 @@
 
 import { cn } from '@/lib/utils'
 
-export type FilterType = 'all' | 'Bouarada' | 'Zaghouan' | 'CDI' | 'CDD' | 'Stage'
+export type FilterType = 'all' | 'Bouarada' | 'Zaghouan' | 'CDI' | 'CDD' | 'Stage' | 'Alternance'
 
 interface FilterChipsProps {
   activeFilter: FilterType
   onFilterChange: (filter: FilterType) => void
 }
 
-const filters: { value: FilterType; label: string; color?: string }[] = [
+const locationFilters: { value: FilterType; label: string }[] = [
   { value: 'all', label: 'Tous' },
-  { value: 'Bouarada', label: 'Bouarada', color: 'blue' },
-  { value: 'Zaghouan', label: 'Zaghouan', color: 'teal' },
+  { value: 'Bouarada', label: 'Bouarada' },
+  { value: 'Zaghouan', label: 'Zaghouan' }
+]
+
+const contractFilters: { value: FilterType; label: string }[] = [
   { value: 'CDI', label: 'CDI' },
   { value: 'CDD', label: 'CDD' },
-  { value: 'Stage', label: 'Stage' }
+  { value: 'Stage', label: 'Stage' },
+  { value: 'Alternance', label: 'Alternance' }
 ]
 
 export function FilterChips({ activeFilter, onFilterChange }: FilterChipsProps) {
-  return (
-    <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4">
-      {filters.map((filter) => {
-        const isActive = activeFilter === filter.value
-        const baseClasses = 'px-4 py-[7px] rounded-full text-xs font-semibold whitespace-nowrap border-[1.5px] transition-all duration-150 min-h-[36px] flex items-center touch-manipulation'
-        
-        let colorClasses = ''
-        if (isActive) {
-          colorClasses = 'bg-primary border-primary text-primary-foreground'
-        } else {
-          colorClasses = 'bg-card border-border text-ink3 hover:border-[var(--violet-b)] hover:text-violet hover:bg-violetl'
-        }
+  const renderPill = (value: FilterType, label: string) => {
+    const isActive = activeFilter === value
+    return (
+      <button
+        key={value}
+        onClick={() => onFilterChange(value)}
+        data-active={isActive ? "true" : "false"}
+        className="flex-shrink-0 px-3 py-1.5 rounded-full text-[12px] font-semibold border-[1.5px] border-solid transition-all duration-100 whitespace-nowrap border-border bg-card text-ink3 active:scale-[0.96] data-[active=true]:bg-v data-[active=true]:border-v data-[active=true]:text-white select-none touch-manipulation cursor-pointer"
+        style={{ WebkitTapHighlightColor: 'transparent' }}
+      >
+        {label}
+      </button>
+    )
+  }
 
-        return (
-          <button
-            key={filter.value}
-            onClick={() => onFilterChange(filter.value)}
-            className={cn(baseClasses, colorClasses)}
-          >
-            {filter.label}
-          </button>
-        )
-      })}
+  return (
+    <div 
+      className="flex gap-2 items-center overflow-x-auto scrollbar-hide -mx-4 px-4 py-2 select-none touch-manipulation" 
+      style={{ 
+        WebkitOverflowScrolling: 'touch',
+        scrollbarWidth: 'none'
+      }}
+    >
+      {/* Locations */}
+      <div className="flex gap-2">
+        {locationFilters.map(f => renderPill(f.value, f.label))}
+      </div>
+      
+      {/* Slight gap between groups */}
+      <div className="w-1 flex-shrink-0" />
+
+      {/* Contracts */}
+      <div className="flex gap-2">
+        {contractFilters.map(f => renderPill(f.value, f.label))}
+      </div>
     </div>
   )
 }
+

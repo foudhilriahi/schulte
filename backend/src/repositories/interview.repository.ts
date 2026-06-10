@@ -57,7 +57,8 @@ export class InterviewRepository {
 
     return prisma.interview.findMany({
       where: {
-        outcome: null, // Only interviews without outcome yet
+        outcome: null,       // Only interviews without outcome yet
+        reminderSent: false, // Don't re-send if already reminded
         scheduledAt: {
           gte: start,
           lte: end,

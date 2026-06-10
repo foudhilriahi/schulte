@@ -5,7 +5,9 @@ import {
   sendStatusChangeEmail,
   sendInterviewInviteEmail,
   sendInterviewReminderEmail,
+  sendInterviewOutcomeEmail,
 } from './email.service';
+import { WebPushService } from './webpush.service';
 import logger from '../utils/logger';
 
 // ── French copy maps ─────────────────────────────────────────────────────────
@@ -22,6 +24,15 @@ const STATUS_MESSAGES: Record<string, (offerTitle: string) => string> = {
   interview: (t) => `Félicitations ! Vous êtes invité(e) à passer un entretien pour le poste « ${t} ».`,
   accepted:  (t) => `Bonne nouvelle ! Votre candidature pour le poste « ${t} » a été retenue.`,
   rejected:  (t) => `Nous vous informons que votre candidature pour le poste « ${t} » n'a pas été retenue.`,
+};
+
+const INTERVIEW_OUTCOME_COPY: Record<
+  "pass" | "fail" | "no_show",
+  { title: string; type: "info" | "success" | "warning" }
+> = {
+  pass: { title: "Entretien validé", type: "success" },
+  fail: { title: "Résultat d'entretien", type: "warning" },
+  no_show: { title: "Absence à l'entretien", type: "warning" },
 };
 
 // ── Service ──────────────────────────────────────────────────────────────────
@@ -65,11 +76,22 @@ export class NotificationService {
           },
         });
 
+        // Web Push Notification
+        await WebPushService.sendToUser(candidateId, { title, body: message, url: '/notifications' });
+
         // Real-time socket push
         SocketService.emitToCandidate(candidateId, 'status:changed', {
           applicationId,
           status,
         });
+        if (payload.offerSite) {
+          SocketService.emitToSite(payload.offerSite, 'application:status_changed', {
+            applicationId,
+            candidateId,
+            status,
+            offerTitle,
+          });
+        }
 
         // Email
         await sendStatusChangeEmail(
@@ -129,6 +151,9 @@ export class NotificationService {
           },
         });
 
+        // Web Push
+        await WebPushService.sendToUser(candidateId, { title: 'Entretien planifié', body: message, url: '/notifications' });
+
         // Real-time socket push
         SocketService.emitToCandidate(candidateId, 'interview:scheduled', payload);
         if (offerSite) {
@@ -155,6 +180,7 @@ export class NotificationService {
           candidateName,
           candidateEmail,
           offerTitle,
+          offerSite,
           scheduledAt,
           location,
         } = payload;
@@ -175,7 +201,7 @@ export class NotificationService {
           `Rappel : votre entretien pour le poste « ${offerTitle} » ` +
           `est prévu demain, ${dateStr} à ${timeStr}, ${location}.`;
 
-        // Persist to DB
+        // Persist to DB (candidate notification)
         await NotificationRepository.create({
           userId:  candidateId,
           type:    'info',
@@ -189,10 +215,24 @@ export class NotificationService {
           },
         });
 
-        // Real-time socket push
+        // Web Push
+        await WebPushService.sendToUser(candidateId, { title: 'Rappel : entretien demain', body: message, url: '/notifications' });
+
+        // Real-time socket push to candidate
         SocketService.emitToCandidate(candidateId, 'interview:reminder', payload);
 
-        // Reminder email
+        // Real-time socket push to HR site — so the HR dashboard can show a reminder badge
+        if (offerSite) {
+          SocketService.emitToSite(offerSite, 'interview:reminder', {
+            interviewId,
+            candidateName,
+            offerTitle,
+            scheduledAt,
+            location,
+          });
+        }
+
+        // Reminder email to candidate
         await sendInterviewReminderEmail(
           { email: candidateEmail, name: candidateName },
           { scheduledAt, location },
@@ -200,6 +240,82 @@ export class NotificationService {
         );
       } catch (err) {
         logger.error('[NotificationService] interview.reminder handler error:', err);
+      }
+    });
+
+    // ── interview.outcomeChanged ────────────────────────────────────────────
+    appEmitter.on('interview.outcomeChanged', async (payload) => {
+      try {
+        const {
+          interviewId,
+          applicationId,
+          candidateId,
+          offerTitle,
+          offerSite,
+          outcome,
+          noShowCount,
+          scheduledAt,
+          location,
+          candidateName,
+          candidateEmail,
+        } = payload;
+
+        const dateStr = scheduledAt.toLocaleDateString('fr-FR', {
+          weekday: 'long',
+          year:    'numeric',
+          month:   'long',
+          day:     'numeric',
+        });
+
+        const timeStr = scheduledAt.toLocaleTimeString('fr-FR', {
+          hour: '2-digit',
+          minute: '2-digit',
+        });
+
+        const messageByOutcome: Record<'pass' | 'fail' | 'no_show', string> = {
+          pass:
+            `Votre entretien pour le poste « ${offerTitle} » est validé. ` +
+            `Notre équipe poursuit les prochaines étapes.`,
+          fail:
+            `Votre entretien pour le poste « ${offerTitle} » n'a pas été retenu.`,
+          no_show:
+            `Votre entretien du ${dateStr} à ${timeStr} (${location}) a été marqué absent. ` +
+            `Nombre d'absences enregistrées : ${noShowCount}.`,
+        };
+
+        const copy = INTERVIEW_OUTCOME_COPY[outcome];
+
+        await NotificationRepository.create({
+          userId:  candidateId,
+          type:    copy.type,
+          payload: {
+            title: copy.title,
+            message: messageByOutcome[outcome],
+            interviewId,
+            applicationId,
+            offerTitle,
+            outcome,
+            noShowCount,
+          },
+        });
+
+        // Web Push
+        await WebPushService.sendToUser(candidateId, { title: copy.title, body: messageByOutcome[outcome], url: '/notifications' });
+
+        SocketService.emitToCandidate(candidateId, 'interview:outcome_updated', payload);
+        if (offerSite) {
+          SocketService.emitToSite(offerSite, 'interview:outcome_updated', payload);
+        }
+
+        await sendInterviewOutcomeEmail(
+          { email: candidateEmail, name: candidateName },
+          { scheduledAt, location },
+          { title: offerTitle },
+          outcome,
+          noShowCount,
+        );
+      } catch (err) {
+        logger.error('[NotificationService] interview.outcomeChanged handler error:', err);
       }
     });
 

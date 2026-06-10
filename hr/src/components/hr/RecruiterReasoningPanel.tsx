@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, type RefObject } from "react";
 import { api } from "@/lib/axios";
 import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
@@ -7,21 +7,80 @@ interface RecruiterReasoningPanelProps {
   candidateId: string;
   currentHrRating: number;
   currentHrNotes: string;
+  notesInputRef?: RefObject<HTMLTextAreaElement>;
 }
 
 const RecruiterReasoningPanel = ({
   candidateId,
   currentHrRating,
   currentHrNotes,
+  notesInputRef,
 }: RecruiterReasoningPanelProps) => {
   const [rating, setRating] = useState(currentHrRating || 0);
   const [notes, setNotes] = useState(currentHrNotes || "");
   const [savingNotes, setSavingNotes] = useState(false);
+  const [savedAt, setSavedAt] = useState<number | null>(null);
+  const saveTimeoutRef = useRef<number | null>(null);
+  const lastSavedNotesRef = useRef(currentHrNotes || "");
+  const saveSeqRef = useRef(0);
 
   useEffect(() => {
     setRating(currentHrRating || 0);
     setNotes(currentHrNotes || "");
-  }, [currentHrRating, currentHrNotes]);
+    lastSavedNotesRef.current = currentHrNotes || "";
+    setSavedAt(null);
+    setSavingNotes(false);
+    saveSeqRef.current += 1;
+    if (saveTimeoutRef.current) {
+      window.clearTimeout(saveTimeoutRef.current);
+      saveTimeoutRef.current = null;
+    }
+  }, [currentHrRating, currentHrNotes, candidateId]);
+
+  useEffect(() => {
+    if (!savedAt) return;
+    const timeoutId = window.setTimeout(() => setSavedAt(null), 2000);
+    return () => window.clearTimeout(timeoutId);
+  }, [savedAt]);
+
+  const persistNotes = async (nextNotes: string, showSuccessToast: boolean) => {
+    const seq = ++saveSeqRef.current;
+    setSavingNotes(true);
+    try {
+      await api.patch(`/applications/${candidateId}/notes`, { notes: nextNotes });
+      if (saveSeqRef.current !== seq) return;
+      lastSavedNotesRef.current = nextNotes;
+      setSavedAt(Date.now());
+      if (showSuccessToast) {
+        toast.success("Enregistré.");
+      }
+    } catch {
+      if (saveSeqRef.current !== seq) return;
+      toast.error("Échec — réessaie.");
+    } finally {
+      if (saveSeqRef.current === seq) {
+        setSavingNotes(false);
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (notes === lastSavedNotesRef.current) return;
+    setSavedAt(null);
+    if (saveTimeoutRef.current) {
+      window.clearTimeout(saveTimeoutRef.current);
+    }
+    saveTimeoutRef.current = window.setTimeout(() => {
+      void persistNotes(notes, false);
+    }, 800);
+
+    return () => {
+      if (saveTimeoutRef.current) {
+        window.clearTimeout(saveTimeoutRef.current);
+        saveTimeoutRef.current = null;
+      }
+    };
+  }, [notes, candidateId]);
 
   const handleRatingChange = async (r: number) => {
     setRating(r);
@@ -33,16 +92,13 @@ const RecruiterReasoningPanel = ({
     }
   };
 
-  const handleNotesBlur = async () => {
-    setSavingNotes(true);
-    try {
-      await api.patch(`/applications/${candidateId}/notes`, { notes });
-      toast.success("Enregistré.");
-    } catch {
-      toast.error("Échec — réessaie.");
-    } finally {
-      setSavingNotes(false);
+  const handleNotesBlur = () => {
+    if (saveTimeoutRef.current) {
+      window.clearTimeout(saveTimeoutRef.current);
+      saveTimeoutRef.current = null;
     }
+    if (notes === lastSavedNotesRef.current) return;
+    void persistNotes(notes, true);
   };
 
   return (
@@ -80,9 +136,14 @@ const RecruiterReasoningPanel = ({
       <div>
         <div className="flex items-center justify-between mb-2">
           <p className="text-[10px] font-medium uppercase tracking-[0.09em] text-ink4">Raisonnement (Notes privées)</p>
-          {savingNotes && <span className="text-[9px] text-ink4">Enregistrement...</span>}
+          {savingNotes ? (
+            <span className="text-[9px] text-ink4">Enregistrement...</span>
+          ) : savedAt ? (
+            <span className="text-[9px] text-ink4">Enregistré</span>
+          ) : null}
         </div>
         <Textarea
+          ref={notesInputRef}
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           onBlur={handleNotesBlur}

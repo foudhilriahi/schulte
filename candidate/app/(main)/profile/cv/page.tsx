@@ -9,6 +9,8 @@ import { toast } from 'sonner'
 import { useAuthStore } from '@/store/auth'
 import { api } from '@/lib/axios'
 import { useRouterWithLoader } from '@/hooks/use-router-with-loader'
+import { BottomSheetConfirm } from '@/components/bottom-sheet-confirm'
+import { messages } from '@/lib/messages'
 
 interface CVItem {
   id: string
@@ -27,6 +29,7 @@ export default function MyCVPage() {
   const { user } = useAuthStore()
   const [cvs, setCvs] = useState<CVItem[]>([])
   const [isUploading, setIsUploading] = useState(false)
+  const [cvToDelete, setCvToDelete] = useState<CVItem | null>(null)
 
   const mapApiCVToUI = (cv: any): CVItem => ({
     id: cv.id,
@@ -72,12 +75,12 @@ export default function MyCVPage() {
     if (!file) return
 
     if (file.type !== 'application/pdf') {
-      toast.error('Seuls les fichiers PDF sont pris en charge')
+      toast.error(messages.cv.uploadPdfOnly)
       return
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      toast.error('La taille du fichier doit etre inferieure a 5 Mo')
+      toast.error(messages.cv.uploadTooLarge)
       return
     }
 
@@ -90,10 +93,10 @@ export default function MyCVPage() {
         headers: { 'Content-Type': 'multipart/form-data' },
       })
 
-      toast.success('CV televerse avec succes !')
+      toast.success(messages.cv.uploaded)
       await loadCVs()
     } catch {
-      toast.error('Echec du televersement du CV')
+      toast.error(messages.cv.uploadFailed)
     } finally {
       setIsUploading(false)
       e.target.value = ''
@@ -105,7 +108,7 @@ export default function MyCVPage() {
       if (cv.type === 'uploaded' && cv.cvUrl) {
         const filename = cv.cvUrl.split('/').pop()
         if (!filename) {
-          toast.error('Reference de fichier CV invalide')
+          toast.error(messages.cv.invalidFileRef)
           return
         }
 
@@ -122,9 +125,9 @@ export default function MyCVPage() {
         const doc = await generateCV(cv.data, cv.template || 'modern')
         doc.save(`${cv.name}.pdf`)
       }
-      toast.success('CV telecharge avec succes !')
+      toast.success(messages.cv.downloaded)
     } catch (err) {
-      toast.error('Echec du telechargement du CV')
+      toast.error(messages.cv.downloadFailed)
     }
   }
 
@@ -132,30 +135,25 @@ export default function MyCVPage() {
     api
       .patch(`/cvs/${cvId}/default`)
       .then(async () => {
-        toast.success('CV par defaut mis a jour !')
+        toast.success(messages.cv.defaultUpdated)
         await loadCVs()
       })
       .catch(() => {
-        toast.error('Echec de la mise a jour du CV par defaut')
+        toast.error(messages.cv.defaultFailed)
       })
   }
 
-  const handleDelete = (cvId: string) => {
-    const cvToDelete = cvs.find(cv => cv.id === cvId)
+  const handleDelete = async () => {
     if (!cvToDelete) return
-
-    if (!confirm(`Voulez-vous vraiment supprimer "${cvToDelete.name}" ?`)) {
-      return
-    }
-
     api
-      .delete(`/cvs/${cvId}`)
+      .delete(`/cvs/${cvToDelete.id}`)
       .then(async () => {
-        toast.success('CV supprime avec succes !')
+        toast.success(messages.cv.deleted)
+        setCvToDelete(null)
         await loadCVs()
       })
       .catch(() => {
-        toast.error('Echec de la suppression du CV')
+        toast.error(messages.cv.deleteFailed)
       })
   }
 
@@ -172,18 +170,18 @@ export default function MyCVPage() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-background">
-      <header className="sticky top-0 bg-background/95 backdrop-blur-sm border-b border-border z-40 safe-area-pt">
+    <div className="flex flex-col min-h-screen bg-page">
+      <header className="sticky top-0 bg-card/95 backdrop-blur-sm border-b border-border z-40 safe-area-pt">
         <div className="px-4 py-3 flex items-center justify-between">
           <div className="flex items-center">
             <button
               onClick={() => router.push('/profile')}
-              className="flex items-center gap-2 text-muted-foreground min-h-[44px] touch-manipulation -ml-1"
+              className="flex items-center gap-2 text-ink3 min-h-[44px] touch-manipulation -ml-1"
             >
               <ArrowLeft className="h-5 w-5" />
-              <span className="text-sm">Retour</span>
+              <span className="text-[12px]">Retour</span>
             </button>
-            <h1 className="ml-4 font-semibold text-foreground">Mes CV</h1>
+            <h1 className="ml-4 font-semibold text-ink">Mes CV</h1>
           </div>
           <Badge variant="secondary" className="text-xs">
             {cvs.length} CV{cvs.length !== 1 ? 's' : ''}
@@ -194,19 +192,19 @@ export default function MyCVPage() {
       <main className="flex-1 px-4 py-6 max-w-md mx-auto w-full">
         <div className="space-y-4">
           {/* Upload New CV */}
-          <Card className="border-2 border-dashed border-border hover:border-[var(--border2)] transition-colors">
+          <Card className="border-2 border-dashed border-border">
             <CardContent className="p-6">
               <label className="flex flex-col items-center justify-center cursor-pointer">
-                <div className="w-12 h-12 rounded-full bg-boul text-primary flex items-center justify-center mb-3">
+                <div className="w-12 h-12 rounded-full bg-vl text-v flex items-center justify-center mb-3">
                   {isUploading ? (
-                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-v"></div>
                   ) : (
                     <Plus className="h-6 w-6" />
                   )}
                 </div>
-                <h3 className="font-semibold text-foreground mb-1">Televerser un nouveau CV</h3>
-                <p className="text-sm text-muted-foreground text-center">
-                  Ajouter un CV PDF a votre collection
+                <h3 className="font-semibold text-ink mb-1">Téléverser un nouveau CV</h3>
+                <p className="text-[12px] text-ink3 text-center">
+                  Ajouter un CV PDF à votre collection
                 </p>
                 <input
                   type="file"
@@ -221,14 +219,14 @@ export default function MyCVPage() {
 
           <Card className="border border-border">
             <CardHeader className="pb-3">
-              <CardTitle className="text-base">Creer un nouveau CV</CardTitle>
+              <CardTitle className="text-[13px]">Créer un nouveau CV</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-muted-foreground mb-3">
-                Utilisez l'assistant pas a pas pour generer un CV dans votre bibliotheque.
+              <p className="text-[12px] text-ink3 mb-3">
+                Utilisez l'assistant pas à pas pour générer un CV dans votre bibliothèque.
               </p>
               <Button onClick={() => router.push('/profile/cv/build')} className="w-full">
-                Ouvrir le generateur de CV
+                Ouvrir le générateur de CV
               </Button>
             </CardContent>
           </Card>
@@ -236,13 +234,13 @@ export default function MyCVPage() {
           {/* CV List */}
           {cvs.length === 0 ? (
             <div className="text-center py-12 space-y-4">
-              <div className="w-16 h-16 rounded-full bg-card2 text-muted-foreground flex items-center justify-center mx-auto">
+              <div className="w-16 h-16 rounded-full bg-card2 text-ink4 flex items-center justify-center mx-auto">
                 <FileText className="h-8 w-8" />
               </div>
               <div>
-                <h2 className="text-lg font-semibold text-foreground">Aucun CV pour le moment</h2>
-                <p className="text-sm text-muted-foreground mt-1 max-w-[280px] mx-auto">
-                  Televersez un PDF ou postulez via le formulaire pour generer des CV automatiquement.
+                <h2 className="text-[15px] font-semibold text-ink">Aucun CV pour le moment</h2>
+                <p className="text-[12px] text-ink3 mt-1 max-w-[280px] mx-auto">
+                  Téléversez un PDF ou utilisez le formulaire pour générer un CV.
                 </p>
               </div>
             </div>
@@ -258,9 +256,9 @@ export default function MyCVPage() {
                           <Star className="h-4 w-4 text-warn fill-current flex-shrink-0" />
                         )}
                       </div>
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <div className="flex items-center gap-2 text-[11px] text-ink3">
                         <Badge variant={cv.type === 'uploaded' ? 'default' : 'secondary'} className="text-xs">
-                          {cv.type === 'uploaded' ? 'Televerse' : 'Genere'}
+                          {cv.type === 'uploaded' ? 'Téléversé' : 'Généré'}
                         </Badge>
                         <span>•</span>
                         <span>{formatDate(cv.createdAt)}</span>
@@ -283,14 +281,14 @@ export default function MyCVPage() {
                       className="flex-1"
                     >
                       <Download className="h-4 w-4 mr-1" />
-                      Telecharger
+                      Télécharger
                     </Button>
                     {!cv.isDefault && (
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => handleSetDefault(cv.id)}
-                        title="Definir comme CV par defaut"
+                        title="Définir comme CV par défaut"
                       >
                         <Star className="h-4 w-4" />
                       </Button>
@@ -300,15 +298,15 @@ export default function MyCVPage() {
                         variant="outline"
                         size="sm"
                         disabled
-                        title="Deja par defaut"
+                        title="Déjà par défaut"
                       >
-                        Par defaut
+                        Par défaut
                       </Button>
                     )}
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleDelete(cv.id)}
+                      onClick={() => setCvToDelete(cv)}
                       className="text-err hover:text-err"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -320,17 +318,15 @@ export default function MyCVPage() {
           )}
 
           {/* Info Card */}
-          <Card className="bg-boul border-[var(--bou-b)]">
+          <Card className="bg-card2 border border-border">
             <CardContent className="p-4">
               <div className="flex items-start gap-3">
-                <div className="w-8 h-8 rounded-full bg-boul text-primary flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <FileText className="h-4 w-4" />
-                </div>
+                <FileText className="h-4 w-4 text-bou mt-0.5" />
                 <div className="flex-1">
-                  <h3 className="text-sm font-semibold text-foreground mb-1">Gestion des CV</h3>
-                  <p className="text-xs text-primary">
-                    Votre CV par defaut (marque avec ⭐) sera utilise automatiquement lors de la candidature. 
-                    Vous pouvez aussi choisir un CV specifique pendant le processus.
+                  <h3 className="text-[13px] font-semibold text-ink mb-1">Gestion des CV</h3>
+                  <p className="text-[11px] text-ink3">
+                    Votre CV par défaut est signalé par l'étoile et utilisé automatiquement lors de la candidature.
+                    Vous pouvez aussi choisir un CV spécifique pendant le processus.
                   </p>
                 </div>
               </div>
@@ -338,6 +334,19 @@ export default function MyCVPage() {
           </Card>
         </div>
       </main>
+      <BottomSheetConfirm
+        open={!!cvToDelete}
+        title="Supprimer ce CV"
+        description={
+          cvToDelete
+            ? `Le CV « ${cvToDelete.name} » sera supprimé de votre bibliothèque.`
+            : undefined
+        }
+        confirmLabel="Supprimer le CV"
+        tone="danger"
+        onClose={() => setCvToDelete(null)}
+        onConfirm={handleDelete}
+      />
     </div>
   )
 }

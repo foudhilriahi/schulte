@@ -1,10 +1,27 @@
 import { Request, Response } from "express";
+import type { ApplicationStatus } from "@prisma/client";
 import prisma from "../config/prisma";
 import { appEmitter } from "../events/emitter";
 import { ApplicationRepository } from "../repositories/application.repository";
 import { InterviewRepository } from "../repositories/interview.repository";
 import logger from "../utils/logger";
 import { SocketService } from "../services/socket.service";
+
+type InterviewType = "on-site" | "video" | "phone";
+
+const INTERVIEW_TYPES = new Set<InterviewType>(["on-site", "video", "phone"]);
+const FINAL_APPLICATION_STATUSES = new Set<ApplicationStatus>(["accepted", "rejected"]);
+const MIN_LOCATION_LENGTH = 3;
+const MAX_LOCATION_LENGTH = 160;
+const MAX_NOTES_LENGTH = 2000;
+const SCHEDULE_MIN_LEAD_MS = 5 * 60 * 1000;
+const SCHEDULE_MAX_FUTURE_MS = 366 * 24 * 60 * 60 * 1000;
+
+function createHttpError(statusCode: number, message: string): Error & { statusCode: number } {
+  const err = new Error(message) as Error & { statusCode: number };
+  err.statusCode = statusCode;
+  return err;
+}
 
 export class InterviewsController {
   private static parseLimit(raw: unknown, max = 100): number | undefined {
@@ -43,6 +60,22 @@ export class InterviewsController {
       ...baseWhere,
       scheduledAt: { gt: cursor },
     };
+  }
+
+  private static sanitizeText(raw: unknown, maxLength: number): string {
+    if (typeof raw !== "string") return "";
+    return raw.replace(/\s+/g, " ").trim().slice(0, maxLength);
+  }
+
+  private static parseInterviewType(raw: unknown): InterviewType | null {
+    const normalized =
+      typeof raw === "string" && raw.trim().length > 0
+        ? raw.trim().toLowerCase()
+        : "on-site";
+    if (INTERVIEW_TYPES.has(normalized as InterviewType)) {
+      return normalized as InterviewType;
+    }
+    return null;
   }
 
   // GET /api/interviews
@@ -108,103 +141,151 @@ export class InterviewsController {
   static async scheduleInterview(req: Request, res: Response): Promise<void> {
     try {
       const { applicationId, scheduledAt, location, type, notes } = req.body;
+      if (typeof applicationId !== "string" || applicationId.trim().length === 0) {
+        res.status(400).json({ error: "Candidature invalide" });
+        return;
+      }
 
-      // Validate scheduledAt
+      const normalizedType = InterviewsController.parseInterviewType(type);
+      if (!normalizedType) {
+        res.status(400).json({ error: "Type d'entretien invalide" });
+        return;
+      }
+
+      const normalizedLocation = InterviewsController.sanitizeText(location, MAX_LOCATION_LENGTH);
+      if (normalizedLocation.length < MIN_LOCATION_LENGTH) {
+        res.status(400).json({
+          error: "Le lieu ou lien d'entretien est obligatoire (au moins 3 caracteres)",
+        });
+        return;
+      }
+
+      const normalizedNotes = InterviewsController.sanitizeText(notes, MAX_NOTES_LENGTH);
+
       const interviewDate = new Date(scheduledAt);
-      if (isNaN(interviewDate.getTime())) {
+      if (Number.isNaN(interviewDate.getTime())) {
         res.status(400).json({ error: "Format de date invalide" });
         return;
       }
-
-      const application = await prisma.application.findUnique({
-        where: { id: applicationId },
-        include: {
-          candidate: { select: InterviewsController.candidateSafeSelect },
-          offer: true,
-        },
-      });
-
-      if (!application) {
-        res.status(404).json({ error: "Candidature introuvable" });
+      const now = Date.now();
+      const scheduledTs = interviewDate.getTime();
+      if (scheduledTs < now + SCHEDULE_MIN_LEAD_MS) {
+        res.status(400).json({
+          error: "La date d'entretien doit etre au moins 5 minutes dans le futur",
+        });
         return;
       }
-
-      if (req.user?.role === "HR") {
-        if (!req.user.site) {
-          res.status(400).json({ error: "L'utilisateur RH doit etre associe a un site" });
-          return;
-        }
-        if (application.offer.site !== req.user.site) {
-          res.status(403).json({ error: "Vous ne pouvez pas planifier un entretien hors de votre site" });
-          return;
-        }
-      }
-
-      if (application.status === "accepted" || application.status === "rejected") {
-        res.status(409).json({
-          error: "Impossible de planifier un entretien pour une candidature deja finalisee",
+      if (scheduledTs > now + SCHEDULE_MAX_FUTURE_MS) {
+        res.status(400).json({
+          error: "La date d'entretien est trop lointaine",
         });
         return;
       }
 
-      // Check if interview already exists for this application
-      const existingInterview = await prisma.interview.findUnique({
-        where: { applicationId },
-      });
-
-      let interview;
-      if (existingInterview) {
-        // Update existing interview
-        interview = await prisma.interview.update({
-          where: { applicationId },
-          data: {
-            scheduledAt: interviewDate,
-            location,
-            type: type || "on-site",
-            notesForCandidate: notes || "",
-            outcome: null,
-            reminderSent: false,
-          },
-          include: {
-            application: {
-              include: {
-                candidate: { select: InterviewsController.candidateSafeSelect },
-                offer: true,
-              },
-            },
-          },
-        });
-        logger.info(`Interview updated for application ${applicationId}`);
-      } else {
-        // Create new interview
-        interview = await prisma.interview.create({
-          data: {
-            applicationId,
-            scheduledAt: interviewDate,
-            location,
-            type: type || "on-site",
-            notesForCandidate: notes || "",
-            createdById: req.user!.userId,
-          },
-          include: {
-            application: {
-              include: {
-                candidate: { select: InterviewsController.candidateSafeSelect },
-                offer: true,
-              },
-            },
-          },
-        });
-        logger.info(`Interview created for application ${applicationId}`);
-      }
-
-      // Update application status to 'interview'
-      if (application.status !== "interview") {
-        await prisma.application.update({
+      const { interview, wasCreated } = await prisma.$transaction(async (tx) => {
+        const currentApplication = await tx.application.findUnique({
           where: { id: applicationId },
-          data: { status: "interview" },
+          include: {
+            candidate: { select: InterviewsController.candidateSafeSelect },
+            offer: true,
+          },
         });
-      }
+
+        if (!currentApplication) {
+          throw createHttpError(404, "Candidature introuvable");
+        }
+
+        if (req.user?.role === "HR") {
+          if (!req.user.site) {
+            throw createHttpError(400, "L'utilisateur RH doit etre associe a un site");
+          }
+          if (currentApplication.offer.site !== req.user.site) {
+            throw createHttpError(403, "Vous ne pouvez pas planifier un entretien hors de votre site");
+          }
+        }
+
+        if (FINAL_APPLICATION_STATUSES.has(currentApplication.status)) {
+          throw createHttpError(
+            409,
+            "Impossible de planifier un entretien pour une candidature deja finalisee",
+          );
+        }
+
+        const existingInterview = await tx.interview.findUnique({
+          where: { applicationId },
+        });
+
+        // STRICT: block reschedule if outcome already set (pass/fail/no_show)
+        if (existingInterview?.outcome) {
+          throw createHttpError(
+            409,
+            "Impossible de replanifier un entretien dont le résultat a déjà été enregistré.",
+          );
+        }
+
+        // STRICT: block reschedule if the existing interview date is in the past and no outcome
+        if (
+          existingInterview &&
+          !existingInterview.outcome &&
+          existingInterview.scheduledAt < new Date()
+        ) {
+          throw createHttpError(
+            409,
+            "L'entretien précédent est passé sans résultat. Marquez-le absent (no_show) avant de replanifier.",
+          );
+        }
+
+        const interviewData = {
+          scheduledAt: interviewDate,
+          location: normalizedLocation,
+          type: normalizedType,
+          notesForCandidate: normalizedNotes.length > 0 ? normalizedNotes : null,
+          outcome: null,
+          reminderSent: false,
+        };
+
+        const savedInterview = existingInterview
+          ? await tx.interview.update({
+              where: { applicationId },
+              data: interviewData,
+              include: {
+                application: {
+                  include: {
+                    candidate: { select: InterviewsController.candidateSafeSelect },
+                    offer: true,
+                  },
+                },
+              },
+            })
+          : await tx.interview.create({
+              data: {
+                applicationId,
+                createdById: req.user!.userId,
+                ...interviewData,
+              },
+              include: {
+                application: {
+                  include: {
+                    candidate: { select: InterviewsController.candidateSafeSelect },
+                    offer: true,
+                  },
+                },
+              },
+            });
+
+        if (currentApplication.status !== "interview") {
+          await tx.application.update({
+            where: { id: applicationId },
+            data: { status: "interview" },
+          });
+        }
+
+        return { interview: savedInterview, wasCreated: !existingInterview };
+      });
+
+      logger.info(
+        `${wasCreated ? "Interview created" : "Interview updated"} for application ${applicationId}`,
+      );
 
       // Emit event — NotificationService listener handles socket + email
       appEmitter.emit("interview.scheduled", {
@@ -220,10 +301,17 @@ export class InterviewsController {
         notes: interview.notesForCandidate ?? undefined,
       });
 
-      SocketService.emitToAdmin('admin:overview:updated', { reason: 'interview-scheduled', interviewId: interview.id });
+      SocketService.emitToAdmin("admin:overview:updated", {
+        reason: "interview-scheduled",
+        interviewId: interview.id,
+      });
 
-      res.status(201).json(interview);
+      res.status(wasCreated ? 201 : 200).json(interview);
     } catch (err: any) {
+      if (typeof err?.statusCode === "number") {
+        res.status(err.statusCode).json({ error: err.message });
+        return;
+      }
       logger.error("Schedule interview error:", err);
       res.status(500).json({ error: "Echec de la planification de l'entretien" });
     }
@@ -257,20 +345,95 @@ export class InterviewsController {
         }
       }
 
-      const interview = await InterviewRepository.markOutcome(interviewId, outcome);
+      if (existingInterview.outcome === outcome) {
+        // Stable no-op for retries to avoid duplicate no-show increments.
+        res.json(existingInterview);
+        return;
+      }
+
+      const updated = await prisma.$transaction(async (tx) => {
+        const interview = await tx.interview.findUnique({
+          where: { id: interviewId },
+          include: {
+            application: {
+              include: {
+                candidate: { select: InterviewsController.candidateSafeSelect },
+                offer: true,
+              },
+            },
+          },
+        });
+
+        if (!interview) {
+          throw createHttpError(404, "Entretien introuvable");
+        }
+
+        if (FINAL_APPLICATION_STATUSES.has(interview.application.status)) {
+          const allowedOutcome = interview.application.status === "accepted" ? "pass" : "fail";
+          if (outcome !== allowedOutcome) {
+            throw createHttpError(
+              409,
+              "Impossible de modifier le resultat d'un entretien lie a une candidature finalisee",
+            );
+          }
+        }
+
+        const noShowIncrement = outcome === "no_show" && interview.outcome !== "no_show";
+        const updatedInterview = await tx.interview.update({
+          where: { id: interviewId },
+          data: {
+            outcome,
+            ...(noShowIncrement ? { noShowCount: { increment: 1 } } : {}),
+          },
+          include: {
+            application: {
+              include: {
+                candidate: { select: InterviewsController.candidateSafeSelect },
+                offer: true,
+              },
+            },
+          },
+        });
+
+        let finalStatus: ApplicationStatus | null = null;
+        if (outcome === "pass" || outcome === "fail") {
+          const nextStatus: ApplicationStatus = outcome === "pass" ? "accepted" : "rejected";
+          if (updatedInterview.application.status !== nextStatus) {
+            await tx.application.update({
+              where: { id: updatedInterview.applicationId },
+              data: { status: nextStatus },
+            });
+            finalStatus = nextStatus;
+          }
+        }
+
+        if (
+          outcome === "no_show" &&
+          noShowIncrement &&
+          updatedInterview.noShowCount >= 2 &&
+          !FINAL_APPLICATION_STATUSES.has(updatedInterview.application.status)
+        ) {
+          await tx.application.update({
+            where: { id: updatedInterview.applicationId },
+            data: { status: "rejected" },
+          });
+          finalStatus = "rejected";
+        }
+
+        return {
+          interview: updatedInterview,
+          finalStatus,
+          previousOutcome: interview.outcome,
+        };
+      });
 
       // Only final outcomes should move the application forward.
-      if (outcome === "pass" || outcome === "fail") {
-        const nextStatus = outcome === "pass" ? "accepted" : "rejected";
-
-        await ApplicationRepository.updateStatus(interview.applicationId, nextStatus);
-
-        const fullApp = await ApplicationRepository.findById(interview.applicationId);
-
+      if (updated.finalStatus) {
+        const fullApp = await ApplicationRepository.findById(updated.interview.applicationId);
         appEmitter.emit("application.statusChanged", {
-          applicationId: interview.applicationId,
+          applicationId: updated.interview.applicationId,
           candidateId: fullApp?.candidate?.id ?? "",
-          status: nextStatus,
+          status: updated.finalStatus,
           candidateName: fullApp?.candidate?.name ?? "",
           candidateEmail: fullApp?.candidate?.email ?? "",
           offerTitle: fullApp?.offer?.title ?? "",
@@ -278,25 +441,20 @@ export class InterviewsController {
         });
       }
 
-      // Auto-reject after second no-show (real-life policy: one reschedule chance).
-      if (outcome === "no_show" && interview.noShowCount >= 2) {
-        const fullApp = await ApplicationRepository.findById(interview.applicationId);
-        const currentStatus = fullApp?.status;
-
-        if (currentStatus !== "accepted" && currentStatus !== "rejected") {
-          await ApplicationRepository.updateStatus(interview.applicationId, "rejected");
-
-          appEmitter.emit("application.statusChanged", {
-            applicationId: interview.applicationId,
-            candidateId: fullApp?.candidate?.id ?? "",
-            status: "rejected",
-            candidateName: fullApp?.candidate?.name ?? "",
-            candidateEmail: fullApp?.candidate?.email ?? "",
-            offerTitle: fullApp?.offer?.title ?? "",
-            offerSite: fullApp?.offer?.site ?? "",
-          });
-        }
-      }
+      appEmitter.emit("interview.outcomeChanged", {
+        interviewId: updated.interview.id,
+        applicationId: updated.interview.applicationId,
+        candidateId: updated.interview.application.candidate.id,
+        candidateName: updated.interview.application.candidate.name,
+        candidateEmail: updated.interview.application.candidate.email ?? "",
+        offerTitle: updated.interview.application.offer.title,
+        offerSite: updated.interview.application.offer.site,
+        outcome,
+        previousOutcome: updated.previousOutcome,
+        noShowCount: updated.interview.noShowCount,
+        scheduledAt: updated.interview.scheduledAt,
+        location: updated.interview.location,
+      });
 
       SocketService.emitToAdmin("admin:overview:updated", {
         reason: "interview-outcome-updated",
@@ -304,8 +462,12 @@ export class InterviewsController {
         outcome,
       });
 
-      res.json(interview);
+      res.json(updated.interview);
     } catch (err: any) {
+      if (typeof err?.statusCode === "number") {
+        res.status(err.statusCode).json({ error: err.message });
+        return;
+      }
       logger.error("Mark interview outcome error:", err);
       res.status(500).json({ error: "Echec de la mise a jour du resultat de l'entretien" });
     }

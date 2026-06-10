@@ -11,7 +11,7 @@ export default function MainLayout({
   return (
     <Providers>
       <RealtimeProvider />
-      <div className="max-w-lg mx-auto bg-background min-h-screen relative">
+      <div className="max-w-lg mx-auto bg-page min-h-screen relative">
         {children}
         <BottomNav />
       </div>

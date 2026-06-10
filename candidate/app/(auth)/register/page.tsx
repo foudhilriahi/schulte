@@ -35,7 +35,7 @@ function validate(values: RegisterValues): RegisterErrors {
   const errors: RegisterErrors = {};
 
   if (values.name.trim().length < 2) {
-    errors.name = 'Le nom doit contenir au moins 2 caracteres';
+    errors.name = 'Le nom doit contenir au moins 2 caractères';
   }
 
   if (!EMAIL_REGEX.test(values.email.trim())) {
@@ -43,14 +43,23 @@ function validate(values: RegisterValues): RegisterErrors {
   }
 
   if (!PHONE_REGEX.test(values.phone.trim())) {
-    errors.phone = 'Le numero doit etre tunisien valide (8 chiffres, commence par 2, 4, 5, 7 ou 9)';
+    errors.phone = 'Numéro tunisien invalide (8 chiffres, commence par 2, 4, 5, 7 ou 9)';
   }
 
   if (!PASSWORD_REGEX.test(values.password)) {
-    errors.password = 'Le mot de passe doit contenir au moins 8 caracteres et 1 chiffre';
+    errors.password = 'Au moins 8 caractères et 1 chiffre';
   }
 
   return errors;
+}
+
+function FieldError({ message }: { message?: string }) {
+  if (!message) return null;
+  return (
+    <p className="mt-1.5 text-[11px] text-err leading-snug" role="alert">
+      {message}
+    </p>
+  );
 }
 
 export default function RegisterPage() {
@@ -82,7 +91,7 @@ export default function RegisterPage() {
       if (typeof userId === 'string' && userId && typeof registeredEmail === 'string' && registeredEmail) {
         router.push(`/verify-email?userId=${userId}&email=${encodeURIComponent(registeredEmail)}`);
       } else {
-        setSubmitError("Reponse serveur invalide. Veuillez vous connecter.");
+        setSubmitError('Réponse serveur invalide. Veuillez vous connecter.');
       }
     } catch (err: any) {
       setSubmitError(err.response?.data?.error || "Erreur lors de l'inscription");
@@ -93,29 +102,30 @@ export default function RegisterPage() {
 
   return (
     <div className="flex flex-col w-full animate-in fade-in duration-300">
-      <div className="flex flex-col mb-4">
-        <h2 className="text-2xl font-bold tracking-tight text-ink">Créer un compte</h2>
-        <p className="text-sm text-ink3 mt-1.5 leading-relaxed">
+      <div className="flex flex-col mb-5">
+        <h2 className="text-[20px] font-semibold tracking-[-0.02em] text-ink">Créer un compte</h2>
+        <p className="text-[13px] text-ink3 mt-1.5 leading-relaxed">
           Rejoignez-nous pour découvrir nos offres et propulser votre carrière.
         </p>
       </div>
 
-      <form onSubmit={onSubmit} className="space-y-4">
-        <div className="space-y-2 relative">
+      <form onSubmit={onSubmit} className="space-y-3">
+        {/* Name */}
+        <div className="space-y-1.5">
           <Label htmlFor="name">Nom complet</Label>
           <Input
             id="name"
             placeholder="Foulen Ben Foulen"
+            autoComplete="name"
             value={values.name}
-            onChange={(event) => setValues((prev) => ({ ...prev, name: event.target.value }))}
-            className={`h-11 bg-card border-border transition-all duration-200 focus-visible:ring-[3px] focus-visible:ring-[var(--violet-b)] focus-visible:border-violet ${errors.name ? 'border-err focus-visible:ring-err/20' : ''}`}
+            onChange={(e) => setValues((p) => ({ ...p, name: e.target.value }))}
+            aria-invalid={!!errors.name}
           />
-          {errors.name && (
-            <span className="text-xs text-err absolute -bottom-5 left-0">{errors.name}</span>
-          )}
+          <FieldError message={errors.name} />
         </div>
 
-        <div className="space-y-2 relative pt-2">
+        {/* Email */}
+        <div className="space-y-1.5">
           <Label htmlFor="email">Email</Label>
           <Input
             id="email"
@@ -125,68 +135,74 @@ export default function RegisterPage() {
             autoComplete="email"
             autoCorrect="off"
             value={values.email}
-            onChange={(event) => setValues((prev) => ({ ...prev, email: event.target.value }))}
-            className={`h-11 bg-card border-border transition-all duration-200 focus-visible:ring-[3px] focus-visible:ring-[var(--violet-b)] focus-visible:border-violet ${errors.email ? 'border-err focus-visible:ring-err/20' : ''}`}
+            onChange={(e) => setValues((p) => ({ ...p, email: e.target.value }))}
+            aria-invalid={!!errors.email}
           />
-          {errors.email && (
-            <span className="text-xs text-err absolute -bottom-5 left-0">{errors.email}</span>
-          )}
+          <FieldError message={errors.email} />
         </div>
 
-        <div className="space-y-2 relative pt-2">
-          <Label htmlFor="phone">Telephone (Tunisie)</Label>
+        {/* Phone */}
+        <div className="space-y-1.5">
+          <Label htmlFor="phone">Téléphone (Tunisie)</Label>
           <Input
             id="phone"
             placeholder="22 345 678"
             type="tel"
+            autoComplete="tel"
+            inputMode="numeric"
             value={values.phone}
-            onChange={(event) => setValues((prev) => ({ ...prev, phone: event.target.value.replace(/\s+/g, '') }))}
-            className={`h-11 bg-card border-border transition-all duration-200 focus-visible:ring-[3px] focus-visible:ring-[var(--violet-b)] focus-visible:border-violet ${errors.phone ? 'border-err focus-visible:ring-err/20' : ''}`}
+            onChange={(e) => setValues((p) => ({ ...p, phone: e.target.value.replace(/\s+/g, '') }))}
+            aria-invalid={!!errors.phone}
           />
-          {errors.phone && (
-            <span className="text-xs text-err absolute -bottom-5 left-0">{errors.phone}</span>
-          )}
+          <FieldError message={errors.phone} />
         </div>
 
-        <div className="space-y-2 relative pt-2">
+        {/* Password */}
+        <div className="space-y-1.5">
           <Label htmlFor="password">Mot de passe</Label>
           <Input
             id="password"
             type="password"
             autoComplete="new-password"
+            placeholder="8 caractères minimum, 1 chiffre"
             value={values.password}
-            onChange={(event) => setValues((prev) => ({ ...prev, password: event.target.value }))}
-            className={`h-11 bg-card border-border transition-all duration-200 focus-visible:ring-[3px] focus-visible:ring-[var(--violet-b)] focus-visible:border-violet ${errors.password ? 'border-err focus-visible:ring-err/20' : ''}`}
+            onChange={(e) => setValues((p) => ({ ...p, password: e.target.value }))}
+            aria-invalid={!!errors.password}
           />
-          {errors.password && (
-            <span className="text-xs text-err absolute -bottom-5 left-0">{errors.password}</span>
-          )}
+          <FieldError message={errors.password} />
         </div>
 
         {submitError && (
-          <div className="rounded-md border border-[var(--err-b)] bg-errl px-3 py-2 text-sm text-err">
+          <div className="rounded-lg border border-[var(--errb)] bg-errl px-3 py-2.5 text-[12px] text-err" role="alert">
             {submitError}
           </div>
         )}
 
-        <Button type="submit" className="w-full h-11 mt-8 rounded-xl font-bold transition-all active:scale-[0.97] shadow-sm" disabled={isLoading}>
+        <Button
+          type="submit"
+          className="w-full mt-2"
+          disabled={isLoading}
+        >
           {isLoading ? (
-            <div className="flex items-center gap-2">
-              <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-              <span>Création en cours...</span>
-            </div>
+            <span className="flex items-center gap-2">
+              <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+              </svg>
+              Création en cours...
+            </span>
           ) : (
             "S'inscrire"
           )}
         </Button>
       </form>
 
-      <div className="text-center text-sm text-ink4 mt-8">
+      <p className="text-center text-[12px] text-ink4 mt-6">
         Vous avez déjà un compte ?{' '}
-        <Link href="/login" className="font-bold text-violet hover:underline decoration-2 underline-offset-4">
+        <Link href="/login" className="font-semibold text-v hover:underline decoration-2 underline-offset-4">
           Connectez-vous
         </Link>
-      </div>
+      </p>
     </div>
   );
 }

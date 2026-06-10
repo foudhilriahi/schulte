@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { api } from '@/lib/axios'
 import { toast } from 'sonner'
+import { messages } from '@/lib/messages'
 
 interface CandidateNotification {
   id: string
@@ -153,7 +154,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
       await api.patch('/notifications/mark-all-read')
     } catch {
       set(previousState)
-      toast.error('Echec du marquage des notifications comme lues.')
+      toast.error(messages.notifications.markAllFailed)
     }
   },
 
@@ -178,18 +179,32 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
       await api.patch(`/notifications/${id}/read`)
     } catch {
       set(previousState)
-      toast.error('Echec du marquage de la notification.')
+      toast.error(messages.notifications.markOneFailed)
     }
   },
 
   deleteNotification: async (id: string) => {
-    const previousState = {
-      notifications: get().notifications,
-      unreadCount: get().unreadCount,
+    const currentNotifications = get().notifications
+    const target = currentNotifications.find((n) => n.id === id)
+    if (!target) return
+
+    const targetIndex = currentNotifications.findIndex((n) => n.id === id)
+
+    const restoreNotification = () => {
+      set((state) => {
+        if (state.notifications.some((n) => n.id === id)) return state
+
+        const notifications = [...state.notifications]
+        notifications.splice(Math.max(0, targetIndex), 0, target)
+
+        return {
+          notifications,
+          unreadCount: target.read ? state.unreadCount : state.unreadCount + 1,
+        }
+      })
     }
 
     set((state) => {
-      const target = state.notifications.find((n) => n.id === id)
       const unreadCount =
         target && !target.read
           ? Math.max(0, state.unreadCount - 1)
@@ -200,12 +215,29 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
       }
     })
 
-    try {
-      await api.delete(`/notifications/${id}`)
-    } catch {
-      set(previousState)
-      toast.error('Echec de la suppression de la notification.')
-    }
+    let undone = false
+    const deleteTimer = window.setTimeout(async () => {
+      if (undone) return
+
+      try {
+        await api.delete(`/notifications/${id}`)
+      } catch {
+        restoreNotification()
+        toast.error(messages.notifications.deleteFailed)
+      }
+    }, 4500)
+
+    toast(messages.notifications.deleted, {
+      duration: 4500,
+      action: {
+        label: messages.notifications.undo,
+        onClick: () => {
+          undone = true
+          window.clearTimeout(deleteTimer)
+          restoreNotification()
+        },
+      },
+    })
   },
 
   addNotification: (n: CandidateNotification) => {

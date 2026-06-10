@@ -1,23 +1,14 @@
 'use client'
 
-import { useState } from 'react'
 import { ApplicationsScreen } from '@/components/screens/applications-screen'
-import { ApplicationDetailScreen } from '@/components/screens/application-detail-screen'
-import type { Application } from '@/lib/types'
+import { useRouterWithLoader } from '@/hooks/use-router-with-loader'
 
 export default function ApplicationsPage() {
-  const [selectedApplication, setSelectedApplication] = useState<Application | null>(null)
-
-  if (selectedApplication) {
-    return (
-      <ApplicationDetailScreen
-        application={selectedApplication}
-        onBack={() => setSelectedApplication(null)}
-      />
-    )
-  }
+  const router = useRouterWithLoader()
 
   return (
-    <ApplicationsScreen onSelectApplication={setSelectedApplication} />
+    <ApplicationsScreen
+      onSelectApplication={(application) => router.push(`/applications/${application.id}`)}
+    />
   )
 }

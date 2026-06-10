@@ -1,197 +1,195 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&family=JetBrains+Mono:wght@400;500&display=swap');
 @import 'tailwindcss';
 @import 'tw-animate-css';
 
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --page: #f4f2ef;
-  --card: #ffffff;
-  --card2: #f9f8f6;
-  --border: rgba(18, 16, 42, 0.08);
-  --border2: rgba(18, 16, 42, 0.14);
+  /* Surfaces */
+  --page:    #EFEFEB;
+  --card:    #FAFAF8;
+  --card2:   #F2F1EE;
+  --border:  rgba(15,13,28,0.07);
+  --border2: rgba(15,13,28,0.13);
 
-  --ink: #000000;
-  --ink2: #000000;
-  --ink3: #000000;
-  --ink4: #000000;
+  /* Ink */
+  --ink:     #0F0D1C;
+  --ink2:    #3D3A52;
+  --ink3:    #7E7A96;
+  --ink4:    #B8B5CA;
 
-  --violet: #5b4fe8;
-  --violet-l: #eef0ff;
-  --violet-b: rgba(91, 79, 232, 0.18);
-  --violet-h: #7368f0;
+  /* Primary */
+  --v:       #5B4FE8;
+  --vl:      #EEEDFE;
+  --vb:      rgba(91,79,232,0.16);
+  --vh:      #7368F0;
 
-  --coral: #f0533a;
-  --coral-l: #fff0ee;
-  --coral-b: rgba(240, 83, 58, 0.18);
+  /* Accent — Tangerine */
+  --tan:     #E8783A;
+  --tanl:    #FEF2EB;
+  --tanb:    rgba(232,120,58,0.18);
 
-  --bou: #2e7cf6;
-  --bou-l: #ebf3ff;
-  --bou-b: rgba(46, 124, 246, 0.18);
-  --zag: #10b97a;
-  --zag-l: #e6faf3;
-  --zag-b: rgba(16, 185, 122, 0.18);
+  /* Site identity */
+  --bou:     #2E7CF6;
+  --boul:    #EBF3FF;
+  --boub:    rgba(46,124,246,0.18);
+  --zag:     #10B97A;
+  --zagl:    #E6FAF3;
+  --zagb:    rgba(16,185,122,0.18);
 
-  --ok: #10b97a;
-  --ok-l: #e6faf3;
-  --ok-b: rgba(16, 185, 122, 0.25);
-  --warn: #f59e0b;
-  --warn-l: #fef3c7;
-  --warn-b: rgba(245, 158, 11, 0.3);
-  --err: #ef4444;
-  --err-l: #fee2e2;
-  --err-b: rgba(239, 68, 68, 0.3);
+  /* Semantic */
+  --ok:      #10B97A;
+  --okl:     #E6FAF3;
+  --okb:     rgba(16,185,122,0.25);
+  --warn:    #E8A020;
+  --warnl:   #FEF3C7;
+  --warnb:   rgba(232,160,32,0.28);
+  --err:     #D94040;
+  --errl:    #FEE2E2;
+  --errb:    rgba(217,64,64,0.28);
 
+  /* Mobile-only: overlay scrim */
+  --scrim:   rgba(15,13,28,0.40);
+
+  /* Compatibility Fallback Aliases for existing components */
   --background: var(--page);
   --foreground: var(--ink);
   --card-foreground: var(--ink);
   --popover: var(--card);
   --popover-foreground: var(--ink);
-  --primary: var(--violet);
+  --primary: var(--v);
   --primary-foreground: #ffffff;
   --secondary: var(--card2);
   --secondary-foreground: var(--ink2);
   --muted: var(--card2);
-  --muted-foreground: var(--ink);
+  --muted-foreground: var(--ink3);
   --accent: var(--card2);
   --accent-foreground: var(--ink);
   --destructive: var(--err);
   --destructive-foreground: #ffffff;
   --input: var(--border);
-  --ring: var(--violet-b);
-  --chart-1: var(--violet);
-  --chart-2: var(--ok);
-  --chart-3: var(--warn);
-  --chart-4: var(--bou);
-  --chart-5: var(--zag);
-  --radius: 10px;
-  --sidebar: var(--card);
-  --sidebar-foreground: var(--ink3);
-  --sidebar-primary: var(--violet);
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: var(--violet-l);
-  --sidebar-accent-foreground: var(--violet);
-  --sidebar-border: var(--border);
-  --sidebar-ring: var(--violet-b);
+  --ring: var(--vb);
+  
+  --violet: var(--v);
+  --violet-l: var(--vl);
+  --violet-b: var(--vb);
+  --violet-h: var(--vh);
 
-  /* Compatibility aliases for existing classes while migrating components */
+  --coral: var(--tan);
+  --coral-l: var(--tanl);
+  --coral-b: var(--tanb);
+
+  --bou-b: var(--boub);
+  --zag-b: var(--zagb);
+  --ok-b: var(--okb);
+  --warn-b: var(--warnb);
+  --err-b: var(--errb);
+
+  --radius: 8px;
+
   --s0: var(--page);
   --s1: var(--card);
   --s2: var(--card2);
-  --s3: #f1eeff;
-  --s4: #e8e3f5;
-  --s5: #d3cee2;
-  --acc: var(--violet);
-  --acc-h: var(--violet-h);
-  --acc-m: var(--violet-l);
-  --acc-b: var(--violet-b);
-  --bou-m: var(--bou-l);
-  --zag-m: var(--zag-l);
+  --s3: #EEEDFE;
+  --s4: #B8B5CA;
+  --s5: var(--border);
+  --acc: var(--v);
+  --acc-h: var(--vh);
+  --acc-m: var(--vl);
+  --acc-b: var(--vb);
+  --bou-m: var(--boul);
+  --zag-m: var(--zagl);
   --t1: var(--ink);
   --t2: var(--ink2);
   --t3: var(--ink3);
   --t4: var(--ink4);
   --t5: var(--border);
-
-  /* Schulte Design System V2 Clean Aliases (Backward compatible) */
-  --c-page: var(--page);
-  --c-card: var(--card);
-  --c-card2: var(--card2);
-  --c-border: var(--border);
-  --c-violet: var(--violet);
-  --c-violet-l: var(--violet-l);
-  --c-coral: var(--coral);
-  --c-bou: var(--bou);
-  --c-zag: var(--zag);
-  --c-ok: var(--ok);
-  --c-warn: var(--warn);
-  --c-err: var(--err);
 }
 
 @theme inline {
-  --font-sans: var(--font-plus-jakarta-sans);
-  --font-mono: var(--font-jetbrains-mono);
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-card: var(--card);
-  --color-card-foreground: var(--card-foreground);
-  --color-popover: var(--popover);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-secondary: var(--secondary);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-destructive: var(--destructive);
-  --color-destructive-foreground: var(--destructive-foreground);
-  --color-border: var(--border);
-  --color-input: var(--input);
-  --color-ring: var(--ring);
-  --color-chart-1: var(--chart-1);
-  --color-chart-2: var(--chart-2);
-  --color-chart-3: var(--chart-3);
-  --color-chart-4: var(--chart-4);
-  --color-chart-5: var(--chart-5);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-  --color-sidebar: var(--sidebar);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-ring: var(--sidebar-ring);
+  --font-sans: 'DM Sans', sans-serif;
+  --font-mono: var(--font-jetbrains-mono), 'JetBrains Mono', monospace;
 
-  --color-s0: var(--s0);
-  --color-s1: var(--s1);
-  --color-s2: var(--s2);
-  --color-s3: var(--s3);
-  --color-s4: var(--s4);
-  --color-s5: var(--s5);
   --color-page: var(--page);
+  --color-card: var(--card);
   --color-card2: var(--card2);
+  --color-border: var(--border);
+  --color-border2: var(--border2);
+
   --color-ink: var(--ink);
   --color-ink2: var(--ink2);
   --color-ink3: var(--ink3);
   --color-ink4: var(--ink4);
-  --color-acc: var(--acc);
-  --color-acch: var(--acc-h);
-  --color-violet: var(--violet);
-  --color-violetl: var(--violet-l);
-  --color-violeth: var(--violet-h);
-  --color-coral: var(--coral);
-  --color-corall: var(--coral-l);
+
+  --color-v: var(--v);
+  --color-vl: var(--vl);
+  --color-vb: var(--vb);
+  --color-vh: var(--vh);
+
+  --color-tan: var(--tan);
+  --color-tanl: var(--tanl);
+  --color-tanb: var(--tanb);
+
   --color-bou: var(--bou);
-  --color-boul: var(--bou-l);
+  --color-boul: var(--boul);
+  --color-boub: var(--boub);
+
   --color-zag: var(--zag);
-  --color-zagl: var(--zag-l);
+  --color-zagl: var(--zagl);
+  --color-zagb: var(--zagb);
+
   --color-ok: var(--ok);
-  --color-okl: var(--ok-l);
+  --color-okl: var(--okl);
+  --color-okb: var(--okb);
+
   --color-warn: var(--warn);
-  --color-warnl: var(--warn-l);
+  --color-warnl: var(--warnl);
+  --color-warnb: var(--warnb);
+
   --color-err: var(--err);
-  --color-errl: var(--err-l);
+  --color-errl: var(--errl);
+  --color-errb: var(--errb);
+
+  --color-scrim: var(--scrim);
+
+  /* Compatibility theme names */
+  --color-violet: var(--v);
+  --color-violet-l: var(--vl);
+  --color-violet-b: var(--vb);
+  --color-violet-h: var(--vh);
+  --color-coral: var(--tan);
+  --color-coral-l: var(--tanl);
+  --color-coral-b: var(--tanb);
   --color-success: var(--ok);
   --color-warning: var(--warn);
   --color-danger: var(--err);
+
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 20px;
+  --radius-full: 999px;
+
+  --color-background: var(--page);
+  --color-foreground: var(--ink);
+
+  --animate-npulse: npulse 2s ease-in-out infinite;
+  --animate-fadeIn: fadeIn 150ms ease-out;
+  --animate-slideUp: slideUp 280ms cubic-bezier(0.32,0.72,0,1);
 }
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border;
   }
   body {
-    @apply bg-background text-foreground font-sans antialiased;
+    @apply bg-page text-ink font-sans antialiased;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 }
 
 @layer utilities {
-  /* Density Zones */
   .zone-hero {
     @apply px-4 py-6;
   }
@@ -204,13 +202,16 @@
 
   /* Motion Utilities */
   .animate-slide-up-fade {
-    animation: slideUpFade 280ms cubic-bezier(.34, 1.56, .64, 1) both;
+    animation: slideUpFade 240ms ease-out both;
   }
   .animate-slide-up-sheet {
-    animation: slideUpSheet 320ms cubic-bezier(.34, 1.56, .64, 1) both;
+    animation: slideUp 280ms cubic-bezier(0.32,0.72,0,1) both;
   }
   .animate-status-pulse {
-    animation: statusPulse 2s ease-in-out infinite;
+    animation: npulse 2s ease-in-out infinite;
+  }
+  .animate-npulse {
+    animation: npulse 2s ease-in-out infinite;
   }
   .skeleton-shimmer {
     background: linear-gradient(90deg, var(--card2) 25%, var(--card) 50%, var(--card2) 75%);
@@ -218,6 +219,11 @@
     animation: shimmer 1.4s ease-in-out infinite;
   }
 }
+
+/* Scrollbars */
+::-webkit-scrollbar { width: 3px; height: 3px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--ink4); border-radius: 999px; }
 
 /* PWA Safe Areas */
 .safe-area-pt {
@@ -239,47 +245,40 @@
 }
 
 @keyframes npulse {
-  0%,
-  100% {
-    box-shadow: 0 0 0 4px var(--violet-l);
+  0%, 100% {
+    box-shadow: 0 0 0 3px var(--vl);
   }
   50% {
-    box-shadow: 0 0 0 8px var(--violet-l);
+    box-shadow: 0 0 0 7px var(--vl);
   }
 }
 
-.animate-timeline-ring {
-  animation: npulse 2s ease-in-out infinite;
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
 }
 
 @keyframes slideUpFade {
   from {
     opacity: 0;
-    transform: translateY(12px);
+    transform: translateY(10px);
   }
   to {
     opacity: 1;
     transform: translateY(0);
-  }
-}
-
-@keyframes slideUpSheet {
-  from {
-    transform: translateY(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-
-@keyframes statusPulse {
-  0%, 100% {
-    box-shadow: 0 0 0 0 var(--violet-b);
-  }
-  50% {
-    box-shadow: 0 0 0 6px transparent;
   }
 }
 
@@ -291,3 +290,4 @@
     background-position: 200% 0;
   }
 }
+

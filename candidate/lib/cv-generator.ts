@@ -1,3 +1,21 @@
+const monthPattern = /^\d{4}-(0[1-9]|1[0-2])$/
+const monthFormatter = new Intl.DateTimeFormat('fr-TN', { month: 'short', year: 'numeric' })
+
+const formatMonth = (value?: string) => {
+  if (!value || !monthPattern.test(value)) return ''
+  const label = monthFormatter.format(new Date(`${value}-01T00:00:00`))
+  return label.charAt(0).toUpperCase() + label.slice(1)
+}
+
+const experienceDuration = (exp: any) => {
+  const start = formatMonth(exp?.startDate)
+  const end = exp?.isCurrent ? 'Present' : formatMonth(exp?.endDate)
+  if (start && end) return `${start} - ${end}`
+  if (start && exp?.isCurrent) return `${start} - Present`
+  if (typeof exp?.duration === 'string' && exp.duration.trim().length > 0) return exp.duration.trim()
+  return ''
+}
+
 export const generateCV = async (data: any, template: 'modern' | 'classic') => {
   const { jsPDF } = await import('jspdf')
   const doc = new jsPDF()
@@ -48,7 +66,7 @@ export const generateCV = async (data: any, template: 'modern' | 'classic') => {
         doc.setFontSize(10)
         doc.setFont("helvetica", "normal")
         doc.setTextColor(100, 100, 100)
-        doc.text(`${exp.company || ''} | ${exp.duration || ''}`, pageWidth - 20, y, { align: 'right' })
+        doc.text(`${exp.company || ''} | ${experienceDuration(exp)}`, pageWidth - 20, y, { align: 'right' })
         
         doc.setTextColor(0, 0, 0)
         y += 8
@@ -119,7 +137,7 @@ export const generateCV = async (data: any, template: 'modern' | 'classic') => {
         
         doc.setFontSize(11)
         doc.setFont("times", "italic")
-        doc.text(`${exp.company || ''}, ${exp.duration || ''}`, 20, y + 5)
+        doc.text(`${exp.company || ''}, ${experienceDuration(exp)}`, 20, y + 5)
         
         y += 12
       })

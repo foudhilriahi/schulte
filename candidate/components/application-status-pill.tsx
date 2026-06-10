@@ -1,4 +1,3 @@
-import { Send, Clock, CalendarCheck, CheckCircle2, XCircle } from "lucide-react";
 import type { ApplicationStatus } from "@/lib/types";
 
 interface ApplicationStatusPillProps {
@@ -7,52 +6,39 @@ interface ApplicationStatusPillProps {
 
 const STATUS_CONFIG: Record<
   ApplicationStatus,
-  { label: string; icon: any; color: string; pulse?: boolean }
+  { label: string; color: string }
 > = {
   new: {
     label: "Candidature envoyée",
-    icon: Send,
     color: "bg-card2 text-ink3 border-border",
   },
   reviewing: {
-    label: "Dossier en lecture",
-    icon: Clock,
-    color: "bg-warnl text-warn border-[var(--warn-b)]",
+    label: "En cours d'examen",
+    color: "bg-vl text-[#3730B8] border-[var(--vb)]",
   },
   interview: {
     label: "Entretien planifié",
-    icon: CalendarCheck,
-    color: "bg-violetl text-violet border-[var(--violet-b)]",
-    pulse: true,
+    color: "bg-tanl text-[#A0471A] border-[var(--tanb)]",
   },
   accepted: {
     label: "Candidature retenue",
-    icon: CheckCircle2,
-    color: "bg-okl text-ok border-[var(--ok-b)]",
+    color: "bg-okl text-[#0A8A5A] border-[var(--okb)]",
   },
   rejected: {
     label: "Non retenue",
-    icon: XCircle,
-    color: "bg-errl text-err border-[var(--err-b)]",
+    color: "bg-card2 text-ink3 border-border",
   },
 };
 
 export function ApplicationStatusPill({ status }: ApplicationStatusPillProps) {
   const config = STATUS_CONFIG[status] || STATUS_CONFIG.new;
-  const Icon = config.icon;
 
   return (
     <div
-      className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-semibold border rounded-full ${config.color}`}
+      className={`inline-flex items-center px-2.5 py-[3px] text-[10px] font-semibold border border-solid rounded-full font-sans ${config.color}`}
     >
-      {config.pulse && (
-        <span className="relative flex h-2 w-2">
-          <span className="absolute inline-flex h-full w-full animate-status-pulse rounded-full bg-violet opacity-75"></span>
-          <span className="relative inline-flex rounded-full h-2 w-2 bg-violet"></span>
-        </span>
-      )}
-      {!config.pulse && <Icon className="h-3 w-3 flex-shrink-0" strokeWidth={2.5} />}
-      <span>{config.label}</span>
+      {config.label}
     </div>
   );
 }
+

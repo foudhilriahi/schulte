@@ -8,6 +8,8 @@ router.use(rateLimiter(180, 1 * 60 * 1000));
 
 router.get('/', authenticate, NotificationsController.getMyNotifications);
 router.get('/unread-count', authenticate, NotificationsController.getUnreadCount);
+router.get('/vapid-public-key', authenticate, NotificationsController.getVapidPublicKey);
+router.post('/subscribe', authenticate, NotificationsController.subscribe);
 router.patch('/mark-all-read', authenticate, NotificationsController.markAllRead);
 router.delete('/clear-all', authenticate, NotificationsController.clearAll);
 router.patch('/:id/read', authenticate, NotificationsController.markOneRead);

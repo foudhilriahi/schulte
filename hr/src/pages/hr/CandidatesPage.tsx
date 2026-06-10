@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { useAuthStore } from '@/store/authStore'
 import DashboardLayout from '@/components/hr/DashboardLayout'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -82,7 +83,7 @@ const CandidatesPage = () => {
       <Card className="rounded-md shadow-card">
         <CardHeader>
           <div className="flex items-center justify-between gap-3">
-            <CardTitle className="text-base">Tous les candidats</CardTitle>
+            <CardTitle className="text-base">Candidats · {useAuthStore.getState().user?.site || ''}</CardTitle>
             <p className="text-[11px] text-ink3">
               {applications.length} candidat{applications.length > 1 ? 's' : ''}
             </p>

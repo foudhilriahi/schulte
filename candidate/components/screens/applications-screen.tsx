@@ -1,47 +1,47 @@
 'use client'
 
-
 import { ApplicationCard } from '@/components/application-card'
 import { useMyApplications } from '@/hooks/useApplications'
 import type { Application } from '@/lib/types'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Card, CardContent } from '@/components/ui/card'
 import { EmptyJourneyState } from '@/components/empty-journey-state'
-
-interface ApplicationsScreenProps {
-  onSelectApplication: (app: Application) => void
-}
+import { TopBar } from '@/components/topbar'
 
 function ApplicationSkeleton() {
   return (
-    <Card>
-      <CardContent className="p-4">
-        <div className="flex items-center gap-2 mb-2">
-          <Skeleton className="h-5 w-20 rounded-full" />
-          <Skeleton className="h-5 w-24 rounded-full" />
-        </div>
-        <Skeleton className="h-5 w-3/4 mb-2" />
-        <Skeleton className="h-4 w-32" />
-      </CardContent>
-    </Card>
+    <div className="bg-card border border-solid border-border rounded-xl p-4 animate-pulse select-none">
+      <div className="flex items-center justify-between mb-2">
+        <Skeleton className="h-5 w-20 rounded-full bg-card2" />
+        <Skeleton className="h-5 w-24 rounded-full bg-card2" />
+      </div>
+      <Skeleton className="h-5 w-3/4 mb-3 bg-card2" />
+      <Skeleton className="h-4 w-32 bg-card2" />
+    </div>
   )
+}
+
+interface ApplicationsScreenProps {
+  onSelectApplication: (app: Application) => void
 }
 
 export function ApplicationsScreen({ onSelectApplication }: ApplicationsScreenProps) {
   const { data: applications = [], isLoading: loading } = useMyApplications()
 
   return (
-    <div className="flex flex-col min-h-screen pb-20">
-      <header className="sticky top-0 bg-background/95 backdrop-blur-sm border-b border-border z-40 safe-area-pt">
-        <div className="px-4 py-4">
-          <h1 className="text-xl font-semibold text-foreground">Mes candidatures</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Suivez l'avancement de vos candidatures
-          </p>
-        </div>
-      </header>
+    <div className="flex flex-col min-h-screen bg-page pt-[52px] pb-[calc(58px+env(safe-area-inset-bottom))] select-none">
+      {/* Reusable Fixed TopBar */}
+      <TopBar />
 
-      <main className="flex-1 px-4 py-4">
+      <div className="px-4 py-4 select-none">
+        <h1 className="text-[20px] font-semibold tracking-[-0.02em] text-ink leading-tight">
+          Mes candidatures
+        </h1>
+        <p className="text-xs text-ink4 mt-0.5">
+          Suivez l'avancement de vos candidatures
+        </p>
+      </div>
+
+      <main className="flex-1 px-4 py-2 select-none animate-slide-up-fade">
         <div className="space-y-3">
           {loading ? (
             <>
@@ -65,3 +65,4 @@ export function ApplicationsScreen({ onSelectApplication }: ApplicationsScreenPr
     </div>
   )
 }
+

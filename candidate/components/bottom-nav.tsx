@@ -2,11 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect } from "react";
 import { Home, FileText, Bell, User } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useNotificationStore } from "@/store/notifications";
-import { useAuthStore } from "@/store/auth";
 
 const navItems = [
   { href: "/", icon: Home, label: "Accueil" },
@@ -17,17 +14,15 @@ const navItems = [
 
 export function BottomNav() {
   const pathname = usePathname();
-  const unreadCount = useNotificationStore((s) => s.unreadCount);
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
-
-  useEffect(() => {
-    if (!isAuthenticated) return;
-    useNotificationStore.getState().fetchUnreadCount();
-  }, [isAuthenticated]);
 
   return (
-    <nav className="sticky bottom-0 left-0 right-0 bg-card border-t border-border z-50 safe-area-pb">
-      <div className="flex items-center justify-around h-[58px] max-w-lg mx-auto">
+    <nav 
+      className="fixed bottom-0 left-0 right-0 h-[calc(58px+env(safe-area-inset-bottom))] bg-card border-t border-solid border-border z-50 shadow-[0_-2px_20px_rgba(15,13,28,0.10)]"
+      style={{
+        paddingBottom: "env(safe-area-inset-bottom)"
+      }}
+    >
+      <div className="flex items-center justify-around h-full max-w-lg mx-auto">
         {navItems.map((item) => {
           const isActive =
             pathname === item.href ||
@@ -38,29 +33,21 @@ export function BottomNav() {
             <Link
               key={item.href}
               href={item.href}
-              className={cn(
-                "relative flex flex-col items-center justify-center gap-1 min-w-[64px] min-h-[44px] px-3 py-2 transition-transform active:scale-[0.88] touch-manipulation",
-                isActive ? "text-violet" : "text-ink4",
-              )}
+              className="flex-1 flex flex-col items-center justify-center gap-[3px] pt-2 pb-1 transition-transform duration-100 active:scale-[0.97] touch-manipulation select-none"
+              style={{ WebkitTapHighlightColor: "transparent" }}
             >
-              <div className="relative">
-                <Icon className="h-5 w-5" strokeWidth={isActive ? 2.5 : 2} />
-                {item.label === "Notifications" && unreadCount > 0 && (
-                  <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-coral border-2 border-card" />
-                )}
+              <div className={cn(
+                "w-5 h-5 flex items-center justify-center transition-colors duration-100",
+                isActive ? "text-v" : "text-ink4"
+              )}>
+                <Icon size={20} />
               </div>
-              <span
-                className={cn(
-                  "text-[10px] font-semibold",
-                  isActive ? "text-violet" : "text-ink4",
-                )}
-              >
+              <span className={cn(
+                "text-[10px] font-semibold transition-colors duration-100",
+                isActive ? "text-v" : "text-ink4"
+              )}>
                 {item.label}
               </span>
-              
-              {isActive && (
-                <span className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 h-[4px] w-[4px] rounded-full bg-violet" />
-              )}
             </Link>
           );
         })}
@@ -68,3 +55,4 @@ export function BottomNav() {
     </nav>
   );
 }
+

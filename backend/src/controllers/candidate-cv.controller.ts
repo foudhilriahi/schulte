@@ -33,6 +33,7 @@ const tunisianCities = new Set([
   "Tozeur",
   "Kébili",
   "Gafsa",
+  "Bouarada",
 ]);
 
 const degreeOptions = new Set([
@@ -47,12 +48,13 @@ const degreeOptions = new Set([
   "Autre",
 ]);
 
-const namePattern = /^[A-Za-zÀ-ÿ'\-\s]{2,80}$/;
+const namePattern = /^[A-Za-zÀ-ÿ'.\-\s]{2,80}$/;
 const phonePattern = /^\+?[0-9\s\-()]{8,20}$/;
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-const textPattern = /^[A-Za-zÀ-ÿ0-9'.,\-\s\n\r:;?!()]{2,2000}$/;
+const textPattern = /^[\s\S]{2,2000}$/;
 const linkPattern = /^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)$/;
+const monthPattern = /^\d{4}-(0[1-9]|1[0-2])$/;
 
 const isValidString = (value: unknown, minLength = 1, maxLength = 200, pattern?: RegExp) => {
   if (typeof value !== "string") return false;
@@ -60,6 +62,46 @@ const isValidString = (value: unknown, minLength = 1, maxLength = 200, pattern?:
   if (trimmed.length < minLength || trimmed.length > maxLength) return false;
   if (pattern && !pattern.test(trimmed)) return false;
   return true;
+};
+
+const monthToDate = (value: unknown): Date | null => {
+  if (typeof value !== "string" || !monthPattern.test(value.trim())) return null;
+  const parsed = new Date(`${value.trim()}-01T00:00:00`);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+};
+
+const formatMonth = (value: string) => {
+  const parsed = monthToDate(value);
+  if (!parsed) return "";
+  const label = parsed.toLocaleDateString("fr-FR", { month: "short", year: "numeric" });
+  return label.charAt(0).toUpperCase() + label.slice(1);
+};
+
+const buildExperienceDuration = (exp: Record<string, any>): string => {
+  const start = formatMonth(typeof exp.startDate === "string" ? exp.startDate : "");
+  const end = exp.isCurrent ? "Present" : formatMonth(typeof exp.endDate === "string" ? exp.endDate : "");
+  if (start && end) return `${start} - ${end}`;
+  if (start && exp.isCurrent) return `${start} - Present`;
+  if (typeof exp.duration === "string" && exp.duration.trim().length > 0) return exp.duration.trim();
+  return "";
+};
+
+const normalizeExperienceEntries = (experience: unknown) => {
+  if (!Array.isArray(experience)) return [];
+  return experience.map((entry) => {
+    if (!entry || typeof entry !== "object") return entry;
+    const normalized = { ...(entry as Record<string, any>) };
+    normalized.duration = buildExperienceDuration(normalized);
+    return normalized;
+  });
+};
+
+const normalizeGeneratedCvData = (formData: any) => {
+  if (!formData || typeof formData !== "object") return formData;
+  return {
+    ...formData,
+    experience: normalizeExperienceEntries(formData.experience),
+  };
 };
 
 const validateGeneratedCvData = (formData: any): string | null => {
@@ -86,7 +128,20 @@ const validateGeneratedCvData = (formData: any): string | null => {
       if (!exp || typeof exp !== "object") return "Experience invalide";
       if (!isValidString(exp.title, 2, 100)) return "Titre de poste invalide";
       if (!isValidString(exp.company, 2, 150)) return "Nom d'entreprise invalide";
-      if (!isValidString(exp.duration, 2, 100)) return "Duree invalide";
+      const startDate = typeof exp.startDate === "string" ? exp.startDate.trim() : "";
+      const endDate = typeof exp.endDate === "string" ? exp.endDate.trim() : "";
+      const isCurrent = exp.isCurrent === true;
+
+      if (startDate || endDate || isCurrent) {
+        const start = monthToDate(startDate);
+        if (!start) return "Date de debut d'experience invalide (format attendu: AAAA-MM)";
+        if (!isCurrent) {
+          const end = monthToDate(endDate);
+          if (!end) return "Date de fin d'experience invalide (format attendu: AAAA-MM)";
+          if (end.getTime() < start.getTime()) return "La date de fin doit etre posterieure a la date de debut";
+        }
+      }
+      // duration is optional — built by the frontend from dates, skip strict check
       if (exp.description && !isValidString(exp.description, 2, 1000, textPattern)) return "Description d'experience invalide (caracteres non autorises ou trop longue)";
     }
   }
@@ -180,7 +235,8 @@ export class CandidateCVController {
         return;
       }
 
-      const validationError = validateGeneratedCvData(formData);
+      const normalizedFormData = normalizeGeneratedCvData(formData);
+      const validationError = validateGeneratedCvData(normalizedFormData);
       if (validationError) {
         res.status(400).json({ error: validationError });
         return;
@@ -191,8 +247,8 @@ export class CandidateCVController {
         name: typeof name === "string" && name.trim() ? name.trim() : "Generated CV",
         type: "generated",
         source: "profile_generated",
-        formData,
-        cvText: CVTextExtractor.assembleFromFormData(formData),
+        formData: normalizedFormData,
+        cvText: CVTextExtractor.assembleFromFormData(normalizedFormData),
         cvTemplate: toTemplate(template),
         isDefault: typeof isDefault === "boolean" ? isDefault : undefined,
       });

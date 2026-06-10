@@ -53,9 +53,9 @@ export function GlobalNetworkLoader() {
 
   return (
     <div className="pointer-events-none fixed inset-0 z-[120] flex items-center justify-center">
-      <div className="flex items-center gap-2 rounded-full border border-border bg-card/95 px-4 py-2 shadow-lg backdrop-blur-sm">
-        <Loader2 className="h-4 w-4 animate-spin text-primary" />
-        <span className="text-xs font-medium text-foreground">Chargement...</span>
+      <div className="flex items-center gap-2 rounded-full border border-border bg-card/95 px-4 py-2 shadow-[0_1px_3px_rgba(15,13,28,0.05)] backdrop-blur-sm">
+        <Loader2 className="h-4 w-4 animate-spin text-v" />
+        <span className="text-[12px] font-medium text-ink">Chargement...</span>
       </div>
     </div>
   );

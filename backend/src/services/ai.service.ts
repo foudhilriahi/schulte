@@ -386,8 +386,27 @@ export class CVTextExtractor {
   static assembleFromFormData(form: Record<string, any>): string {
     if (!form) return '';
     const parts: string[] = [];
+    const monthPattern = /^\d{4}-(0[1-9]|1[0-2])$/;
 
     const get = (...keys: string[]) => keys.reduce<any>((o, k) => o?.[k], form);
+    const fmtMonth = (value?: string) => {
+      if (!value || !monthPattern.test(value)) return "";
+      const label = new Date(`${value}-01T00:00:00`).toLocaleDateString("fr-FR", {
+        month: "short",
+        year: "numeric",
+      });
+      return label.charAt(0).toUpperCase() + label.slice(1);
+    };
+    const experienceDuration = (entry: any) => {
+      const start = fmtMonth(entry?.startDate);
+      const end = entry?.isCurrent ? "Present" : fmtMonth(entry?.endDate);
+      if (start && end) return `${start} - ${end}`;
+      if (start && entry?.isCurrent) return `${start} - Present`;
+      if (typeof entry?.duration === "string" && entry.duration.trim().length > 0) {
+        return entry.duration.trim();
+      }
+      return "Non précisée";
+    };
 
     const name  = get('name')  ?? get('personal', 'name') ?? 'Candidat Anonyme';
     parts.push(`# ${name}\n`);
@@ -413,7 +432,7 @@ export class CVTextExtractor {
       parts.push('\n## Expérience Professionnelle');
       exp.forEach((e: any) => {
         parts.push(`### ${e.title ?? 'Poste'} chez ${e.company ?? 'Entreprise'}`);
-        parts.push(`*Durée : ${e.duration ?? 'Non précisée'}*`);
+        parts.push(`*Durée : ${experienceDuration(e)}*`);
         if (e.description) {
           parts.push(`**Description :**\n${e.description}`);
         }

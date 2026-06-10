@@ -13,12 +13,40 @@ export class AuthController {
 
       const existing = await UserRepository.findByEmail(email);
       if (existing) {
+        // If account exists but email is NOT verified yet — treat as a re-registration attempt:
+        // refresh the verification code and let them proceed to the verify screen.
+        if (!existing.emailVerified) {
+          const verifyCode = crypto.randomInt(100000, 1000000).toString();
+          const verifyTokenHash = crypto.createHash('sha256').update(verifyCode).digest('hex');
+          const verifyTokenExpiry = new Date(Date.now() + 15 * 60 * 1000);
+
+          await UserRepository.update(existing.id, {
+            verifyToken: verifyTokenHash,
+            verifyTokenExpiry,
+          });
+
+          try {
+            await sendVerificationEmail(existing.email || '', existing.name, verifyCode);
+            logger.info(`Re-sent verification code to unverified account: ${existing.email}`);
+          } catch (emailError) {
+            logger.error('Failed to resend verification email on re-register:', emailError);
+          }
+
+          res.status(200).json({
+            message: 'Un nouveau code de vérification a été envoyé à votre adresse email.',
+            userId: existing.id,
+            email: existing.email,
+          });
+          return;
+        }
+
+        // Account exists and is already verified — genuine duplicate
         res.status(409).json({ error: 'E-mail deja enregistre' });
         return;
       }
 
       const existingPhone = await UserRepository.findByPhone(phone);
-      if (existingPhone) {
+      if (existingPhone && existingPhone.emailVerified) {
         res.status(409).json({ error: 'Numero de telephone deja enregistre' });
         return;
       }

@@ -61,6 +61,8 @@ out/
 .nuxt
 dist/
 build/
+!candidate/app/(main)/profile/cv/build/
+!candidate/app/(main)/profile/cv/build/page.tsx
 
 # Gatsby / Storybook outputs
 .storybook-out

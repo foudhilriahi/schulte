@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { use } from "react";
 import { toast } from "sonner";
 import { useRouterWithLoader } from "@/hooks/use-router-with-loader";
+import { messages } from "@/lib/messages";
 
 export default function DeprecatedManualFormPage({
   params,
@@ -14,7 +15,7 @@ export default function DeprecatedManualFormPage({
   const { jobId } = use(params);
 
   useEffect(() => {
-    toast.info("Manual apply form has moved. Please select a CV from your library.");
+    toast.info(messages.apply.movedToLibrary);
     router.replace(`/apply/${jobId}`);
   }, [jobId, router]);
 

@@ -1,20 +1,18 @@
 'use client'
 
 import type { Application } from '@/lib/types'
-import { Badge } from '@/components/ui/badge'
-import { Card, CardContent } from '@/components/ui/card'
 import { ChevronRight } from 'lucide-react'
 import { ApplicationStatusPill } from './application-status-pill'
+import { SiteBadge } from './job-card'
+import { MatchScoreGauge } from './match-score-gauge'
 
 interface ApplicationCardProps {
   application: Application
   onClick: () => void
 }
+
 export function ApplicationCard({ application, onClick }: ApplicationCardProps) {
-  const city = application.offer?.site || 'Zaghouan';
-  const cityColor = city === 'Bouarada'
-    ? 'bg-boul border-[var(--bou-b)] text-primary'
-    : 'bg-zagl border-[var(--zag-b)] text-ok'
+  const city = application.offer?.site || 'Zaghouan'
   const appliedAt = application.appliedAt || application.createdAt
   const sentDate = new Date(appliedAt)
   const sentDateLabel = !isNaN(sentDate.getTime())
@@ -22,27 +20,40 @@ export function ApplicationCard({ application, onClick }: ApplicationCardProps) 
     : 'date indisponible'
 
   return (
-    <Card 
-      className="cursor-pointer transition-[transform,border-color,box-shadow] duration-200 ease-[cubic-bezier(.34,1.56,.64,1)] touch-manipulation hover:-translate-y-[2px] hover:border-[var(--border2)] hover:shadow-hover"
+    <div
       onClick={onClick}
+      className="relative bg-card border border-solid border-border rounded-xl overflow-hidden active:scale-[0.98] transition-transform duration-[120ms] cursor-pointer shadow-[0_1px_3px_rgba(15,13,28,0.05)] select-none touch-manipulation"
+      style={{ WebkitTapHighlightColor: 'transparent' }}
     >
-      <CardContent className="p-4">
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-2 flex-wrap">
-              <Badge className={cityColor}>{city}</Badge>
-              <ApplicationStatusPill status={application.status} />
-            </div>
-            <h3 className="font-bold text-[13px] tracking-[-0.01em] text-ink line-clamp-1">
-              {application.offer?.title || 'Offre inconnue'}
-            </h3>
-            <p className="text-[10px] font-mono text-ink4 mt-1">
-              Candidature envoyee le {sentDateLabel}
-            </p>
-          </div>
-          <ChevronRight className="h-5 w-5 text-ink4 flex-shrink-0" />
+      {/* Site identity bar — left edge, always visible */}
+      <div className={`absolute left-0 top-0 bottom-0 w-[3.5px] ${city === 'Bouarada' ? 'bg-bou' : 'bg-zag'}`} />
+
+      <div className="pl-4 pr-4 pt-3.5 pb-3">
+        {/* Top row */}
+        <div className="flex items-center justify-between mb-2">
+          <SiteBadge site={city} />
+          <ApplicationStatusPill status={application.status} />
         </div>
-      </CardContent>
-    </Card>
+
+        {/* Title */}
+        <h3 className="text-[15px] font-semibold text-ink mb-2 leading-snug truncate">
+          {application.offer?.title || 'Offre inconnue'}
+        </h3>
+
+        {/* Bottom row */}
+        <div className="flex items-center justify-between">
+          <span className="font-mono text-[10px] text-ink4">
+            Envoyé le {sentDateLabel}
+          </span>
+          <div className="flex items-center gap-2">
+            {application.aiScore !== undefined && application.aiScore !== null && (
+              <MatchScoreGauge score={application.aiScore} size={38} />
+            )}
+            <ChevronRight size={14} className="text-ink4 flex-shrink-0" />
+          </div>
+        </div>
+      </div>
+    </div>
   )
 }
+

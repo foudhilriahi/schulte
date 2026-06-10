@@ -73,4 +73,11 @@ router.post(
   ApplicationsController.analyse,
 );
 
+router.get(
+  "/:id/cv",
+  authenticate,
+  requireRole("HR", "ADMIN"),
+  ApplicationsController.downloadCV,
+);
+
 export default router;

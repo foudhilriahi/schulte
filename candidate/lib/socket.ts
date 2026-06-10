@@ -1,4 +1,3 @@
-// ✅ PRODUCTION-READY SOCKET.IO CLIENT
 import { io, Socket } from 'socket.io-client';
 
 // Use correct backend URL with fallback
@@ -13,7 +12,7 @@ class SocketService {
   connect(token: string) {
     // Don't reconnect if already connected or connecting
     if (this.socket?.connected || this.isConnecting) {
-      console.log('✅ Socket already connected or connecting');
+      console.log('Socket already connected or connecting');
       return;
     }
 
@@ -25,7 +24,7 @@ class SocketService {
 
     this.isConnecting = true;
     
-    console.log('🔄 Connecting to WebSocket...', URL);
+    console.log('Connecting to WebSocket...', URL);
     
     this.socket = io(URL, {
       auth: { token },
@@ -41,18 +40,18 @@ class SocketService {
     this.socket.on('connect', () => {
       this.reconnectAttempts = 0;
       this.isConnecting = false;
-      console.log('✅ WebSocket Connected:', this.socket?.id);
+      console.log('WebSocket connected:', this.socket?.id);
     });
 
     this.socket.on('disconnect', (reason) => {
       this.isConnecting = false;
-      console.log('🔴 WebSocket Disconnected:', reason);
+      console.log('WebSocket disconnected:', reason);
       
       // Auto-reconnect for certain disconnect reasons
       if (reason === 'io server disconnect' || reason === 'transport close') {
         setTimeout(() => {
           if (token && !this.socket?.connected) {
-            console.log('🔄 Auto-reconnecting...');
+            console.log('Auto-reconnecting...');
             this.connect(token);
           }
         }, 3000);
@@ -62,10 +61,10 @@ class SocketService {
     this.socket.on('connect_error', (error) => {
       this.reconnectAttempts++;
       this.isConnecting = false;
-      console.error('❌ WebSocket Connection Error:', error.message);
+      console.error('WebSocket connection error:', error.message);
       
       if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-        console.error('❌ Max reconnection attempts reached. Will retry in 30 seconds...');
+        console.error('Max reconnection attempts reached. Will retry in 30 seconds...');
         setTimeout(() => {
           this.reconnectAttempts = 0;
           if (token) this.connect(token);
@@ -74,19 +73,19 @@ class SocketService {
     });
 
     this.socket.on('error', (error) => {
-      console.error('❌ WebSocket Error:', error);
+      console.error('WebSocket error:', error);
     });
 
     // Add authentication error handler
     this.socket.on('auth_error', (error) => {
-      console.error('❌ WebSocket Auth Error:', error);
+      console.error('WebSocket auth error:', error);
       this.disconnect();
     });
   }
 
   disconnect() {
     if (this.socket) {
-      console.log('🔌 Disconnecting WebSocket...');
+      console.log('Disconnecting WebSocket...');
       this.socket.disconnect();
       this.socket = null;
       this.reconnectAttempts = 0;

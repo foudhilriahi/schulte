@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useAuthStore } from "@/store/authStore";
 import DashboardLayout from "@/components/hr/DashboardLayout";
 import { api } from "@/lib/axios";
 import SiteWorkloadHeatline from "@/components/hr/SiteWorkloadHeatline";
@@ -52,7 +53,7 @@ const DashboardPage = () => {
   };
 
   return (
-    <DashboardLayout title="Vue d'ensemble">
+    <DashboardLayout title={`Vue d'ensemble · ${useAuthStore.getState().user?.site || ''}`}>
       <div className="overflow-hidden rounded-xl border border-border bg-card">
         <div className="flex items-center justify-between border-b border-border bg-card2 px-4 py-3">
           <p className="text-[11px] font-semibold text-ink">Activité récente</p>

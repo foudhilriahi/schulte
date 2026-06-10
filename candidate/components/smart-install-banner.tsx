@@ -3,6 +3,9 @@
 import { useEffect, useState } from "react";
 import { Download, X, Share } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { BottomSheetConfirm } from "@/components/bottom-sheet-confirm";
+import { messages } from "@/lib/messages";
+import { toast } from "sonner";
 
 type InstallOutcome = "accepted" | "dismissed";
 
@@ -38,6 +41,7 @@ export function SmartInstallBanner() {
   const [mode, setMode] = useState<BrowserInstallMode>("unsupported");
   const [deferredPrompt, setDeferredPrompt] =
     useState<BeforeInstallPromptEvent | null>(null);
+  const [showCopyConfirm, setShowCopyConfirm] = useState(false);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -94,91 +98,101 @@ export function SmartInstallBanner() {
   const copyUrl = async () => {
     try {
       await navigator.clipboard.writeText(window.location.href);
-      alert("Lien copié. Ouvrez Safari et collez-le pour installer.");
+      toast.success(messages.pwa.copied);
+      setShowCopyConfirm(false);
     } catch {
-      alert("Copiez l'URL et ouvrez-la dans Safari.");
+      toast.info(messages.pwa.copyFallback);
+      setShowCopyConfirm(false);
     }
   };
 
   if (!visible) return null;
 
   return (
-    <div className="fixed bottom-20 left-4 right-4 z-50 animate-slide-up-sheet">
-      <div className="rounded-2xl border border-[var(--bou-b)] bg-boul/95 backdrop-blur-md px-4 py-4 shadow-lg">
-        <div className="flex items-start gap-3">
-          <div className="h-10 w-10 shrink-0 rounded-full bg-[var(--bou)] flex items-center justify-center text-white mt-1 shadow-sm">
-            <Download className="h-5 w-5" />
-          </div>
-          
-          <div className="min-w-0 flex-1">
-            <h3 className="text-[15px] font-bold text-foreground">Installer Schulte Mobile</h3>
+    <>
+      <div className="fixed bottom-20 left-4 right-4 z-50 animate-slide-up-sheet">
+        <div className="rounded-xl border border-[var(--border)] bg-card/95 backdrop-blur-md px-4 py-4 shadow-[0_1px_3px_rgba(15,13,28,0.05)]">
+          <div className="flex items-start gap-3">
+            <Download className="h-5 w-5 text-bou mt-1" />
             
-            {mode === "native-prompt" && (
-              <>
-                <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
-                  Ajoutez l'application à votre écran d'accueil pour une expérience plein écran, fluide et avec notifications.
-                </p>
-                <div className="mt-3 flex items-center gap-2">
+            <div className="min-w-0 flex-1">
+              <h3 className="text-[15px] font-semibold text-ink">Installer Schulte Mobile</h3>
+              
+              {mode === "native-prompt" && (
+                <>
+                  <p className="mt-1 text-[12px] text-ink3 leading-relaxed">
+                    Ajoutez l'application à votre écran d'accueil pour une expérience plein écran, fluide et avec notifications.
+                  </p>
+                  <div className="mt-3 flex items-center gap-2">
+                    <Button
+                      type="button"
+                      onClick={handleInstallNow}
+                      disabled={!deferredPrompt}
+                      className="h-8 px-4 text-[12px]"
+                    >
+                      Installer maintenant
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      onClick={handleDismiss}
+                      className="h-8 px-3 text-[12px] text-ink3"
+                    >
+                      Plus tard
+                    </Button>
+                  </div>
+                </>
+              )}
+
+              {mode === "ios-safari" && (
+                <>
+                  <p className="mt-1 text-[12px] text-ink3 leading-relaxed">
+                    Pour installer, touchez l'icône Partager ci-dessous puis choisissez <strong className="text-ink font-semibold">Sur l'écran d'accueil</strong>.
+                  </p>
+                  <div className="mt-3 flex items-center justify-center gap-2 rounded-xl bg-card2/80 py-2 border border-border">
+                    <span className="text-[11px] text-ink3">1. Touchez</span>
+                    <Share className="h-4 w-4 text-bou" />
+                    <span className="text-[11px] text-ink3 ml-1">2. Sélectionnez [+]</span>
+                  </div>
+                </>
+              )}
+
+              {mode === "ios-other" && (
+                <>
+                  <p className="mt-1 text-[12px] text-ink3 leading-relaxed">
+                    Votre navigateur actuel (Chrome/Firefox) ne permet pas l'installation sur iOS.
+                  </p>
                   <Button
                     type="button"
-                    onClick={handleInstallNow}
-                    disabled={!deferredPrompt}
-                    className="h-8 rounded-full px-4 text-xs font-semibold shadow-sm"
+                    variant="outline"
+                    onClick={() => setShowCopyConfirm(true)}
+                    className="mt-3 h-8 px-4 text-[12px] w-full"
                   >
-                    Installer maintenant
+                    Copier le lien pour Safari
                   </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    onClick={handleDismiss}
-                    className="h-8 rounded-full px-3 text-xs text-muted-foreground"
-                  >
-                    Plus tard
-                  </Button>
-                </div>
-              </>
-            )}
-
-            {mode === "ios-safari" && (
-              <>
-                <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
-                  Pour installer, touchez l'icône Partager ci-dessous puis choisissez <strong className="text-foreground font-semibold">Sur l'écran d'accueil</strong>.
-                </p>
-                <div className="mt-3 flex items-center justify-center gap-2 rounded-xl bg-card/80 py-2 border border-border">
-                  <span className="text-xs text-ink3">1. Touchez</span>
-                  <Share className="h-4 w-4 text-bou" />
-                  <span className="text-xs text-ink3 ml-1">2. Sélectionnez [+]</span>
-                </div>
-              </>
-            )}
-
-            {mode === "ios-other" && (
-              <>
-                <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
-                  Votre navigateur actuel (Chrome/Firefox) ne permet pas l'installation sur iOS.
-                </p>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={copyUrl}
-                  className="mt-3 h-8 rounded-full px-4 text-xs w-full bg-card"
-                >
-                  Copier le lien pour Safari
-                </Button>
-              </>
-            )}
+                </>
+              )}
+            </div>
+            
+            <button
+              type="button"
+              aria-label="Fermer le rappel d'installation"
+              className="shrink-0 rounded-lg p-1.5 text-ink3 hover:bg-card2 transition-colors active:scale-95"
+              onClick={handleDismiss}
+            >
+              <X className="h-4 w-4" />
+            </button>
           </div>
-          
-          <button
-            type="button"
-            aria-label="Fermer le rappel d'installation"
-            className="shrink-0 rounded-full p-1.5 text-muted-foreground hover:bg-card2 transition-colors active:scale-95"
-            onClick={handleDismiss}
-          >
-            <X className="h-4 w-4" />
-          </button>
         </div>
       </div>
-    </div>
+      <BottomSheetConfirm
+        open={showCopyConfirm}
+        title={messages.pwa.copyTitle}
+        description={messages.pwa.copyDescription}
+        confirmLabel={messages.pwa.copyConfirm}
+        onClose={() => setShowCopyConfirm(false)}
+        onConfirm={copyUrl}
+      />
+    </>
   );
 }

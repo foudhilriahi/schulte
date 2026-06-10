@@ -10,6 +10,15 @@ import ScheduleInterviewModal from "./ScheduleInterviewModal";
 import { api } from "@/lib/axios";
 import { getApplicationAnalysisText } from "@/lib/applicationText";
 import { toast } from "sonner";
+import { AlertTriangle } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import type { KanbanStatus } from "@/data/hrMockData";
 import { useSocket } from "@/hooks/useSocket";
 
@@ -43,6 +52,14 @@ interface PendingSchedule {
   candidateName: string;
 }
 
+interface RevertingApp {
+  appId: string;
+  fromStatus: KanbanStatus;
+  toStatus: KanbanStatus;
+  candidateName: string;
+  jobTitle: string;
+}
+
 const KanbanBoard = () => {
   const [applications, setApplications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -64,7 +81,9 @@ const KanbanBoard = () => {
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
   const [pendingSchedule, setPendingSchedule] =
     useState<PendingSchedule | null>(null);
-  const { socket } = useSocket();
+  const [revertingApp, setRevertingApp] = useState<RevertingApp | null>(null);
+  const [revertSaving, setRevertSaving] = useState(false);
+  const { socket, socketVersion } = useSocket();
   const navigate = useNavigate();
 
   const fetchApplications = useCallback(() => {
@@ -123,14 +142,32 @@ const KanbanBoard = () => {
       fetchApplications();
     };
 
+    const onApplicationManualAnalysis = () => {
+      fetchApplications();
+    };
+
+    const onInterviewScheduled = () => {
+      fetchApplications();
+    };
+
+    const onApplicationStatusChanged = () => {
+      fetchApplications();
+    };
+
     socket.on("application:new", onApplicationNew);
     socket.on("application:analysed", onApplicationAnalysed);
+    socket.on("application:manual_analysis", onApplicationManualAnalysis);
+    socket.on("interview:scheduled", onInterviewScheduled);
+    socket.on("application:status_changed", onApplicationStatusChanged);
 
     return () => {
       socket.off("application:new", onApplicationNew);
       socket.off("application:analysed", onApplicationAnalysed);
+      socket.off("application:manual_analysis", onApplicationManualAnalysis);
+      socket.off("interview:scheduled", onInterviewScheduled);
+      socket.off("application:status_changed", onApplicationStatusChanged);
     };
-  }, [socket, fetchApplications]);
+  }, [socket, socketVersion, fetchApplications]);
 
   useEffect(() => {
     setSearchQuery(queryParam);
@@ -149,6 +186,70 @@ const KanbanBoard = () => {
       const fromStatus = source.droppableId as KanbanStatus;
       const toStatus = destination.droppableId as KanbanStatus;
 
+      // ── Strict real-life guards (client-side, backend also enforces) ──────
+      const draggedApp = applications.find((a) => a.id === draggableId);
+      const interview = draggedApp?.interview ?? null;
+      const interviewOutcome: string | null = interview?.outcome ?? null;
+      const interviewIsPending = !!interview && !interviewOutcome;
+      const interviewScheduledAt: Date | null = interview?.scheduledAt
+        ? new Date(interview.scheduledAt)
+        : null;
+      const interviewIsPastWithoutOutcome =
+        interviewIsPending && !!interviewScheduledAt && interviewScheduledAt < new Date();
+
+      // Final status lock — allow revert with confirmation
+      if (
+        (fromStatus === "accepted" || fromStatus === "rejected") &&
+        toStatus !== fromStatus
+      ) {
+        // Store pending revert and show dialog
+        setRevertingApp({
+          appId: draggableId,
+          fromStatus,
+          toStatus,
+          candidateName: draggedApp?.name || "Candidat",
+          jobTitle: draggedApp?.jobTitle || "",
+        });
+        // Don't move the card yet — wait for user to confirm
+        return;
+      }
+
+      // Interview pending → only "interview" column allowed
+      if (interviewIsPending && toStatus !== "interview") {
+        if (interviewIsPastWithoutOutcome) {
+          toast.error(
+            "L'entretien est passé sans résultat. Marquez le candidat absent avant de changer le statut.",
+          );
+        } else {
+          toast.error(
+            "Entretien en attente — renseignez le résultat avant de déplacer cette candidature.",
+          );
+        }
+        return;
+      }
+
+      // Outcome already set → lock to matching final column
+      if (interviewOutcome === "pass" && toStatus !== "accepted") {
+        toast.error("Résultat fixé (Retenu) — déplacez vers « Retenu » uniquement.");
+        return;
+      }
+      if (interviewOutcome === "fail" && toStatus !== "rejected") {
+        toast.error("Résultat fixé (Refusé) — déplacez vers « Non retenu » uniquement.");
+        return;
+      }
+      if (interviewOutcome === "no_show") {
+        const noShowCount = interview?.noShowCount ?? 0;
+        if (noShowCount >= 2 && toStatus !== "rejected") {
+          toast.error("2 absences enregistrées — candidature automatiquement rejetée.");
+          return;
+        }
+        if (noShowCount < 2 && toStatus !== "interview") {
+          toast.error("Absence enregistrée — statut verrouillé sur Convoqué jusqu'à replanification.");
+          return;
+        }
+      }
+      // ── End guards ────────────────────────────────────────────────────────
+
       // Optimistic visual update
       setApplications((prev) =>
         prev.map((a) =>
@@ -158,7 +259,6 @@ const KanbanBoard = () => {
 
       if (toStatus === "interview") {
         // Find candidate name for the modal title
-        const draggedApp = applications.find((a) => a.id === draggableId);
         const candidateName = draggedApp?.name || "Candidat";
 
         // Store pending schedule info and open modal — do NOT call api.patch yet
@@ -175,14 +275,16 @@ const KanbanBoard = () => {
           status: backendStatus,
         });
         toast.success("Enregistré.");
-      } catch {
+      } catch (error: any) {
         // Revert on failure
         setApplications((prev) =>
           prev.map((a) =>
             a.id === draggableId ? { ...a, status: fromStatus } : a,
           ),
         );
-        toast.error("Échec — annulé.");
+        const message =
+          error?.response?.data?.error || "Échec — annulé.";
+        toast.error(message);
         setSnapBackId(draggableId);
         setTimeout(() => setSnapBackId(null), 300);
       } finally {
@@ -219,6 +321,32 @@ const KanbanBoard = () => {
     setPendingSchedule(null);
     setScheduleModalOpen(false);
   }, [pendingSchedule, fetchApplications]);
+
+  /** Confirm revert from final status (accepted/rejected → earlier status) */
+  const confirmRevert = useCallback(async () => {
+    if (!revertingApp) return;
+    const { appId, fromStatus, toStatus, candidateName } = revertingApp;
+    setRevertSaving(true);
+    try {
+      const backendStatus = reverseStatusMap[toStatus];
+      await api.patch(`/applications/${appId}/status`, {
+        status: backendStatus,
+        allowRevert: true,
+      });
+      // Move card visually
+      setApplications((prev) =>
+        prev.map((a) => (a.id === appId ? { ...a, status: toStatus } : a)),
+      );
+      toast.success(`Décision annulée — ${candidateName} rétabli(e).`);
+      setRevertingApp(null);
+      fetchApplications();
+    } catch (err: any) {
+      const message = err?.response?.data?.error || "Échec — réessaie.";
+      toast.error(message);
+    } finally {
+      setRevertSaving(false);
+    }
+  }, [revertingApp, fetchApplications]);
 
   const handleCardClick = useCallback((candidate: any, e?: React.MouseEvent) => {
     if (e && (e.metaKey || e.ctrlKey)) {
@@ -317,8 +445,9 @@ const KanbanBoard = () => {
       toast.success(`${selectedIds.length} candidats mis à jour.`);
       setSelectedIds([]);
       fetchApplications();
-    } catch (err) {
-      toast.error("Erreur lors de l'action par lot.");
+    } catch (err: any) {
+      const message = err?.response?.data?.error || "Erreur lors de l'action par lot.";
+      toast.error(message);
       setApplications(oldApps);
     }
   };
@@ -352,8 +481,14 @@ const KanbanBoard = () => {
 
   useEffect(() => {
     if (!splitOpen || !selectedCandidate) return;
-    const stillVisible = filtered.some((c) => c.id === selectedCandidate.id);
-    if (!stillVisible) closeSplit();
+    const updated = filtered.find((c) => c.id === selectedCandidate.id);
+    if (!updated) {
+      closeSplit();
+      return;
+    }
+    if (updated !== selectedCandidate) {
+      setSelectedCandidate(updated);
+    }
   }, [filtered, splitOpen, selectedCandidate, closeSplit]);
 
   const getScoreColor = (score: number) => {
@@ -468,8 +603,111 @@ const KanbanBoard = () => {
         onClose={handleScheduleModalClose}
         applicationId={pendingSchedule?.appId || ""}
         candidateName={pendingSchedule?.candidateName || ""}
+        isReschedule={!!applications.find((a) => a.id === pendingSchedule?.appId)?.interview}
+        existingOutcome={
+          applications.find((a) => a.id === pendingSchedule?.appId)?.interview?.outcome ?? null
+        }
+        isPastWithoutOutcome={(() => {
+          const app = applications.find((a) => a.id === pendingSchedule?.appId);
+          const iv = app?.interview;
+          if (!iv || iv.outcome) return false;
+          const dt = iv.scheduledAt ? new Date(iv.scheduledAt) : null;
+          return !!dt && dt < new Date();
+        })()}
         onSuccess={handleScheduleSuccess}
       />
+
+      {/* ── Revert from final status dialog ─────────────────────────────── */}
+      <Dialog
+        open={!!revertingApp}
+        onOpenChange={(isOpen) => { if (!isOpen && !revertSaving) setRevertingApp(null); }}
+      >
+        <DialogContent className="sm:max-w-[440px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-ink">
+              <AlertTriangle className="h-4 w-4 text-warn shrink-0" />
+              Annuler la décision finale
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {/* Candidate info card */}
+            <div className="rounded-lg border border-border bg-card2 p-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-vl text-[13px] font-bold text-v">
+                  {revertingApp?.candidateName
+                    ? revertingApp.candidateName.split(" ").map((n) => n[0]).join("").slice(0, 2)
+                    : "?"}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[14px] font-semibold text-ink truncate">
+                    {revertingApp?.candidateName}
+                  </p>
+                  <p className="text-[11px] text-ink3 truncate">
+                    {revertingApp?.jobTitle}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Status transition */}
+            <div className="flex items-center justify-center gap-3">
+              <span className={`rounded-full border px-3 py-1.5 text-[12px] font-semibold ${
+                revertingApp?.fromStatus === "accepted"
+                  ? "border-ok/30 bg-ok/10 text-ok"
+                  : "border-err/30 bg-err/10 text-err"
+              }`}>
+                {revertingApp?.fromStatus === "accepted" ? "✓ Retenu" : "✗ Non retenu"}
+              </span>
+              <span className="text-ink3 text-sm">→</span>
+              <span className="rounded-full border border-border bg-card2 px-3 py-1.5 text-[12px] font-semibold text-ink3">
+                {revertingApp?.toStatus === "interview"
+                  ? "Convoqué"
+                  : revertingApp?.toStatus === "review"
+                  ? "En lecture"
+                  : "À trier"}
+              </span>
+            </div>
+
+            {/* Warning */}
+            <div className="rounded-md border border-warn/30 bg-warn/10 p-3 text-[12px] text-warn leading-relaxed">
+              <p className="font-semibold mb-1">⚠️ Attention</p>
+              <ul className="space-y-1 text-[11px] text-ink3">
+                <li>• Cette action annule la décision finale enregistrée.</li>
+                <li>• Un email sera envoyé au candidat pour l'informer du changement.</li>
+                <li>• L'historique de la décision sera conservé dans les logs.</li>
+              </ul>
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setRevertingApp(null)}
+              disabled={revertSaving}
+            >
+              Garder la décision
+            </Button>
+            <Button
+              onClick={confirmRevert}
+              disabled={revertSaving}
+              className="bg-warn text-white hover:bg-warn/90"
+            >
+              {revertSaving ? (
+                <span className="flex items-center gap-2">
+                  <svg className="animate-spin h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  </svg>
+                  Traitement...
+                </span>
+              ) : (
+                "Oui, annuler la décision"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
     </div>
   );

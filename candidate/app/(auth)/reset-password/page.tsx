@@ -27,7 +27,7 @@ function validate(values: ResetValues): ResetErrors {
   const errors: ResetErrors = {};
 
   if (values.password.length < 6) {
-    errors.password = 'Le mot de passe doit contenir au moins 6 caracteres';
+    errors.password = 'Le mot de passe doit contenir au moins 6 caractères';
   }
 
   if (values.password !== values.confirmPassword) {
@@ -39,7 +39,7 @@ function validate(values: ResetValues): ResetErrors {
 
 export default function ResetPasswordPage() {
   return (
-    <Suspense fallback={<div className="w-full text-center text-sm text-muted-foreground">Chargement...</div>}>
+    <Suspense fallback={<div className="w-full text-center text-[12px] text-ink3">Chargement...</div>}>
       <ResetPasswordContent />
     </Suspense>
   );
@@ -87,7 +87,7 @@ function ResetPasswordContent() {
         router.push('/login');
       }, 300);
     } catch (err: any) {
-      setSubmitError(err.response?.data?.error || 'Erreur lors de la reinitialisation');
+      setSubmitError(err.response?.data?.error || 'Erreur lors de la réinitialisation');
     } finally {
       setIsLoading(false);
     }
@@ -97,12 +97,12 @@ function ResetPasswordContent() {
     return (
       <div className="flex flex-col gap-6 w-full animate-in fade-in duration-200">
         <div className="flex flex-col items-center text-center">
-          <div className="w-16 h-16 bg-errl text-err rounded-full flex items-center justify-center mb-4 border border-[var(--err-b)]">
+          <div className="w-16 h-16 bg-errl text-err rounded-full flex items-center justify-center mb-4 border border-[var(--errb)]">
             <AlertCircle className="h-8 w-8" />
           </div>
-          <h1 className="text-2xl font-semibold tracking-tight">Lien invalide</h1>
-          <p className="text-sm text-muted-foreground mt-2 max-w-md">
-            Le lien de reinitialisation est invalide ou a expire.
+          <h1 className="text-[20px] font-semibold tracking-[-0.02em] text-ink">Lien invalide</h1>
+          <p className="text-[13px] text-ink3 mt-2 max-w-md">
+            Le lien de réinitialisation est invalide ou a expiré.
             Veuillez demander un nouveau lien.
           </p>
         </div>
@@ -117,7 +117,7 @@ function ResetPasswordContent() {
           <Button asChild variant="outline" className="w-full">
             <Link href="/login">
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Retour a la connexion
+              Retour à la connexion
             </Link>
           </Button>
         </div>
@@ -129,12 +129,12 @@ function ResetPasswordContent() {
     return (
       <div className="flex flex-col gap-6 w-full animate-in fade-in duration-200">
         <div className="flex flex-col items-center text-center">
-          <div className="w-16 h-16 bg-okl text-ok rounded-full flex items-center justify-center mb-4 border border-[var(--ok-b)]">
+          <div className="w-16 h-16 bg-okl text-ok rounded-full flex items-center justify-center mb-4 border border-[var(--okb)]">
             <CheckCircle2 className="h-8 w-8" />
           </div>
-          <h1 className="text-2xl font-semibold tracking-tight">Mot de passe reinitialise !</h1>
-          <p className="text-sm text-muted-foreground mt-2">
-            Votre mot de passe a ete mis a jour avec succes.
+          <h1 className="text-[20px] font-semibold tracking-[-0.02em] text-ink">Mot de passe réinitialisé</h1>
+          <p className="text-[13px] text-ink3 mt-2">
+            Votre mot de passe a été mis à jour.
             Vous pouvez maintenant vous connecter avec votre nouveau mot de passe.
           </p>
         </div>
@@ -151,9 +151,9 @@ function ResetPasswordContent() {
   return (
     <div className="flex flex-col gap-6 w-full animate-in fade-in duration-200">
       <div className="flex flex-col items-center text-center">
-        <h1 className="text-2xl font-semibold tracking-tight">Nouveau mot de passe</h1>
-        <p className="text-sm text-muted-foreground mt-2">
-          Choisissez un nouveau mot de passe securise pour votre compte
+        <h1 className="text-[20px] font-semibold tracking-[-0.02em] text-ink">Nouveau mot de passe</h1>
+        <p className="text-[13px] text-ink3 mt-2">
+          Choisissez un nouveau mot de passe sécurisé pour votre compte.
         </p>
       </div>
 
@@ -166,10 +166,10 @@ function ResetPasswordContent() {
             autoComplete="new-password"
             value={values.password}
             onChange={(event) => setValues((prev) => ({ ...prev, password: event.target.value }))}
-            className={`bg-background transition-shadow duration-300 focus-visible:ring-primary/50 ${errors.password ? 'border-err focus-visible:ring-destructive/50' : ''}`}
+            aria-invalid={!!errors.password}
           />
           {errors.password && (
-            <span className="text-xs text-err absolute -bottom-5 left-0">{errors.password}</span>
+            <span className="text-[11px] text-err absolute -bottom-5 left-0">{errors.password}</span>
           )}
         </div>
 
@@ -181,15 +181,15 @@ function ResetPasswordContent() {
             autoComplete="new-password"
             value={values.confirmPassword}
             onChange={(event) => setValues((prev) => ({ ...prev, confirmPassword: event.target.value }))}
-            className={`bg-background transition-shadow duration-300 focus-visible:ring-primary/50 ${errors.confirmPassword ? 'border-err focus-visible:ring-destructive/50' : ''}`}
+            aria-invalid={!!errors.confirmPassword}
           />
           {errors.confirmPassword && (
-            <span className="text-xs text-err absolute -bottom-5 left-0">{errors.confirmPassword}</span>
+            <span className="text-[11px] text-err absolute -bottom-5 left-0">{errors.confirmPassword}</span>
           )}
         </div>
 
         {submitError && (
-          <div className="rounded-md border border-[var(--err-b)] bg-errl px-3 py-2 text-sm text-err">
+          <div className="rounded-lg border border-[var(--errb)] bg-errl px-3 py-2 text-[12px] text-err">
             {submitError}
           </div>
         )}
@@ -197,21 +197,21 @@ function ResetPasswordContent() {
         <Button type="submit" className="w-full mt-6" disabled={isLoading}>
           {isLoading ? (
             <div className="flex items-center gap-2">
-              <svg className="animate-spin h-4 w-4 text-primary-foreground" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-              <span>Reinitialisation...</span>
+              <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+              <span>Réinitialisation...</span>
             </div>
           ) : (
             <>
               <Lock className="h-4 w-4 mr-2" />
-              Reinitialiser le mot de passe
+              Réinitialiser le mot de passe
             </>
           )}
         </Button>
       </form>
 
-      <div className="text-center text-sm text-muted-foreground">
+      <div className="text-center text-[12px] text-ink4">
         Vous vous souvenez de votre mot de passe ?{' '}
-        <Link href="/login" className="font-medium text-primary hover:underline">
+        <Link href="/login" className="font-medium text-v hover:underline">
           Se connecter
         </Link>
       </div>

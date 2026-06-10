@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useAuthStore } from '@/store/authStore'
 import DashboardLayout from '@/components/hr/DashboardLayout'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -95,7 +96,7 @@ const OffersPage = () => {
   })
 
   return (
-    <DashboardLayout title="Offres">
+    <DashboardLayout title={`Offres · ${useAuthStore.getState().user?.site || ''}`}>
       <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
         <div className="flex flex-wrap items-center gap-3">
           <p className="text-[12px] text-ink3">{filteredOffers.length} offre(s)</p>

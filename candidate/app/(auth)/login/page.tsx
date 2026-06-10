@@ -64,7 +64,7 @@ export default function LoginPage() {
 
       const { user, accessToken } = res.data;
       if (user.role !== 'CANDIDATE') {
-        setSubmitError('Acces refuse. Cette application est reservee aux candidats.');
+        setSubmitError('Accès refusé. Cette application est réservée aux candidats.');
         return;
       }
 
@@ -87,8 +87,8 @@ export default function LoginPage() {
   return (
     <div className="flex flex-col w-full animate-in fade-in duration-300">
       <div className="flex flex-col mb-4">
-        <h2 className="text-2xl font-bold tracking-tight text-ink">Bon retour</h2>
-        <p className="text-sm text-ink3 mt-1.5 leading-relaxed">
+        <h2 className="text-[20px] font-semibold tracking-[-0.02em] text-ink">Bon retour</h2>
+        <p className="text-[13px] text-ink3 mt-1.5 leading-relaxed">
           Accédez à votre espace candidat pour suivre vos candidatures.
         </p>
       </div>
@@ -106,18 +106,18 @@ export default function LoginPage() {
             autoCorrect="off"
             value={values.email}
             onChange={(event) => setValues((prev) => ({ ...prev, email: event.target.value }))}
-            className={`h-11 bg-card border-border transition-all duration-200 focus-visible:ring-[3px] focus-visible:ring-[var(--violet-b)] focus-visible:border-violet ${errors.email ? 'border-err focus-visible:ring-err/20' : ''}`}
+            aria-invalid={!!errors.email}
           />
           {errors.email && (
-            <span className="text-xs text-err absolute -bottom-5 left-0">{errors.email}</span>
+            <span className="text-[11px] text-err absolute -bottom-5 left-0">{errors.email}</span>
           )}
         </div>
 
         <div className="space-y-2 relative pt-2">
           <div className="flex items-center justify-between">
             <Label htmlFor="password">Mot de passe</Label>
-            <Link href="/forgot-password" className="text-xs font-medium text-primary hover:underline">
-              Mot de passe oublie ?
+            <Link href="/forgot-password" className="text-[11px] font-medium text-v hover:underline">
+              Mot de passe oublié ?
             </Link>
           </div>
           <Input
@@ -126,20 +126,20 @@ export default function LoginPage() {
             autoComplete="current-password"
             value={values.password}
             onChange={(event) => setValues((prev) => ({ ...prev, password: event.target.value }))}
-            className={`h-11 bg-card border-border transition-all duration-200 focus-visible:ring-[3px] focus-visible:ring-[var(--violet-b)] focus-visible:border-violet ${errors.password ? 'border-err focus-visible:ring-err/20' : ''}`}
+            aria-invalid={!!errors.password}
           />
           {errors.password && (
-            <span className="text-xs text-err absolute -bottom-5 left-0">{errors.password}</span>
+            <span className="text-[11px] text-err absolute -bottom-5 left-0">{errors.password}</span>
           )}
         </div>
 
         {submitError && (
-          <div className="rounded-md border border-[var(--err-b)] bg-errl px-3 py-2 text-sm text-err">
+          <div className="rounded-lg border border-solid border-[var(--errb)] bg-errl px-3 py-2 text-[12px] text-err">
             {submitError}
           </div>
         )}
 
-        <Button type="submit" className="w-full h-11 mt-6 rounded-xl font-bold transition-all active:scale-[0.97] shadow-sm" disabled={isLoading}>
+        <Button type="submit" className="w-full mt-6" disabled={isLoading}>
           {isLoading ? (
             <div className="flex items-center gap-2">
               <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
@@ -151,9 +151,9 @@ export default function LoginPage() {
         </Button>
       </form>
 
-      <div className="text-center text-sm text-ink4 mt-8">
+      <div className="text-center text-[12px] text-ink4 mt-8">
         Pas encore de compte ?{' '}
-        <Link href="/register" className="font-bold text-violet hover:underline decoration-2 underline-offset-4">
+        <Link href="/register" className="font-semibold text-v hover:underline decoration-2 underline-offset-4">
           S'inscrire
         </Link>
       </div>

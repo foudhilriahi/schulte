@@ -26,15 +26,37 @@ const OutcomeModal = ({
 }: OutcomeModalProps) => {
   const [loading, setLoading] = useState(false)
 
+  const buildIdempotencyKey = (outcome: 'pass' | 'fail' | 'no_show') => {
+    return `outcome:${interviewId}:${outcome}`
+  }
+
   const handleOutcome = async (outcome: 'pass' | 'fail' | 'no_show') => {
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      toast.error("Connexion internet indisponible. Vérifiez le réseau puis réessayez.")
+      return
+    }
+
     setLoading(true)
     try {
-      await api.patch(`/interviews/${interviewId}/outcome`, { outcome })
+      await api.patch(
+        `/interviews/${interviewId}/outcome`,
+        { outcome },
+        {
+          headers: {
+            'x-idempotency-key': buildIdempotencyKey(outcome),
+          },
+        },
+      )
       toast.success('Résultat enregistré.')
       onSuccess()
       onClose()
-    } catch {
-      toast.error("Erreur lors de l'enregistrement.")
+    } catch (error: any) {
+      const status = error?.response?.status
+      const errorMsg =
+        status === 409
+          ? "Une requête identique est déjà en cours. Patientez quelques secondes."
+          : error?.response?.data?.error || "Erreur lors de l'enregistrement."
+      toast.error(errorMsg)
     } finally {
       setLoading(false)
     }

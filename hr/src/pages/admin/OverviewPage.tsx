@@ -6,6 +6,13 @@ import { api } from '@/lib/axios'
 import { socketService } from '@/lib/socket'
 import { toast } from 'sonner'
 
+// Components
+import { AdminKPIStrip } from '@/components/admin/AdminKPIStrip'
+import { SiteComparisonPanel } from '@/components/admin/SiteComparisonPanel'
+import { PipelineFunnel } from '@/components/admin/PipelineFunnel'
+import { RecentActivityTable } from '@/components/admin/RecentActivityTable'
+import { ExportExcelButton } from '@/components/admin/ExportExcelButton'
+
 const AdminOverviewPage = () => {
   const [stats, setStats] = useState<any>(null)
   const [loading, setLoading] = useState(true)
@@ -70,7 +77,7 @@ const AdminOverviewPage = () => {
     }
   }, [])
 
-  if (loading) return <DashboardLayout title="Vue d'ensemble"><p className="text-[12px] text-ink3">Chargement...</p></DashboardLayout>
+  if (loading) return <DashboardLayout title="Vue d'ensemble admin"><p className="text-[12px] text-ink3">Chargement...</p></DashboardLayout>
 
   const handleBroadcast = async () => {
     const message = broadcastMsg.trim()
@@ -110,12 +117,15 @@ const AdminOverviewPage = () => {
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <p className="text-[11px] text-ink4">
           {lastUpdated
-            ? `Derniere mise a jour: ${lastUpdated.toLocaleTimeString('fr-TN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`
-            : 'Derniere mise a jour: -'}
+            ? `Dernière mise à jour: ${lastUpdated.toLocaleTimeString('fr-TN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`
+            : 'Dernière mise à jour: -'}
         </p>
-        <Button variant="outline" size="sm" onClick={retryFetch} className="text-[11px]">
-          Recharger
-        </Button>
+        <div className="flex items-center gap-2">
+          <ExportExcelButton stats={stats} />
+          <Button variant="outline" size="sm" onClick={retryFetch} className="text-[11px] h-8">
+            Recharger
+          </Button>
+        </div>
       </div>
 
       {error && (
@@ -127,78 +137,54 @@ const AdminOverviewPage = () => {
         </div>
       )}
 
-      <div className="mb-6 rounded-xl border border-border bg-card p-5 shadow-card">
-        <p className="text-[10px] font-medium uppercase tracking-[0.09em] text-ink4">
-          Resume activite
-        </p>
-        <div className="mt-4 grid grid-cols-2 gap-4 md:grid-cols-3">
-          <div>
-            <p className="text-[11px] text-ink3">Total candidats</p>
-            <p className="text-[12px] font-mono text-ink2">{stats?.totalCandidates ?? 0}</p>
-          </div>
-          <div>
-            <p className="text-[11px] text-ink3">Comptes RH</p>
-            <p className="text-[12px] font-mono text-ink2">{stats?.hrAccounts ?? 0}</p>
-          </div>
-          <div>
-            <p className="text-[11px] text-ink3">Offres actives</p>
-            <p className="text-[12px] font-mono text-ink2">{stats?.activeOffers ?? 0}</p>
-          </div>
-          <div>
-            <p className="text-[11px] text-ink3">Total candidatures</p>
-            <p className="text-[12px] font-mono text-ink2">{stats?.totalApplications ?? 0}</p>
-          </div>
-          <div>
-            <p className="text-[11px] text-ink3">Candidatures (mois)</p>
-            <p className="text-[12px] font-mono text-ink2">{stats?.applicationsMonth ?? 0}</p>
-          </div>
-          <div>
-            <p className="text-[11px] text-ink3">Entretiens (semaine)</p>
-            <p className="text-[12px] font-mono text-ink2">{stats?.interviewsWeek ?? 0}</p>
-          </div>
+      {/* Main KPI Strip */}
+      <AdminKPIStrip stats={stats} />
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        {/* Left Column: Comparisons & Funnel */}
+        <div className="flex flex-col gap-6">
+          <SiteComparisonPanel stats={stats} />
+          <PipelineFunnel stats={stats} />
+          
+          {/* Mini messagerie (admin → RH) */}
+          <Card className="rounded-xl shadow-card border-border">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-[13px] font-semibold text-ink">
+                Diffusion RH
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div>
+                <select
+                  value={broadcastSite}
+                  onChange={e => setBroadcastSite(e.target.value as 'all' | 'Bouarada' | 'Zaghouan')}
+                  className="w-full rounded-md border border-border bg-card2 px-3 py-1.5 text-[11px] text-ink focus:outline-none focus:border-v"
+                >
+                  <option value="all">Tous les sites</option>
+                  <option value="Bouarada">Bouarada uniquement</option>
+                  <option value="Zaghouan">Zaghouan uniquement</option>
+                </select>
+              </div>
+              <div>
+                <input
+                  value={broadcastMsg}
+                  onChange={e => setBroadcastMsg(e.target.value)}
+                  placeholder="Court message aux RH..."
+                  className="w-full rounded-md border border-border bg-card2 px-3 py-1.5 text-[11px] text-ink placeholder:text-ink4 focus:outline-none focus:border-v"
+                />
+              </div>
+              <Button onClick={handleBroadcast} disabled={sendingBroadcast} className="w-full text-[11px] h-8">
+                {sendingBroadcast ? 'Envoi...' : 'Envoyer'}
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Right Column: Recent Activity */}
+        <div className="lg:col-span-2">
+          <RecentActivityTable stats={stats} />
         </div>
       </div>
-
-      {/* Mini messagerie (admin → RH) */}
-      <Card className="rounded-lg shadow-card">
-        <CardHeader>
-          <CardTitle className="text-[16px] font-semibold tracking-[-0.015em] text-ink">
-            Mini messagerie (admin vers RH)
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <label htmlFor="audience-select" className="text-[11px] font-medium uppercase tracking-[0.09em] text-ink3">
-              Audience
-            </label>
-            <select
-              id="audience-select"
-              value={broadcastSite}
-              onChange={e => setBroadcastSite(e.target.value as 'all' | 'Bouarada' | 'Zaghouan')}
-              className="mt-1 h-10 w-full rounded-lg border-[1.5px] border-input bg-card px-3.5 py-2 text-[13px] text-ink focus:outline-none focus:border-v focus:ring-[3px] focus:ring-vl"
-            >
-              <option value="all">Tous les sites RH</option>
-              <option value="Bouarada">Bouarada uniquement</option>
-              <option value="Zaghouan">Zaghouan uniquement</option>
-            </select>
-          </div>
-          <div>
-            <label htmlFor="broadcast-message" className="text-[11px] font-medium uppercase tracking-[0.09em] text-ink3">
-              Message
-            </label>
-            <input
-              id="broadcast-message"
-              value={broadcastMsg}
-              onChange={e => setBroadcastMsg(e.target.value)}
-              placeholder="Écrire un court message aux équipes RH"
-              className="mt-1 flex h-10 w-full rounded-lg border-[1.5px] border-input bg-card px-3.5 py-2 text-[13px] text-ink placeholder:text-ink4 focus-visible:outline-none focus-visible:border-v focus-visible:ring-[3px] focus-visible:ring-vl"
-            />
-          </div>
-          <Button onClick={handleBroadcast} disabled={sendingBroadcast} className="text-[11px]">
-            {sendingBroadcast ? 'Envoi...' : 'Envoyer la diffusion'}
-          </Button>
-        </CardContent>
-      </Card>
     </DashboardLayout>
   )
 }

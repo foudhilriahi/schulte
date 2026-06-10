@@ -18,6 +18,16 @@ const candidateSafeSelect = {
   isActive: true,
 } as const;
 
+// Full candidateCV select — includes formData + cvTemplate for PDF generation
+const candidateCVSelect = {
+  id: true,
+  name: true,
+  source: true,
+  cvText: true,
+  formData: true,
+  cvTemplate: true,
+} as const;
+
 export class ApplicationRepository {
   static async findByCandidate(candidateId: string) {
     return prisma.application.findMany({
@@ -58,12 +68,7 @@ export class ApplicationRepository {
           select: candidateSafeSelect,
         },
         candidateCV: {
-          select: {
-            id: true,
-            cvText: true,
-            name: true,
-            source: true,
-          },
+          select: candidateCVSelect,
         },
         offer: {
           select: {
@@ -91,12 +96,7 @@ export class ApplicationRepository {
         },
         offer: true,
         candidateCV: {
-          select: {
-            id: true,
-            cvText: true,
-            name: true,
-            source: true,
-          },
+          select: candidateCVSelect,
         },
         interview: true,
       },

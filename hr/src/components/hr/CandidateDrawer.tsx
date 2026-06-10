@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Star, X, Bot, Zap } from "lucide-react";
+import { Star, X, Bot, Zap, AlertTriangle, CheckCircle, XCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -7,6 +7,13 @@ import { api } from "@/lib/axios";
 import { authSession } from "@/lib/authSession";
 import { toast } from "sonner";
 import ScheduleInterviewModal from "./ScheduleInterviewModal";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import DecisionConfidenceStrip from "./DecisionConfidenceStrip";
 import RecruiterReasoningPanel from "./RecruiterReasoningPanel";
@@ -52,6 +59,10 @@ const CandidateDrawer = ({
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<string>("review");
   const [statusSaving, setStatusSaving] = useState(false);
+  /** null = idle, 'accepted' | 'rejected' = waiting for confirm (applying final status) */
+  const [pendingFinalStatus, setPendingFinalStatus] = useState<"accepted" | "rejected" | null>(null);
+  /** Reverting FROM final status: { from: current status, to: target status } */
+  const [revertingStatus, setRevertingStatus] = useState<{ from: string; to: string } | null>(null);
   const notesRef = useRef<HTMLTextAreaElement | null>(null);
 
   useEffect(() => {
@@ -61,6 +72,12 @@ const CandidateDrawer = ({
     setAnalysis(normalizeStoredDualAnalysis(candidate.aiAnalysis));
     setSelectedStatus(candidate.status || "review");
   }, [candidate, open]);
+
+  useEffect(() => {
+    if (!open) {
+      setScheduleModalOpen(false);
+    }
+  }, [open]);
 
   if (!open || !candidate) return null;
 
@@ -83,29 +100,121 @@ const CandidateDrawer = ({
     }
   };
 
-  const saveStatus = async (nextStatus?: string) => {
+  // ── Strict interview guards ──────────────────────────────────────────────
+  const interview = candidate.interview ?? null;
+  const interviewOutcome: string | null = interview?.outcome ?? null;
+  const interviewScheduledAt: Date | null = interview?.scheduledAt
+    ? new Date(interview.scheduledAt)
+    : null;
+  const interviewIsPending = !!interview && !interviewOutcome;
+  const interviewIsPastWithoutOutcome =
+    interviewIsPending && !!interviewScheduledAt && interviewScheduledAt < new Date();
+
+  /**
+   * Returns a blocking reason string if the status change is not allowed,
+   * or null if it's fine.
+   */
+  const getStatusBlockReason = (nextStatus: string): string | null => {
+    // Final lock — backend also enforces this
+    if (
+      (candidate.status === "accepted" || candidate.status === "rejected") &&
+      nextStatus !== candidate.status
+    ) {
+      return "Statut final verrouillé — impossible de revenir en arrière.";
+    }
+    // Interview pending (no outcome yet) → only "interview" is allowed
+    if (interviewIsPending && nextStatus !== "interview") {
+      return "Entretien en attente — renseignez le résultat avant de changer le statut.";
+    }
+    // Outcome already set → only the matching final status is allowed
+    if (interviewOutcome === "pass" && nextStatus !== "accepted") {
+      return "Résultat fixé (Retenu) — statut verrouillé sur Accepté.";
+    }
+    if (interviewOutcome === "fail" && nextStatus !== "rejected") {
+      return "Résultat fixé (Refusé) — statut verrouillé sur Non retenu.";
+    }
+    if (interviewOutcome === "no_show") {
+      // no_show with count < 2 keeps status at interview; ≥ 2 locks to rejected
+      const noShowCount = interview?.noShowCount ?? 0;
+      if (noShowCount >= 2 && nextStatus !== "rejected") {
+        return "2 absences enregistrées — candidature automatiquement rejetée.";
+      }
+      if (noShowCount < 2 && nextStatus !== "interview") {
+        return "Absence enregistrée — statut verrouillé sur Convoqué jusqu'à replanification.";
+      }
+    }
+    return null;
+  };
+
+  const saveStatus = async (nextStatus?: string, allowRevert = false) => {
     const statusToSave = nextStatus || selectedStatus;
     if (!statusToSave || statusToSave === candidate.status) return;
 
+    // Client-side strict guard
+    const blockReason = getStatusBlockReason(statusToSave);
+    if (blockReason) {
+      // Check if this is a revert from final status
+      const currentIsFinal = candidate.status === "accepted" || candidate.status === "rejected";
+      const targetIsNotFinal = statusToSave !== "accepted" && statusToSave !== "rejected";
+
+      if (currentIsFinal && targetIsNotFinal) {
+        // User is trying to revert FROM final status — show confirmation dialog
+        setRevertingStatus({ from: candidate.status, to: statusToSave });
+        return;
+      }
+
+      toast.error(blockReason);
+      setSelectedStatus(candidate.status || "review");
+      return;
+    }
+
     setStatusSaving(true);
     try {
-      await api.patch(`/applications/${candidate.id}/status`, {
+      const payload: Record<string, any> = {
         status: statusToBackend[statusToSave] ?? statusToSave,
-      });
-      toast.success("Enregistré.");
+      };
+      // Pass allowRevert if this is a revert operation
+      if (allowRevert) {
+        payload.allowRevert = true;
+      }
+
+      await api.patch(`/applications/${candidate.id}/status`, payload);
+      toast.success(allowRevert ? "Statut rétabli." : "Enregistré.");
       onQuickStatusChange?.(candidate, statusToSave as any);
       if (nextStatus) {
         setSelectedStatus(statusToSave);
       }
-    } catch {
-      toast.error("Échec — réessaie.");
+    } catch (error: any) {
+      const message = error?.response?.data?.error || "Échec — réessaie.";
+      toast.error(message);
+      setSelectedStatus(candidate.status || "review");
     } finally {
       setStatusSaving(false);
     }
   };
 
   const acceptCandidate = () => {
-    saveStatus("accepted");
+    const blockReason = getStatusBlockReason("accepted");
+    if (blockReason) {
+      toast.error(blockReason);
+      return;
+    }
+    // Show confirm dialog instead of firing immediately
+    setPendingFinalStatus("accepted");
+  };
+
+  const confirmFinalStatus = () => {
+    if (!pendingFinalStatus) return;
+    const status = pendingFinalStatus;
+    setPendingFinalStatus(null);
+    saveStatus(status);
+  };
+
+  const confirmRevert = () => {
+    if (!revertingStatus) return;
+    const { to } = revertingStatus;
+    setRevertingStatus(null);
+    saveStatus(to, true); // allowRevert = true
   };
 
   const runDualAI = async () => {
@@ -141,6 +250,12 @@ const CandidateDrawer = ({
 
   const confidenceLevel = analysis?.mergedConfidence || "";
 
+  const handleNotesClick = () => {
+    if (!notesRef.current) return;
+    notesRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+    notesRef.current.focus();
+  };
+
   return (
     <>
       <div className="flex h-full w-full flex-col border-l border-border bg-card shadow-modal animate-slideIn">
@@ -168,7 +283,7 @@ const CandidateDrawer = ({
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => notesRef.current?.focus()}
+              onClick={handleNotesClick}
               className="h-8 px-3 text-[11px]"
             >
               Notes
@@ -259,7 +374,19 @@ const CandidateDrawer = ({
                   <Button
                     variant="outline"
                     className="h-8 w-full bg-card text-[11px]"
-                    onClick={() => saveStatus()}
+                    onClick={() => {
+                      if (selectedStatus === "accepted" || selectedStatus === "rejected") {
+                        const blockReason = getStatusBlockReason(selectedStatus);
+                        if (blockReason) {
+                          toast.error(blockReason);
+                          setSelectedStatus(candidate.status || "review");
+                          return;
+                        }
+                        setPendingFinalStatus(selectedStatus as "accepted" | "rejected");
+                      } else {
+                        saveStatus();
+                      }
+                    }}
                     disabled={statusSaving || selectedStatus === candidate.status}
                   >
                     {statusSaving ? "Mise a jour..." : "Appliquer le statut"}
@@ -406,6 +533,7 @@ const CandidateDrawer = ({
               candidateId={candidate.id}
               currentHrRating={rating}
               currentHrNotes={notes}
+              notesInputRef={notesRef}
             />
 
             <section>
@@ -414,19 +542,17 @@ const CandidateDrawer = ({
               </p>
               <div className="mt-2">
                 {candidate.cvUrl ? (
-                  <div className="flex min-h-[240px] items-center justify-center rounded-md border border-border bg-card2 p-4 text-center">
+                  // ── Uploaded PDF ──────────────────────────────────────────
+                  <div className="flex min-h-[120px] items-center justify-center rounded-md border border-border bg-card2 p-4 text-center">
                     <div className="space-y-2">
-                      <p className="text-[12px] text-ink3">PDF televerse</p>
+                      <p className="text-[12px] text-ink3">PDF téléversé</p>
                       <Button
                         variant="outline"
                         onClick={async () => {
                           try {
                             const token = authSession.getAccessToken()
-                            const filename = candidate.cvUrl?.replace('/uploads/', '') || ''
-                            const response = await fetch(`${API_BASE}/uploads/${filename}`, {
-                              headers: {
-                                'Authorization': `Bearer ${token}`
-                              }
+                            const response = await fetch(`${API_BASE}/applications/${candidate.id}/cv`, {
+                              headers: { 'Authorization': `Bearer ${token}` }
                             })
                             if (!response.ok) throw new Error('Failed to download')
                             const blob = await response.blob()
@@ -438,91 +564,65 @@ const CandidateDrawer = ({
                             window.URL.revokeObjectURL(url)
                           } catch (err) {
                             console.error('Download error:', err)
-                            alert('Echec du telechargement du CV')
+                            toast.error('Échec du téléchargement du CV')
                           }
                         }}
                         className="text-[11px]"
                       >
-                        Voir / Telecharger le PDF
+                        Télécharger le PDF
                       </Button>
                     </div>
                   </div>
                 ) : candidate.formData ? (
-                  <div className="space-y-3 text-[12px]">
-                    <div className="rounded-md bg-card2 p-3">
-                      <p className="text-[10px] font-medium uppercase tracking-[0.09em] text-ink4">Personnel</p>
-                      <p className="mt-1 text-ink">
-                        {candidate.formData.personal?.name} - {candidate.formData.personal?.city}
-                      </p>
-                    </div>
-                    {candidate.formData.education?.length > 0 && (
-                      <div className="rounded-md bg-card2 p-3">
-                        <p className="text-[10px] font-medium uppercase tracking-[0.09em] text-ink4">Formation</p>
-                        {candidate.formData.education.map((e: any, i: number) => (
-                          <p key={i} className="mt-1 text-ink">
-                            {e.degree} - {e.institution} ({e.year})
-                          </p>
-                        ))}
-                      </div>
-                    )}
-                    {candidate.formData.experience?.length > 0 && (
-                      <div className="rounded-md bg-card2 p-3">
-                        <p className="text-[10px] font-medium uppercase tracking-[0.09em] text-ink4">Experience</p>
-                        {candidate.formData.experience.map((e: any, i: number) => (
-                          <p key={i} className="mt-1 text-ink">
-                            {e.title} chez {e.company}
-                          </p>
-                        ))}
-                      </div>
-                    )}
-                    {candidate.formData.skills?.length > 0 && (
-                      <div className="rounded-md bg-card2 p-3">
-                        <p className="text-[10px] font-medium uppercase tracking-[0.09em] text-ink4">Competences</p>
-                        <div className="mt-2 flex flex-wrap gap-1">
-                          {candidate.formData.skills.map((s: string) => (
-                            <Badge key={s} variant="outline" className="text-[10px]">
-                              {s}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    {candidate.formData.languages?.length > 0 && (
-                      <div className="rounded-md bg-card2 p-3">
-                        <p className="text-[10px] font-medium uppercase tracking-[0.09em] text-ink4">Langues</p>
-                        {candidate.formData.languages.map((l: any, i: number) => (
-                          <p key={i} className="mt-1 text-ink">
-                            {l.name} ({l.level})
-                          </p>
-                        ))}
-                      </div>
-                    )}
-                    {candidate.formData.links?.length > 0 && (
-                      <div className="rounded-md bg-card2 p-3">
-                        <p className="text-[10px] font-medium uppercase tracking-[0.09em] text-ink4">Liens</p>
-                        {candidate.formData.links.map((l: any, i: number) => {
-                          let href = l.url;
-                          try {
-                            const urlObj = new URL(href);
-                            if (urlObj.protocol !== 'http:' && urlObj.protocol !== 'https:') {
-                              href = '#';
+                  // ── Generated CV — download as PDF ────────────────────────
+                  <div className="space-y-3">
+                    <div className="flex min-h-[120px] items-center justify-center rounded-md border border-border bg-card2 p-4 text-center">
+                      <div className="space-y-2">
+                        <p className="text-[12px] text-ink3">CV généré par le candidat</p>
+                        <Button
+                          variant="outline"
+                          onClick={async () => {
+                            try {
+                              const token = authSession.getAccessToken()
+                              const response = await fetch(`${API_BASE}/applications/${candidate.id}/cv`, {
+                                headers: { 'Authorization': `Bearer ${token}` }
+                              })
+                              if (!response.ok) throw new Error('Failed to download')
+                              const blob = await response.blob()
+                              const url = window.URL.createObjectURL(blob)
+                              const a = document.createElement('a')
+                              a.href = url
+                              a.download = `CV_${candidate.name}.pdf`
+                              a.click()
+                              window.URL.revokeObjectURL(url)
+                            } catch (err) {
+                              console.error('Download error:', err)
+                              toast.error('Échec du téléchargement du CV')
                             }
-                          } catch (e) {
-                            href = '#';
-                          }
-                          return (
-                            <a key={i} href={href} target={href !== '#' ? '_blank' : '_self'} rel="noopener noreferrer" className="mt-1 block text-[11px] text-v hover:underline">
-                              {l.name}
-                            </a>
-                          );
-                        })}
+                          }}
+                          className="text-[11px]"
+                        >
+                          Télécharger le CV (PDF)
+                        </Button>
                       </div>
-                    )}
+                    </div>
+                    {/* Quick summary still visible inline */}
+                    <div className="rounded-md bg-card2 p-3 text-[11px] text-ink3 space-y-1">
+                      {candidate.formData.personal?.name && (
+                        <p><span className="font-medium text-ink">Nom :</span> {candidate.formData.personal.name}</p>
+                      )}
+                      {candidate.formData.personal?.city && (
+                        <p><span className="font-medium text-ink">Ville :</span> {candidate.formData.personal.city}</p>
+                      )}
+                      {candidate.formData.skills?.length > 0 && (
+                        <p><span className="font-medium text-ink">Compétences :</span> {candidate.formData.skills.slice(0, 6).join(', ')}{candidate.formData.skills.length > 6 ? '…' : ''}</p>
+                      )}
+                    </div>
                   </div>
                 ) : (
-                  <div className="flex h-[160px] items-center justify-center rounded-md bg-card2">
+                  <div className="flex h-[120px] items-center justify-center rounded-md bg-card2">
                     <p className="text-[12px] text-ink3">
-                      Aucune donnee CV/formulaire disponible
+                      Aucune donnée CV disponible
                     </p>
                   </div>
                 )}
@@ -534,12 +634,134 @@ const CandidateDrawer = ({
     </div>
   </div>
 
+      {/* Revert from final status dialog */}
+      <Dialog
+        open={!!revertingStatus}
+        onOpenChange={(isOpen) => { if (!isOpen) setRevertingStatus(null); }}
+      >
+        <DialogContent className="sm:max-w-[440px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-ink">
+              <AlertTriangle className="h-4 w-4 text-warn" />
+              Annuler la décision
+            </DialogTitle>
+          </DialogHeader>
+          <div className="rounded-md border border-warn/30 bg-warn/10 p-4 text-[13px] text-ink">
+            <p className="mb-3">
+              Vous êtes sur le point de <strong>rétablir</strong> le statut de :
+            </p>
+            <div className="bg-card rounded-md p-3 border border-border mb-3">
+              <p className="font-bold text-ink">{candidate.name}</p>
+              <p className="text-xs text-ink3">{candidate.jobTitle}</p>
+            </div>
+            <div className="flex items-center justify-center gap-3 text-sm">
+              <span className="px-3 py-1 rounded-full bg-err/10 text-err font-semibold border border-err/20">
+                {revertingStatus?.from === "accepted" ? "Retenu" : "Non retenu"}
+              </span>
+              <span className="text-ink3">→</span>
+              <span className="px-3 py-1 rounded-full bg-boul/10 text-primary font-semibold border border-bou-b/20">
+                {revertingStatus?.to === "interview"
+                  ? "Convoqué"
+                  : revertingStatus?.to === "reviewing"
+                  ? "En lecture"
+                  : "À trier"}
+              </span>
+            </div>
+            <p className="mt-3 text-[11px] text-ink3">
+              ⚠️ Cette action enverra un nouvel email au candidat pour l'informer du changement de statut.
+            </p>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setRevertingStatus(null)}
+              disabled={statusSaving}
+            >
+              Annuler
+            </Button>
+            <Button
+              onClick={confirmRevert}
+              disabled={statusSaving}
+              className="bg-warn text-white hover:bg-warn/90"
+            >
+              {statusSaving ? "Traitement..." : "Oui, annuler la décision"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Confirm final status dialog */}
+      <Dialog
+        open={!!pendingFinalStatus}
+        onOpenChange={(isOpen) => { if (!isOpen) setPendingFinalStatus(null); }}
+      >
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-ink">
+              {pendingFinalStatus === "accepted" ? (
+                <CheckCircle className="h-4 w-4 text-ok" />
+              ) : (
+                <XCircle className="h-4 w-4 text-err" />
+              )}
+              {pendingFinalStatus === "accepted" ? "Confirmer l'acceptation" : "Confirmer le rejet"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className={`rounded-md border p-4 text-[13px] ${
+            pendingFinalStatus === "accepted"
+              ? "border-ok/30 bg-ok/10 text-ok"
+              : "border-err/30 bg-err/10 text-err"
+          }`}>
+            {pendingFinalStatus === "accepted" ? (
+              <>
+                Vous êtes sur le point de <strong>retenir</strong> la candidature de{" "}
+                <strong>{candidate.name}</strong>.
+              </>
+            ) : (
+              <>
+                Vous êtes sur le point de <strong>rejeter</strong> la candidature de{" "}
+                <strong>{candidate.name}</strong>.
+              </>
+            )}
+            <span className="mt-1 block text-[11px] text-ink3">
+              Cette action est <strong>irréversible</strong> — le statut sera verrouillé définitivement.
+            </span>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setPendingFinalStatus(null)}
+              disabled={statusSaving}
+            >
+              Annuler
+            </Button>
+            <Button
+              onClick={confirmFinalStatus}
+              disabled={statusSaving}
+              className={
+                pendingFinalStatus === "accepted"
+                  ? "bg-ok text-white hover:bg-ok/90"
+                  : "bg-err text-white hover:bg-err/90"
+              }
+            >
+              {statusSaving
+                ? "Enregistrement..."
+                : pendingFinalStatus === "accepted"
+                ? "Oui, retenir"
+                : "Oui, rejeter"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Schedule Interview Modal */}
       <ScheduleInterviewModal
         open={scheduleModalOpen}
         onClose={() => setScheduleModalOpen(false)}
         applicationId={candidate.id}
         candidateName={candidate.name}
+        isReschedule={!!interview}
+        existingOutcome={interviewOutcome as any}
+        isPastWithoutOutcome={interviewIsPastWithoutOutcome}
         onSuccess={() => {
           setScheduleModalOpen(false);
           toast.success("RDV fixé — rappel J-1 programmé.");

@@ -31,6 +31,22 @@ export interface InterviewReminderPayload {
   candidateName: string;
   candidateEmail: string;
   offerTitle: string;
+  offerSite?: string;
+  scheduledAt: Date;
+  location: string;
+}
+
+export interface InterviewOutcomeChangedPayload {
+  interviewId: string;
+  applicationId: string;
+  candidateId: string;
+  candidateName: string;
+  candidateEmail: string;
+  offerTitle: string;
+  offerSite?: string;
+  outcome: "pass" | "fail" | "no_show";
+  previousOutcome: "pass" | "fail" | "no_show" | null;
+  noShowCount: number;
   scheduledAt: Date;
   location: string;
 }
@@ -41,6 +57,7 @@ interface AppEvents {
   'application.statusChanged': ApplicationStatusChangedPayload;
   'interview.scheduled': InterviewScheduledPayload;
   'interview.reminder': InterviewReminderPayload;
+  'interview.outcomeChanged': InterviewOutcomeChangedPayload;
 }
 
 // ── TypedEmitter ─────────────────────────────────────────────────────────────

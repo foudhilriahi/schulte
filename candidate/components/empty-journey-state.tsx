@@ -6,6 +6,16 @@ interface EmptyJourneyStateProps {
   variant: "no-jobs" | "no-applications" | "no-notifications";
 }
 
+type EmptyStateConfig = {
+  icon: typeof FolderOpen;
+  title: string;
+  description: string;
+  color: string;
+  bg: string;
+  action?: string;
+  path?: string;
+};
+
 const CONFIG = {
   "no-jobs": {
     icon: FolderOpen,
@@ -20,8 +30,8 @@ const CONFIG = {
     description: "Parcourez les offres et postulez — votre parcours commence ici.",
     action: "Voir les offres",
     path: "/",
-    color: "text-violet",
-    bg: "bg-violetl",
+    color: "text-v",
+    bg: "bg-vl",
   },
   "no-notifications": {
     icon: Bell,
@@ -30,26 +40,27 @@ const CONFIG = {
     color: "text-ok",
     bg: "bg-okl",
   },
-};
+} satisfies Record<EmptyJourneyStateProps["variant"], EmptyStateConfig>;
 
 export function EmptyJourneyState({ variant }: EmptyJourneyStateProps) {
   const router = useRouterWithLoader();
-  const data = CONFIG[variant];
+  const data: EmptyStateConfig = CONFIG[variant];
   const Icon = data.icon;
+  const actionPath = typeof data.path === "string" ? data.path : null;
 
   return (
     <div className="flex flex-col items-center justify-center py-16 px-4 text-center animate-slide-up-fade">
       <div className={`h-20 w-20 rounded-full ${data.bg} flex items-center justify-center mb-5`}>
         <Icon className={`h-10 w-10 ${data.color}`} strokeWidth={1.5} />
       </div>
-      <h3 className="text-lg font-bold text-ink mb-2">{data.title}</h3>
-      <p className="text-sm text-ink3 max-w-[280px] leading-relaxed mb-6">
+      <h3 className="text-[15px] font-semibold text-ink mb-2">{data.title}</h3>
+      <p className="text-[12px] text-ink3 max-w-[280px] leading-relaxed mb-6">
         {data.description}
       </p>
-      {data.action && data.path && (
+      {data.action && actionPath && (
         <Button
-          onClick={() => router.push(data.path)}
-          className="rounded-full px-6 font-semibold"
+          onClick={() => router.push(actionPath)}
+          className="px-6"
         >
           {data.action}
         </Button>

@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { NotificationRepository } from "../repositories/notification.repository";
 import logger from "../utils/logger";
+import prisma from "../config/prisma";
 
 export class NotificationsController {
   // GET /api/notifications
@@ -89,5 +90,43 @@ export class NotificationsController {
       logger.error('Clear notifications error:', err);
       res.status(500).json({ error: 'Echec de la suppression des notifications' });
     }
+  }
+
+  // POST /api/notifications/subscribe
+  static async subscribe(req: Request, res: Response): Promise<void> {
+    try {
+      const { subscription } = req.body;
+      if (!subscription || !subscription.endpoint || !subscription.keys) {
+        res.status(400).json({ error: 'Subscription invalide' });
+        return;
+      }
+      
+      const { endpoint, keys: { p256dh, auth } } = subscription;
+      
+      await prisma.pushSubscription.upsert({
+        where: { endpoint },
+        update: {
+          userId: req.user!.userId,
+          p256dh,
+          auth
+        },
+        create: {
+          userId: req.user!.userId,
+          endpoint,
+          p256dh,
+          auth
+        }
+      });
+      
+      res.json({ success: true });
+    } catch (err: any) {
+      logger.error('Subscribe error:', err);
+      res.status(500).json({ error: 'Erreur lors de la souscription' });
+    }
+  }
+
+  // GET /api/notifications/vapid-public-key
+  static getVapidPublicKey(req: Request, res: Response): void {
+    res.json({ publicKey: process.env.VAPID_PUBLIC_KEY });
   }
 }

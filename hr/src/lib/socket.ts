@@ -7,16 +7,23 @@ const URL = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localho
 class SocketService {
   private socket: Socket | null = null;
   private currentToken: string | null = null;
+  private isConnecting = false;
 
   connect(token: string) {
-    if (this.socket?.connected && this.currentToken === token) return;
-    
-    // Disconnect old socket if new token
+    if (this.socket && this.currentToken === token) {
+      if (this.socket.connected || this.isConnecting) return;
+      this.isConnecting = true;
+      this.socket.connect();
+      return;
+    }
+
     if (this.socket) {
       this.socket.disconnect();
+      this.socket = null;
     }
-    
+
     this.currentToken = token;
+    this.isConnecting = true;
 
     this.socket = io(URL, {
       auth: { token },
@@ -25,14 +32,17 @@ class SocketService {
     });
 
     this.socket.on('connect', () => {
+      this.isConnecting = false;
       console.log('🔗 WebSocket Connected (HR):', this.socket?.id);
     });
 
     this.socket.on('disconnect', () => {
+      this.isConnecting = false;
       console.log('🔴 WebSocket Disconnected (HR)');
     });
 
     this.socket.on('connect_error', (err: any) => {
+      this.isConnecting = false;
       const message = String(err?.message || '');
       console.error('❌ WebSocket connect error (HR):', message);
 

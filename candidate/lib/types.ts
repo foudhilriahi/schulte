@@ -39,13 +39,20 @@ export interface JobOffer {
 export interface Interview {
   id: string;
   applicationId: string;
-  date: string;
-  time: string;
-  location: string;
-  type: string;
-  status: string;
+  scheduledAt?: string;
+  outcome?: 'pass' | 'fail' | 'no_show' | null;
+  noShowCount?: number;
+  notesForCandidate?: string;
+  createdById?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  date?: string;
+  time?: string;
+  location?: string;
+  type?: string;
+  status?: string;
   notes?: string;
-  prepNotes: string[];
+  prepNotes?: string[];
 }
 
 export interface Application {

@@ -35,8 +35,15 @@ export function startCronJobs(): void {
           candidateName:  candidate.name,
           candidateEmail: candidate.email ?? '',
           offerTitle:     offer.title,
+          offerSite:      offer.site,
           scheduledAt:    interview.scheduledAt,
           location:       interview.location,
+        });
+
+        // Also mark reminderSent so we don't double-fire if cron overlaps
+        await prisma.interview.update({
+          where: { id: interview.id },
+          data: { reminderSent: true },
         });
       }
     } catch (err) {

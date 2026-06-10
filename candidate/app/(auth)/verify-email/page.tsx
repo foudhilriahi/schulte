@@ -13,7 +13,7 @@ import { useRouterWithLoader } from '@/hooks/use-router-with-loader';
 
 export default function VerifyEmailPage() {
   return (
-    <Suspense fallback={<div className="w-full text-center text-sm text-muted-foreground">Chargement...</div>}>
+    <Suspense fallback={<div className="w-full text-center text-[12px] text-ink3">Chargement...</div>}>
       <VerifyEmailContent />
     </Suspense>
   );
@@ -33,8 +33,8 @@ function VerifyEmailContent() {
   const [resendCooldown, setResendCooldown] = useState(0);
   const [resendMessage, setResendMessage] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
-  const resendTimeoutRef = useRef<number>();
-  const redirectTimeoutRef = useRef<number>();
+  const resendTimeoutRef = useRef<number | undefined>(undefined);
+  const redirectTimeoutRef = useRef<number | undefined>(undefined);
 
   // Cleanup timeouts on unmount
   useEffect(() => {
@@ -94,7 +94,7 @@ function VerifyEmailContent() {
 
     try {
       await api.post('/auth/resend-verification', { email });
-      setResendMessage('Nouveau code envoye !');
+      setResendMessage('Nouveau code envoyé.');
       setResendCooldown(60);
       setCode('');
       setError('');
@@ -116,11 +116,11 @@ function VerifyEmailContent() {
     return (
       <div className="flex flex-col gap-6 w-full animate-in fade-in duration-200">
         <div className="flex flex-col items-center text-center">
-          <div className="w-16 h-16 bg-okl text-ok rounded-full flex items-center justify-center mb-4 border border-[var(--ok-b)]">
+          <div className="w-16 h-16 bg-okl text-ok rounded-full flex items-center justify-center mb-4 border border-[var(--okb)]">
             <CheckCircle2 className="h-8 w-8" />
           </div>
-          <h1 className="text-2xl font-semibold tracking-tight">Email verifie !</h1>
-          <p className="text-sm text-muted-foreground mt-2">
+          <h1 className="text-[20px] font-semibold tracking-[-0.02em] text-ink">Email vérifié</h1>
+          <p className="text-[13px] text-ink3 mt-2">
             Votre compte est maintenant actif. Redirection en cours...
           </p>
         </div>
@@ -131,13 +131,13 @@ function VerifyEmailContent() {
   return (
     <div className="flex flex-col gap-6 w-full animate-in fade-in duration-200">
       <div className="flex flex-col items-center text-center">
-        <div className="w-16 h-16 bg-secondary text-primary rounded-full flex items-center justify-center mb-4 border border-input">
+        <div className="w-16 h-16 bg-card2 text-v rounded-full flex items-center justify-center mb-4 border border-border">
           <Mail className="h-8 w-8" />
         </div>
-        <h1 className="text-2xl font-semibold tracking-tight">Verifiez votre email</h1>
-        <p className="text-sm text-muted-foreground mt-2 max-w-sm">
-          Un code a 6 chiffres a ete envoye a{' '}
-          <strong className="text-foreground">{email || 'votre adresse email'}</strong>.
+        <h1 className="text-[20px] font-semibold tracking-[-0.02em] text-ink">Vérifiez votre email</h1>
+        <p className="text-[13px] text-ink3 mt-2 max-w-sm">
+          Un code à 6 chiffres a été envoyé à{' '}
+          <strong className="text-ink">{email || 'votre adresse email'}</strong>.
           Entrez-le ci-dessous pour activer votre compte.
         </p>
       </div>
@@ -153,15 +153,15 @@ function VerifyEmailContent() {
             inputMode="numeric"
             autoComplete="one-time-code"
             className={`
-              w-[200px] text-center text-2xl font-bold tracking-[0.5em] py-3 h-auto
-              bg-background transition-shadow duration-300 focus-visible:ring-primary/50
-              ${error ? 'border-err focus-visible:ring-destructive/50' : ''}
+              w-[200px] text-center text-[20px] font-semibold tracking-[0.5em] py-3 h-auto
+              ${error ? 'border-err' : ''}
             `}
+            aria-invalid={!!error}
           />
         </div>
 
         {error && (
-          <div className="rounded-md border border-[var(--err-b)] bg-errl px-3 py-2 text-sm text-err text-center">
+          <div className="rounded-lg border border-[var(--errb)] bg-errl px-3 py-2 text-[12px] text-err text-center">
             {error}
           </div>
         )}
@@ -169,24 +169,24 @@ function VerifyEmailContent() {
         <Button type="submit" className="w-full" disabled={isLoading || code.length !== 6}>
           {isLoading ? (
             <div className="flex items-center gap-2">
-              <svg className="animate-spin h-4 w-4 text-primary-foreground" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-              <span>Verification...</span>
+              <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+              <span>Vérification...</span>
             </div>
           ) : (
-            'Verifier'
+            'Vérifier'
           )}
         </Button>
       </form>
 
       <div className="space-y-3">
-        <div className="p-4 bg-secondary border border-input rounded-md">
+        <div className="p-4 bg-card2 border border-border rounded-xl">
           <div className="flex items-start gap-3">
-            <Mail className="h-5 w-5 text-primary mt-0.5 shrink-0" />
+            <Mail className="h-5 w-5 text-v mt-0.5 shrink-0" />
             <div className="flex-1">
-              <h3 className="text-sm font-semibold text-foreground">Verifiez votre boite email</h3>
-              <p className="text-sm text-muted-foreground mt-1">
+              <h3 className="text-[13px] font-semibold text-ink">Vérifiez votre boîte email</h3>
+              <p className="text-[12px] text-ink3 mt-1">
                 Le code est valide pendant 15 minutes.
-                Pensez a verifier vos spams si vous ne le trouvez pas.
+                Pensez à vérifier vos spams si vous ne le trouvez pas.
               </p>
             </div>
           </div>
@@ -196,7 +196,7 @@ function VerifyEmailContent() {
           type="button"
           onClick={handleResend}
           disabled={resendCooldown > 0}
-          className="w-full flex items-center justify-center gap-2 text-sm text-primary hover:underline disabled:text-muted-foreground disabled:no-underline disabled:cursor-not-allowed transition-colors"
+          className="w-full flex items-center justify-center gap-2 text-[12px] text-v hover:underline disabled:text-ink4 disabled:no-underline disabled:cursor-not-allowed transition-colors"
         >
           <RefreshCw className={`h-3.5 w-3.5 ${resendCooldown > 0 ? '' : ''}`} />
           {resendCooldown > 0
@@ -206,13 +206,13 @@ function VerifyEmailContent() {
         </button>
 
         {resendMessage && (
-          <p className="text-xs text-center text-muted-foreground animate-in fade-in duration-200">{resendMessage}</p>
+          <p className="text-[11px] text-center text-ink4 animate-in fade-in duration-200">{resendMessage}</p>
         )}
       </div>
 
-      <div className="text-center text-sm text-muted-foreground">
+      <div className="text-center text-[12px] text-ink4">
         Mauvaise adresse ?{' '}
-        <Link href="/register" className="font-medium text-primary hover:underline">
+        <Link href="/register" className="font-medium text-v hover:underline">
           Recommencer l&apos;inscription
         </Link>
       </div>

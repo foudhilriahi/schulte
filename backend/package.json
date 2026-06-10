@@ -8,7 +8,9 @@
     "start": "node dist/server.js",
     "seed": "tsx prisma/seed.ts",
     "migrate": "npx prisma migrate dev",
-    "generate": "npx prisma generate"
+    "generate": "npx prisma generate",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "keywords": [],
   "author": "",
@@ -17,7 +19,9 @@
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
     "@prisma/client": "^6.19.2",
+    "@types/pdfkit": "^0.17.6",
     "@types/socket.io": "^3.0.1",
+    "@types/web-push": "^3.6.4",
     "bcryptjs": "^3.0.3",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
@@ -32,8 +36,10 @@
     "node-cron": "^4.2.1",
     "nodemailer": "^8.0.1",
     "pdf-parse": "^2.4.5",
+    "pdfkit": "^0.18.0",
     "prisma": "^6.19.2",
     "socket.io": "^4.8.3",
+    "web-push": "^3.6.7",
     "winston": "^3.19.0"
   },
   "devDependencies": {
@@ -49,6 +55,7 @@
     "@types/nodemailer": "^7.0.11",
     "ts-node": "^10.9.2",
     "tsx": "^4.21.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.8"
   }
 }
